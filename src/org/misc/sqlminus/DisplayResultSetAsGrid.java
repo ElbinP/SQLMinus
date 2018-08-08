@@ -65,7 +65,7 @@ public class DisplayResultSetAsGrid implements Runnable {
 					for (int i = 1; i <= columnCount; i++) {
 						if (stopExecution)
 							throw new ThreadKilledException("Thread killed");
-						temp = rst.getMetaData().getColumnName(i);
+						temp = rst.getMetaData().getColumnLabel(i);
 						/*
 						 * if(temp==null){ temp=nullRep; }
 						 */

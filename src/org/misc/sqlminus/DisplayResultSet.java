@@ -82,7 +82,7 @@ public class DisplayResultSet implements java.lang.Runnable {
 						if (stopExecution)
 							throw new ThreadKilledException("Thread killed");
 						// columnName[i]=rst.getMetaData().getColumnName(i);//++++++++++++++++++++++++++++++++++++++++++++++
-						String temp = rst.getMetaData().getColumnName(i);
+						String temp = rst.getMetaData().getColumnLabel(i);
 						if (temp == null) {
 							temp = nullRep;
 						}
