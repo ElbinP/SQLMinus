@@ -82,6 +82,8 @@ public class SQLMinus extends JFrame implements ActionListener {
 	private JRadioButton btText, btTable;
 	private JScrollPane textSpane, tableSpane;
 	private final int MINCOLWIDTH = 15, MAXCOLWIDTH = 50, INTERCOLSPACE = 4, MAXDATALENGTH = 1000;
+	private final String COMMIT_TRANSACTIONS_COMMAND = "COMMIT_TRANSACTIONS";
+	private final String ROLLBACK_TRANSACTIONS_COMMAND = "ROLLBACK_TRANSACTIONS";
 
 	/************** The Constructor for SQLMinus ***********************/
 
@@ -326,7 +328,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 		 * gridbag.setConstraints(dummy2,c); optionsPanel.add(dummy2);
 		 */
 
-		setCommitButton = new JCheckBox("Auto Commit", true);
+		setCommitButton = new JCheckBox("Auto Commit", false);
 		// setCommitButton.setFont(f);
 		setCommitButton.setBackground(backgroundColor);
 		setCommitButton.setToolTipText(
@@ -343,9 +345,41 @@ public class SQLMinus extends JFrame implements ActionListener {
 		// gridbag.setConstraints(setCommitButton,c);
 		// optionsPanel.add(setCommitButton);
 		JPanel setCommitPanel = new JPanel();
-		setCommitPanel.add(setCommitButton);
+
+		JPanel setCommitInnerPanel = new JPanel();
+		setCommitInnerPanel.setLayout(new BoxLayout(setCommitInnerPanel, BoxLayout.X_AXIS));
+		setCommitInnerPanel.add(setCommitButton);
+
+		JButton rollBackButton;
+		try {
+			rollBackButton = new JButton(new ImageIcon(ImageReader.getImage(this.getClass(), "/images/rollback.gif")));
+		} catch (Exception e) {
+			rollBackButton = new JButton("Rollback");
+		}
+		rollBackButton.setActionCommand(ROLLBACK_TRANSACTIONS_COMMAND);
+		rollBackButton.addActionListener(this);
+		rollBackButton.setToolTipText("Rollback");
+		rollBackButton.setPreferredSize(new Dimension(30, 30));
+		setCommitInnerPanel.add(rollBackButton);
+
+		JButton commitButton;
+		try {
+			commitButton = new JButton(new ImageIcon(ImageReader.getImage(this.getClass(), "/images/commit.gif")));
+		} catch (Exception e) {
+			commitButton = new JButton("Commit");
+		}
+		commitButton.setActionCommand(COMMIT_TRANSACTIONS_COMMAND);
+		commitButton.addActionListener(this);
+		commitButton.setToolTipText("Commit");
+		commitButton.setPreferredSize(new Dimension(30, 30));
+		setCommitInnerPanel.add(commitButton);
+
+		setCommitInnerPanel.setBackground(backgroundColor);
+
+		setCommitPanel.add(setCommitInnerPanel);
 		setCommitPanel.setBackground(backgroundColor);
 		setCommitPanel.setBorder(BorderFactory.createEtchedBorder());
+
 		gridbag.setConstraints(setCommitPanel, c);
 		optionsPanel.add(setCommitPanel);
 
@@ -878,6 +912,10 @@ public class SQLMinus extends JFrame implements ActionListener {
 				connectDatabase();
 			else if (command.equals("DISCONNECT"))
 				disconnectDatabase();
+			else if (command.equals(ROLLBACK_TRANSACTIONS_COMMAND))
+				rollbackTransactions();
+			else if (command.equals(COMMIT_TRANSACTIONS_COMMAND))
+				commitTransactions();
 			else if (command.equals("Show Sample 1"))
 				showSample1();
 			else if (command.equals("Show Sample 2"))
@@ -915,10 +953,11 @@ public class SQLMinus extends JFrame implements ActionListener {
 	}
 
 	public /* synchronized */ void exitSystem() {
-		try {
-			conn.commit();
-		} catch (Exception e) {
-		}
+		// Do not automatically commit on exit
+//		try {
+//			conn.commit();
+//		} catch (Exception e) {
+//		}
 		try {
 			conn.close();
 		} catch (Exception e) {
@@ -1156,6 +1195,22 @@ public class SQLMinus extends JFrame implements ActionListener {
 		}
 	}
 
+	public void commitTransactions() throws SQLException {
+		if (conn != null) {
+			conn.commit();
+		} else {
+			popMessage("Not connected");
+		}
+	}
+
+	public void rollbackTransactions() throws SQLException {
+		if (conn != null) {
+			conn.rollback();
+		} else {
+			popMessage("Not connected");
+		}
+	}
+
 	private void insertItem(JComboBox combo, String item) {
 		int caretPos = ((JTextComponent) sqlText.getEditor().getEditorComponent()).getCaretPosition();
 		Object temp = null;
@@ -1226,12 +1281,13 @@ public class SQLMinus extends JFrame implements ActionListener {
 			} catch (Exception e) {
 				popMessage(e.toString());
 			}
-			try {
-				conn.commit();
-			} catch (NullPointerException ne) {
-			} catch (Exception e) {
-				popMessage(e.toString());
-			}
+			// Do not commit automatically on disconnect
+//			try {
+//				conn.commit();
+//			} catch (NullPointerException ne) {
+//			} catch (Exception e) {
+//				popMessage(e.toString());
+//			}
 			try {
 				conn.close();
 			} catch (NullPointerException ne) {
