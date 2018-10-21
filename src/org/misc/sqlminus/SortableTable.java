@@ -61,10 +61,8 @@ public class SortableTable extends JTable {
 		text.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent e) {
-				if (text.getText().split("\r\n|\r|\n").length > 1) {
-					contentsViewFrame.setContent(text.getText());
-					contentsViewFrame.setVisible(true);
-				}
+				contentsViewFrame.setContent(text.getText());
+				contentsViewFrame.setVisible(true);
 			}
 		});
 
@@ -79,6 +77,10 @@ public class SortableTable extends JTable {
 
 	public JPopupMenu getCellEditorPopupMenu() {
 		return textMouseAdapter.getPopupMenu();
+	}
+
+	public JPopupMenu getContentsViewPopupMenu() {
+		return contentsViewFrame.getContentsViewPopupMenu();
 	}
 
 	public void changeTable(Vector rowContents, Vector columnHeadings, int[] columnTypes) {
