@@ -51,7 +51,7 @@ public class CustomizedMouseAdapter extends MouseAdapter implements ActionListen
 	}
 
 	/**
-	 * The <code>text</code> parameter is for compatability with older code, it is
+	 * The <code>text</code> parameter is for compatibility with older code, it is
 	 * not used anymore.
 	 */
 	public CustomizedMouseAdapter(javax.swing.text.JTextComponent text) {

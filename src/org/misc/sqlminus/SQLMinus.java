@@ -773,7 +773,8 @@ public class SQLMinus extends JFrame implements ActionListener {
 
 		// adding a jtable to the bottompanel(to be used instead of the text area if so
 		// desired
-		tableOutput = new SortableTable(new DisplayResultSetTableModel(), MINCOLWIDTH, MAXCOLWIDTH);
+		tableOutput = new SortableTable(new DisplayResultSetTableModel(), MINCOLWIDTH, MAXCOLWIDTH, backgroundLight,
+				iconImage, tfont);
 		tableOutput.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		tableOutput.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
 		tableOutput.setBackground(backgroundColor);

@@ -1,42 +1,76 @@
 package org.misc.sqlminus;
 
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Font;
+import java.awt.Image;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.Vector;
 
-import javax.swing.DefaultCellEditor;
 import javax.swing.JPopupMenu;
 import javax.swing.JTable;
-import javax.swing.JTextField;
+import javax.swing.JTextArea;
 import javax.swing.event.TableModelEvent;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableColumn;
 
 import nocom.special.CustomizedMouseAdapter;
+import nocom.special.MultilineTextCellEditor;
 import nocom.special.UtilityFunctions;
 
 public class SortableTable extends JTable {
 
 	private TableCellEditor myCellEditor;
-	private JTextField text;
+	private JTextArea text;
 	private CustomizedMouseAdapter textMouseAdapter;
 	private DefaultTableCellRenderer cellRenderer;
 	private DefaultTableCellRenderer dummyRenderer;
 	private int minColWidth, maxColWidth;
+	private CellContentsViewFrame contentsViewFrame;
+	private Color backgroundColor;
+	private Image iconImage;
+	private Font tFont;
 
-	public SortableTable(DisplayResultSetTableModel model, int minColWidth, int maxColWidth) {
+	public SortableTable(DisplayResultSetTableModel model, int minColWidth, int maxColWidth, Color backgroundColor,
+			Image iconImage, Font tFont) {
 		super(model);
+		this.backgroundColor = backgroundColor;
+		this.iconImage = iconImage;
 		model.addMouseListenerToHeaderInTable(this);
-		text = new JTextField();
+
+		text = new JTextArea();
+		text.setBackground(backgroundColor);
+		text.setFont(tFont);
 		text.setEditable(false);
 		textMouseAdapter = new CustomizedMouseAdapter(text);
 		text.addMouseListener(textMouseAdapter);
-		myCellEditor = new DefaultCellEditor(text);
+
+		myCellEditor = new MultilineTextCellEditor(text);
 		cellRenderer = new DefaultTableCellRenderer();
 		dummyRenderer = new DefaultTableCellRenderer();
 		setMinColWidth(minColWidth);
 		setMaxColWidth(maxColWidth);
+		contentsViewFrame = new CellContentsViewFrame();
+		contentsViewFrame.getContentPane().setBackground(backgroundColor);
+		contentsViewFrame.setIconImage(iconImage);
+		contentsViewFrame.setBounds(150, 100, 600, 300);
+		contentsViewFrame.setVisible(false);
+
+		text.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				if (e.getClickCount() == 2 && text.getText().split("\r\n|\r|\n").length > 1) {
+					contentsViewFrame.setContent(text.getText());
+					contentsViewFrame.setVisible(true);
+				}
+			}
+		});
+
+		getSelectionModel().addListSelectionListener(e -> {
+			contentsViewFrame.setVisible(false);
+		});
 	}
 
 	public JPopupMenu getCellEditorPopupMenu() {
