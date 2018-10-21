@@ -781,6 +781,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 		tableOutput.setFont(tfont);
 		tableOutput.setCellEditorFont(tfont);
 		laf.addComponentToMonitor(tableOutput.getCellEditorPopupMenu());
+		laf.addComponentToMonitor(tableOutput.getContentsViewFrame());
 		// tableOutput.setBorder(BorderFactory.createEtchedBorder());
 
 		tableSpane = new JScrollPane(tableOutput);

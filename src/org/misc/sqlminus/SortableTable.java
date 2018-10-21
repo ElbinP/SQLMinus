@@ -73,6 +73,10 @@ public class SortableTable extends JTable {
 		});
 	}
 
+	public Component getContentsViewFrame() {
+		return contentsViewFrame;
+	}
+
 	public JPopupMenu getCellEditorPopupMenu() {
 		return textMouseAdapter.getPopupMenu();
 	}
