@@ -52,7 +52,7 @@ public class SortableTable extends JTable {
 		dummyRenderer = new DefaultTableCellRenderer();
 		setMinColWidth(minColWidth);
 		setMaxColWidth(maxColWidth);
-		contentsViewFrame = new CellContentsViewFrame();
+		contentsViewFrame = new CellContentsViewFrame(backgroundColor);
 		contentsViewFrame.getContentPane().setBackground(backgroundColor);
 		contentsViewFrame.setIconImage(iconImage);
 		contentsViewFrame.setBounds(150, 100, 600, 300);
@@ -61,7 +61,7 @@ public class SortableTable extends JTable {
 		text.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent e) {
-				if (e.getClickCount() == 2 && text.getText().split("\r\n|\r|\n").length > 1) {
+				if (text.getText().split("\r\n|\r|\n").length > 1) {
 					contentsViewFrame.setContent(text.getText());
 					contentsViewFrame.setVisible(true);
 				}
