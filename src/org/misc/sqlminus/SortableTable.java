@@ -10,10 +10,9 @@ import java.util.Vector;
 
 import javax.swing.JPopupMenu;
 import javax.swing.JTable;
-import javax.swing.JTextArea;
+import javax.swing.JTextField;
 import javax.swing.event.TableModelEvent;
 import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableColumn;
 
 import nocom.special.CustomizedMouseAdapter;
@@ -22,8 +21,8 @@ import nocom.special.UtilityFunctions;
 
 public class SortableTable extends JTable {
 
-	private TableCellEditor myCellEditor;
-	private JTextArea text;
+	private MultilineTextCellEditor myCellEditor;
+	private JTextField text;
 	private CustomizedMouseAdapter textMouseAdapter;
 	private DefaultTableCellRenderer cellRenderer;
 	private DefaultTableCellRenderer dummyRenderer;
@@ -40,7 +39,7 @@ public class SortableTable extends JTable {
 		this.iconImage = iconImage;
 		model.addMouseListenerToHeaderInTable(this);
 
-		text = new JTextArea();
+		text = new JTextField();
 		text.setBackground(backgroundColor);
 		text.setFont(tFont);
 		text.setEditable(false);
@@ -61,7 +60,7 @@ public class SortableTable extends JTable {
 		text.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent e) {
-				contentsViewFrame.setContent(text.getText());
+				contentsViewFrame.setContent(myCellEditor.getMultilineContents());
 				contentsViewFrame.setVisible(true);
 			}
 		});

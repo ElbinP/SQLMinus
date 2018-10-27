@@ -5,25 +5,35 @@ import java.awt.Component;
 import javax.swing.DefaultCellEditor;
 import javax.swing.JCheckBox;
 import javax.swing.JTable;
-import javax.swing.JTextArea;
+import javax.swing.JTextField;
 
 public class MultilineTextCellEditor extends DefaultCellEditor {
 
-	private JTextArea textArea;
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 6202352238862100199L;
+	private JTextField textField;
+	private String contents;
 
-	public MultilineTextCellEditor(JTextArea textArea) {
+	public MultilineTextCellEditor(JTextField textField) {
 		super(new JCheckBox());
-		this.textArea = textArea;
+		this.textField = textField;
 	}
 
 	public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
-		textArea.setText(value.toString());
-
-		return textArea;
+		if (value != null) {
+			contents = value.toString();
+			textField.setText(value.toString());
+		} else {
+			contents = null;
+			textField.setText("");
+		}
+		return textField;
 	}
 
-	public Object getCellEditorValue() {
-		return textArea.getText();
+	public String getMultilineContents() {
+		return contents;
 	}
 
 }

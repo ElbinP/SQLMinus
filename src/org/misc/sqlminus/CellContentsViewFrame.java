@@ -13,6 +13,7 @@ public class CellContentsViewFrame extends JFrame {
 
 	private JTextArea textArea;
 	private CustomizedMouseAdapter mouseAdapter;
+	private JScrollPane scrollPane;
 
 	public CellContentsViewFrame(Color backgroundColor) {
 		super("Cell contents");
@@ -21,7 +22,7 @@ public class CellContentsViewFrame extends JFrame {
 		textArea.setEditable(false);
 		mouseAdapter = new CustomizedMouseAdapter(false);
 		textArea.addMouseListener(mouseAdapter);
-		JScrollPane scrollPane = new JScrollPane(textArea);
+		scrollPane = new JScrollPane(textArea);
 		add(scrollPane);
 	}
 
@@ -31,6 +32,10 @@ public class CellContentsViewFrame extends JFrame {
 
 	public void setContent(String content) {
 		textArea.setText(content);
+	}
+
+	public JScrollPane getContentsViewArea() {
+		return scrollPane;
 	}
 
 }
