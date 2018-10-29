@@ -4,6 +4,8 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Font;
 import java.awt.Image;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Vector;
@@ -56,6 +58,12 @@ public class SortableTable extends JTable {
 		contentsViewFrame.setIconImage(iconImage);
 		contentsViewFrame.setBounds(150, 100, 600, 300);
 		contentsViewFrame.setVisible(false);
+		contentsViewFrame.addComponentListener(new ComponentAdapter() {
+			@Override
+			public void componentShown(ComponentEvent componentEvent) {
+				contentsViewFrame.getContentsViewArea().getVerticalScrollBar().setValue(1);
+			}
+		});
 
 		text.addMouseListener(new MouseAdapter() {
 			@Override
