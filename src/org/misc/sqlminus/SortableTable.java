@@ -62,6 +62,7 @@ public class SortableTable extends JTable {
 			@Override
 			public void componentShown(ComponentEvent componentEvent) {
 				contentsViewFrame.getContentsViewArea().getVerticalScrollBar().setValue(1);
+				contentsViewFrame.getTextArea().repaint();
 			}
 		});
 

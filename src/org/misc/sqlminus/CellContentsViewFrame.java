@@ -38,4 +38,8 @@ public class CellContentsViewFrame extends JFrame {
 		return scrollPane;
 	}
 
+	public JTextArea getTextArea() {
+		return textArea;
+	}
+
 }
