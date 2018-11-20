@@ -1008,6 +1008,8 @@ public class SQLMinus extends JFrame implements ActionListener {
 				rowsComboBox.requestFocusInWindow();
 				return;
 			}
+		} else {
+			sqlMinusPreferences.put(Constants.PreferencesKeys.ROWS_TO_SELECT, "All");
 		}
 
 		int minColWidthValue = MINCOLWIDTH;
