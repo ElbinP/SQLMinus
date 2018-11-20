@@ -1,70 +1,36 @@
 package org.misc.sqlminus;
 
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.GridLayout;
-import java.awt.Image;
-import java.awt.Insets;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.InputEvent;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-
-import javax.swing.BorderFactory;
-import javax.swing.BoxLayout;
-import javax.swing.ButtonGroup;
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JCheckBoxMenuItem;
-import javax.swing.JComboBox;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JMenu;
-import javax.swing.JMenuBar;
-import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JPasswordField;
-import javax.swing.JRadioButton;
-import javax.swing.JScrollPane;
-import javax.swing.JSplitPane;
-import javax.swing.JTabbedPane;
-import javax.swing.JTable;
-import javax.swing.JTextArea;
-import javax.swing.JTextField;
-import javax.swing.ListSelectionModel;
-import javax.swing.SwingUtilities;
-import javax.swing.border.BevelBorder;
-import javax.swing.plaf.metal.MetalComboBoxEditor;
-import javax.swing.text.JTextComponent;
-
 import nocom.special.CustomizedMouseAdapter;
 import nocom.special.ImageReader;
 import nocom.special.LookAndFeelMenu;
 
+import javax.swing.*;
+import javax.swing.border.BevelBorder;
+import javax.swing.plaf.metal.MetalComboBoxEditor;
+import javax.swing.text.JTextComponent;
+import java.awt.*;
+import java.awt.event.*;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.Arrays;
+import java.util.prefs.Preferences;
+
 public class SQLMinus extends JFrame implements ActionListener {
 
+	private final int MINCOLWIDTH = 15, MAXCOLWIDTH = 50, INTERCOLSPACE = 4, MAXDATALENGTH = 1000;
+	private final String COMMIT_TRANSACTIONS_COMMAND = "COMMIT_TRANSACTIONS";
+	private final String ROLLBACK_TRANSACTIONS_COMMAND = "ROLLBACK_TRANSACTIONS";
+	public LookAndFeelMenu laf = new LookAndFeelMenu(new Component[]{}, KeyEvent.VK_L, null);
+	public CustomizedMouseAdapter commonAdapter = new CustomizedMouseAdapter(false);
 	private JTextArea textOutput;
 	private SQLFrame textareaFrame;
-	private JTextField textf1, textf2, textf3, tableText, columnText, schemaText, statusBar;
+	private JTextField driverClassName, driverConnectionString, dbUsername, tableText, columnText, schemaText, statusBar;
 	private JComboBox sqlText;
 	private JTextField minColWidth, maxColWidth, interColSpace, maxDataLength, nullRep;
 	private JButton minColWidthButton, maxColWidthButton, interColSpaceButton, maxDataLengthButton;
-	private JPasswordField passf;
+	private JPasswordField dbPassword;
 	private JButton indicatorLabel;
 	private JLabel schemaLabel;
 	private JSplitPane splitPane;
@@ -76,20 +42,18 @@ public class SQLMinus extends JFrame implements ActionListener {
 	private DisplayResultSetAsGrid displayGrid = new DisplayResultSetAsGrid();
 	private ClassLoaderPanel driverPanel;
 	private volatile boolean busy = false;
-	public LookAndFeelMenu laf = new LookAndFeelMenu(new Component[] {}, KeyEvent.VK_L, null);
-	public CustomizedMouseAdapter commonAdapter = new CustomizedMouseAdapter(false);
 	private SortableTable tableOutput;
 	private JRadioButton btText, btTable;
 	private JScrollPane textSpane, tableSpane;
-	private final int MINCOLWIDTH = 15, MAXCOLWIDTH = 50, INTERCOLSPACE = 4, MAXDATALENGTH = 1000;
-	private final String COMMIT_TRANSACTIONS_COMMAND = "COMMIT_TRANSACTIONS";
-	private final String ROLLBACK_TRANSACTIONS_COMMAND = "ROLLBACK_TRANSACTIONS";
+	private Preferences sqlMinusPreferences;
+	private String[] rowsComboBoxOptions = {"100", "500", "All"};
 
 	/************** The Constructor for SQLMinus ***********************/
 
 	public SQLMinus() {
 		super("SQL Minus");
 
+		sqlMinusPreferences = Preferences.userNodeForPackage(SQLMinus.class);
 		GridBagLayout gridbag = new GridBagLayout();
 		GridBagConstraints c = new GridBagConstraints();
 
@@ -137,13 +101,13 @@ public class SQLMinus extends JFrame implements ActionListener {
 
 		c.weightx = 4;
 		c.gridwidth = GridBagConstraints.REMAINDER;
-		textf1 = new JTextField("sun.jdbc.odbc.JdbcOdbcDriver", 50);
-		textf1.setActionCommand("CONNECT");
-		textf1.addActionListener(this);
-		textf1.addMouseListener(commonAdapter);
-		// textf1.setFont(tfont);
-		gridbag.setConstraints(textf1, c);
-		connectionPanel.add(textf1);
+		driverClassName = new JTextField(sqlMinusPreferences.get(Constants.PreferencesKeys.DRIVER_CLASSNAME, ""), 50);
+		driverClassName.setActionCommand("CONNECT");
+		driverClassName.addActionListener(this);
+		driverClassName.addMouseListener(commonAdapter);
+		// driverClassName.setFont(tfont);
+		gridbag.setConstraints(driverClassName, c);
+		connectionPanel.add(driverClassName);
 
 		c.weightx = 1;
 		c.gridwidth = 1;
@@ -154,13 +118,13 @@ public class SQLMinus extends JFrame implements ActionListener {
 
 		c.weightx = 4;
 		c.gridwidth = GridBagConstraints.REMAINDER;
-		textf2 = new JTextField("jdbc:odbc:test", 50);
-		textf2.setActionCommand("CONNECT");
-		textf2.addActionListener(this);
-		textf2.addMouseListener(commonAdapter);
-		// textf2.setFont(tfont);
-		gridbag.setConstraints(textf2, c);
-		connectionPanel.add(textf2);
+		driverConnectionString = new JTextField(sqlMinusPreferences.get(Constants.PreferencesKeys.CONNECT_STRING, ""), 50);
+		driverConnectionString.setActionCommand("CONNECT");
+		driverConnectionString.addActionListener(this);
+		driverConnectionString.addMouseListener(commonAdapter);
+		// driverConnectionString.setFont(tfont);
+		gridbag.setConstraints(driverConnectionString, c);
+		connectionPanel.add(driverConnectionString);
 
 		c.weightx = 1;
 		c.gridwidth = 1;
@@ -169,13 +133,13 @@ public class SQLMinus extends JFrame implements ActionListener {
 		gridbag.setConstraints(label3, c);
 		connectionPanel.add(label3);
 
-		textf3 = new JTextField(20);
-		textf3.setActionCommand("CONNECT");
-		textf3.addActionListener(this);
-		textf3.addMouseListener(commonAdapter);
-		// textf3.setFont(tfont);
-		gridbag.setConstraints(textf3, c);
-		connectionPanel.add(textf3);
+		dbUsername = new JTextField(sqlMinusPreferences.get(Constants.PreferencesKeys.DB_USERNAME, ""), 20);
+		dbUsername.setActionCommand("CONNECT");
+		dbUsername.addActionListener(this);
+		dbUsername.addMouseListener(commonAdapter);
+		// dbUsername.setFont(tfont);
+		gridbag.setConstraints(dbUsername, c);
+		connectionPanel.add(dbUsername);
 
 		JLabel label4 = new JLabel("Password", JLabel.RIGHT);
 		// label4.setFont(f);
@@ -183,13 +147,13 @@ public class SQLMinus extends JFrame implements ActionListener {
 		connectionPanel.add(label4);
 
 		c.gridwidth = GridBagConstraints.REMAINDER;
-		passf = new JPasswordField(20);
-		passf.setActionCommand("CONNECT");
-		passf.addActionListener(this);
-		// passf.setFont(tfont);
-		passf.setEchoChar('*');
-		gridbag.setConstraints(passf, c);
-		connectionPanel.add(passf);
+		dbPassword = new JPasswordField(20);
+		dbPassword.setActionCommand("CONNECT");
+		dbPassword.addActionListener(this);
+		// dbPassword.setFont(tfont);
+		dbPassword.setEchoChar('*');
+		gridbag.setConstraints(dbPassword, c);
+		connectionPanel.add(dbPassword);
 
 		c.gridwidth = 1;
 		JButton button2 = new JButton("CLEAR FIELDS");
@@ -301,9 +265,13 @@ public class SQLMinus extends JFrame implements ActionListener {
 
 		c.weightx = 1;
 		c.gridwidth = GridBagConstraints.REMAINDER;
-		String[] options = { "100", "500", "All" };
-		rowsComboBox = new JComboBox(options);
+		rowsComboBox = new JComboBox(rowsComboBoxOptions);
 		rowsComboBox.setEditable(true);
+		String rowsToSelectUserPreference = sqlMinusPreferences.get(Constants.PreferencesKeys.ROWS_TO_SELECT, null);
+		if (rowsToSelectUserPreference != null && !(Arrays.stream(rowsComboBoxOptions).anyMatch(rowsToSelectUserPreference::equalsIgnoreCase))) {
+			rowsComboBox.addItem(rowsToSelectUserPreference);
+			rowsComboBox.setSelectedItem(rowsToSelectUserPreference);
+		}
 		// rowsComboBox.setFont(tfont);
 		rowsComboBox.setBackground(backgroundColor);
 		// rowsComboBox.setToolTipText("Enter the number of records to be returned on
@@ -682,9 +650,10 @@ public class SQLMinus extends JFrame implements ActionListener {
 		c.weightx = 50;
 		c.weighty = 1;
 		// sqlText=new JTextField("select * from emp",50);
-		Object[] optionArray = { makeObj(ResourceLoader.getResourceString("sample1SQLStatement")),
-				makeObj(ResourceLoader.getResourceString("sample2SQLStatement")) };
+		Object[] optionArray = {makeObj(ResourceLoader.getResourceString("sample1SQLStatement")),
+				makeObj(ResourceLoader.getResourceString("sample2SQLStatement"))};
 		sqlText = new JComboBox(optionArray);
+		loadSQLTextsFromPreferences();
 		MetalComboBoxEditor editor = new MetalComboBoxEditor();
 		sqlText.setEditor(editor);
 		sqlText.setEditable(true);
@@ -894,6 +863,10 @@ public class SQLMinus extends JFrame implements ActionListener {
 
 	}
 
+	public static void main(String[] args) {
+		new SQLMinus();
+	}
+
 	/*********** The constructor for SQLMinus ends here ********************/
 
 	public void actionPerformed(ActionEvent ae) {
@@ -943,6 +916,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 				executeStatement(getSqlText());
 			} else if (command.equals("EMPTY COMBOBOX")) {
 				sqlText.removeAllItems();
+				saveSQLTextsToPreferences();
 			} else if (command.equals("SHOW QUERY WINDOW-COMBO COMMAND")) {
 				showSQLFrame(true);
 			}
@@ -981,7 +955,11 @@ public class SQLMinus extends JFrame implements ActionListener {
 		// rowsToReturn will be null if all rows are to be returned
 		if (!(((String) rowsComboBox.getSelectedItem()).equalsIgnoreCase("All"))) {
 			try {
-				rowsToReturn = Integer.valueOf(((String) rowsComboBox.getSelectedItem()).trim());
+				String selectedItemValue = ((String) rowsComboBox.getSelectedItem()).trim();
+				rowsToReturn = Integer.valueOf(selectedItemValue);
+				if (!(Arrays.stream(rowsComboBoxOptions).anyMatch(selectedItemValue::equalsIgnoreCase))) {
+					sqlMinusPreferences.put(Constants.PreferencesKeys.ROWS_TO_SELECT, selectedItemValue);
+				}
 			} catch (NumberFormatException ne) {
 				popMessageAndCloseResultSet("Enter an integer for the number of records to be returned", rst);
 				rowsComboBox.requestFocusInWindow();
@@ -1097,12 +1075,19 @@ public class SQLMinus extends JFrame implements ActionListener {
 	}
 
 	public /* synchronized */ void clearFields() {
-		textf1.setText("");
-		textf2.setText("");
-		textf3.setText("");
+		driverClassName.setText("");
+		driverConnectionString.setText("");
+		dbUsername.setText("");
 		// sqlText.setText("");
 		// sqlText.setSelectedItem(makeObj(""));
-		passf.setText("");
+		dbPassword.setText("");
+		saveConnectionSettingsToPreferences();
+	}
+
+	private void saveConnectionSettingsToPreferences() {
+		sqlMinusPreferences.put(Constants.PreferencesKeys.DRIVER_CLASSNAME, driverClassName.getText());
+		sqlMinusPreferences.put(Constants.PreferencesKeys.CONNECT_STRING, driverConnectionString.getText());
+		sqlMinusPreferences.put(Constants.PreferencesKeys.DB_USERNAME, dbUsername.getText());
 	}
 
 	public /* synchronized */ void setBusy() {
@@ -1164,29 +1149,29 @@ public class SQLMinus extends JFrame implements ActionListener {
 
 	public /* synchronized */ void showSample1() {
 		/*
-		 * textf1.setText("sun.jdbc.odbc.JdbcOdbcDriver");
-		 * textf2.setText("jdbc:odbc:accesstest"); textf3.setText("scott");
-		 * passf.setText(""); sqlText.setText("select * from emp");
+		 * driverClassName.setText("sun.jdbc.odbc.JdbcOdbcDriver");
+		 * driverConnectionString.setText("jdbc:odbc:accesstest"); dbUsername.setText("scott");
+		 * dbPassword.setText(""); sqlText.setText("select * from emp");
 		 */
-		textf1.setText(ResourceLoader.getResourceString("sample1Driver"));
-		textf2.setText(ResourceLoader.getResourceString("sample1ConnectString"));
-		textf3.setText(ResourceLoader.getResourceString("sample1User"));
-		passf.setText("");
+		driverClassName.setText(ResourceLoader.getResourceString("sample1Driver"));
+		driverConnectionString.setText(ResourceLoader.getResourceString("sample1ConnectString"));
+		dbUsername.setText(ResourceLoader.getResourceString("sample1User"));
+		dbPassword.setText("");
 		// sqlText.setText(ResourceLoader.getResourceString("sample1SQLStatement"));
 		sqlText.setSelectedItem(makeObj(ResourceLoader.getResourceString("sample1SQLStatement")));
 	}
 
 	public /* synchronized */ void showSample2() {
 		/*
-		 * textf1.setText("oracle.jdbc.driver.OracleDriver");
-		 * textf2.setText("jdbc:oracle:thin:@127.0.0.1:1521:orakle");
-		 * textf3.setText("scott"); passf.setText("");
+		 * driverClassName.setText("oracle.jdbc.driver.OracleDriver");
+		 * driverConnectionString.setText("jdbc:oracle:thin:@127.0.0.1:1521:orakle");
+		 * dbUsername.setText("scott"); dbPassword.setText("");
 		 * sqlText.setText("select * from emp");
 		 */
-		textf1.setText(ResourceLoader.getResourceString("sample2Driver"));
-		textf2.setText(ResourceLoader.getResourceString("sample2ConnectString"));
-		textf3.setText(ResourceLoader.getResourceString("sample2User"));
-		passf.setText("");
+		driverClassName.setText(ResourceLoader.getResourceString("sample2Driver"));
+		driverConnectionString.setText(ResourceLoader.getResourceString("sample2ConnectString"));
+		dbUsername.setText(ResourceLoader.getResourceString("sample2User"));
+		dbPassword.setText("");
 		// sqlText.setText(ResourceLoader.getResourceString("sample2SQLStatement"));
 		sqlText.setSelectedItem(makeObj(ResourceLoader.getResourceString("sample2SQLStatement")));
 	}
@@ -1232,6 +1217,25 @@ public class SQLMinus extends JFrame implements ActionListener {
 		String comboText = ((JTextComponent) sqlText.getEditor().getEditorComponent()).getText();
 		caretPos = caretPos > comboText.length() ? comboText.length() : caretPos;
 		((JTextComponent) sqlText.getEditor().getEditorComponent()).setCaretPosition(caretPos);
+		saveSQLTextsToPreferences();
+	}
+
+	private void saveSQLTextsToPreferences() {
+		StringBuilder sqlTextsString = new StringBuilder();
+		for (int i = sqlText.getItemCount() - 1; i >= 0; i--) {
+			sqlTextsString.append(sqlText.getItemAt(i).toString()).append("<br/>");
+		}
+		sqlMinusPreferences.put(Constants.PreferencesKeys.SQL_TEXTS, sqlTextsString.toString());
+	}
+
+	private void loadSQLTextsFromPreferences() {
+		String sqlTextsString = sqlMinusPreferences.get(Constants.PreferencesKeys.SQL_TEXTS, null);
+		if (sqlTextsString != null) {
+			String[] sqlTextArray = sqlTextsString.split("<br/>");
+			Arrays.stream(sqlTextArray).forEach(s -> {
+				if (s.trim().length() > 0) insertItem(sqlText, s);
+			});
+		}
 	}
 
 	private Object makeObj(final String item) {
@@ -1266,8 +1270,9 @@ public class SQLMinus extends JFrame implements ActionListener {
 	public /* synchronized */ void connectDatabase() throws SQLException, Exception {
 		if (!busy) {
 			disconnectDatabase();
-			conn = driverPanel.getConnection(textf1.getText(), textf2.getText(), textf3.getText(),
-					new String(passf.getPassword()));
+			saveConnectionSettingsToPreferences();
+			conn = driverPanel.getConnection(driverClassName.getText(), driverConnectionString.getText(), dbUsername.getText(),
+					new String(dbPassword.getPassword()));
 			indicatorLabel.setText("CONNECTED");
 			indicatorLabel.setForeground(Color.green);
 			// popMessage("Connected");
@@ -1408,10 +1413,6 @@ public class SQLMinus extends JFrame implements ActionListener {
 
 	public void setStatusBarText(String info) {
 		statusBar.setText(info);
-	}
-
-	public static void main(String[] args) {
-		new SQLMinus();
 	}
 
 }
