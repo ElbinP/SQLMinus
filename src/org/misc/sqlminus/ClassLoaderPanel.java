@@ -30,8 +30,8 @@ import nocom.special.LookAndFeelMenu;
 
 public class ClassLoaderPanel extends JPanel implements ActionListener {
 
-	DefaultListModel jarList;
-	JList driversList;
+	DefaultListModel<String> jarList;
+	JList<String> driversList;
 	JFileChooser fileChooser;
 	JButton addButton, removeButton;
 	private Preferences sqlMinusPreferences;
@@ -51,9 +51,9 @@ public class ClassLoaderPanel extends JPanel implements ActionListener {
 		fileChooser.addChoosableFileFilter(fileChooser.getAcceptAllFileFilter());
 		laf.addComponentToMonitor(fileChooser);
 
-		jarList = new DefaultListModel();
+		jarList = new DefaultListModel<String>();
 		loadJarsListFromPreferences();
-		driversList = new JList(jarList);
+		driversList = new JList<String>(jarList);
 		driversList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		// driversList.setFont(tfont);
 		if (jarList.getSize() > 0) {
@@ -122,7 +122,7 @@ public class ClassLoaderPanel extends JPanel implements ActionListener {
 			throws Exception {
 		URL[] url = new URL[jarList.getSize()];
 		for (int i = 0; i < jarList.getSize(); i++) {
-			url[i] = new URL("file:" + (String) jarList.getElementAt(i));
+			url[i] = new URL("file:" + jarList.getElementAt(i));
 		}
 		URLClassLoader classLoader = new URLClassLoader(url);
 		Driver driver = (Driver) Class.forName(driverName, true, classLoader).newInstance();
@@ -144,7 +144,10 @@ public class ClassLoaderPanel extends JPanel implements ActionListener {
 		String jarsListString = sqlMinusPreferences.get(Constants.PreferencesKeys.JARS_LIST, null);
 		if (jarsListString != null) {
 			String[] jarsListArray = jarsListString.split("<br/>");
-			Arrays.stream(jarsListArray).forEach(s -> jarList.addElement(s));
+			Arrays.stream(jarsListArray).forEach(s -> {
+				if (s.trim().length() > 0)
+					jarList.addElement(s);
+			});
 		}
 	}
 

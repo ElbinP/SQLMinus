@@ -311,9 +311,10 @@ public class SQLMinus extends JFrame implements ActionListener {
 		rowsComboBox = new JComboBox(rowsComboBoxOptions);
 		rowsComboBox.setEditable(true);
 		String rowsToSelectUserPreference = sqlMinusPreferences.get(Constants.PreferencesKeys.ROWS_TO_SELECT, null);
-		if (rowsToSelectUserPreference != null
-				&& !(Arrays.stream(rowsComboBoxOptions).anyMatch(rowsToSelectUserPreference::equalsIgnoreCase))) {
-			rowsComboBox.addItem(rowsToSelectUserPreference);
+		if (rowsToSelectUserPreference != null) {
+			if (!(Arrays.stream(rowsComboBoxOptions).anyMatch(rowsToSelectUserPreference::equalsIgnoreCase))) {
+				rowsComboBox.addItem(rowsToSelectUserPreference);
+			}
 			rowsComboBox.setSelectedItem(rowsToSelectUserPreference);
 		}
 		// rowsComboBox.setFont(tfont);
@@ -1001,9 +1002,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 			try {
 				String selectedItemValue = ((String) rowsComboBox.getSelectedItem()).trim();
 				rowsToReturn = Integer.valueOf(selectedItemValue);
-				if (!(Arrays.stream(rowsComboBoxOptions).anyMatch(selectedItemValue::equalsIgnoreCase))) {
-					sqlMinusPreferences.put(Constants.PreferencesKeys.ROWS_TO_SELECT, selectedItemValue);
-				}
+				sqlMinusPreferences.put(Constants.PreferencesKeys.ROWS_TO_SELECT, selectedItemValue);
 			} catch (NumberFormatException ne) {
 				popMessageAndCloseResultSet("Enter an integer for the number of records to be returned", rst);
 				rowsComboBox.requestFocusInWindow();
