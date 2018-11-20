@@ -1,9 +1,11 @@
 package org.misc.sqlminus;
 
-import nocom.special.LookAndFeelMenu;
-
-import javax.swing.*;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.GridLayout;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
@@ -16,6 +18,16 @@ import java.util.Arrays;
 import java.util.Properties;
 import java.util.prefs.Preferences;
 
+import javax.swing.DefaultListModel;
+import javax.swing.JButton;
+import javax.swing.JFileChooser;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.ListSelectionModel;
+
+import nocom.special.LookAndFeelMenu;
+
 public class ClassLoaderPanel extends JPanel implements ActionListener {
 
 	DefaultListModel jarList;
@@ -25,7 +37,7 @@ public class ClassLoaderPanel extends JPanel implements ActionListener {
 	private Preferences sqlMinusPreferences;
 
 	public ClassLoaderPanel(LookAndFeelMenu laf, Insets insets, Color backgroundColor, Color buttonColor, Font f,
-							Font tfont) {
+			Font tfont) {
 		super();
 
 		sqlMinusPreferences = Preferences.userNodeForPackage(SQLMinus.class);
