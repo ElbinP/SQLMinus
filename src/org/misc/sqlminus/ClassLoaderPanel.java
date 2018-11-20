@@ -1,11 +1,9 @@
 package org.misc.sqlminus;
 
-import java.awt.Color;
-import java.awt.Font;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.GridLayout;
-import java.awt.Insets;
+import nocom.special.LookAndFeelMenu;
+
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
@@ -18,16 +16,6 @@ import java.util.Arrays;
 import java.util.Properties;
 import java.util.prefs.Preferences;
 
-import javax.swing.DefaultListModel;
-import javax.swing.JButton;
-import javax.swing.JFileChooser;
-import javax.swing.JList;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.ListSelectionModel;
-
-import nocom.special.LookAndFeelMenu;
-
 public class ClassLoaderPanel extends JPanel implements ActionListener {
 
 	DefaultListModel jarList;
@@ -37,7 +25,7 @@ public class ClassLoaderPanel extends JPanel implements ActionListener {
 	private Preferences sqlMinusPreferences;
 
 	public ClassLoaderPanel(LookAndFeelMenu laf, Insets insets, Color backgroundColor, Color buttonColor, Font f,
-			Font tfont) {
+							Font tfont) {
 		super();
 
 		sqlMinusPreferences = Preferences.userNodeForPackage(SQLMinus.class);
@@ -46,7 +34,9 @@ public class ClassLoaderPanel extends JPanel implements ActionListener {
 		GridBagConstraints c = new GridBagConstraints();
 		setLayout(gridbag);
 		fileChooser = new JFileChooser(System.getProperty("user.dir"));
+		Arrays.stream(fileChooser.getChoosableFileFilters()).forEach(ff -> fileChooser.removeChoosableFileFilter(ff));
 		fileChooser.addChoosableFileFilter(new CustomFileFilter());
+		fileChooser.addChoosableFileFilter(fileChooser.getAcceptAllFileFilter());
 		laf.addComponentToMonitor(fileChooser);
 
 		jarList = new DefaultListModel();
@@ -138,17 +128,17 @@ public class ClassLoaderPanel extends JPanel implements ActionListener {
 		}
 	}
 
-	private void loadJarsListFromPreferences(){
+	private void loadJarsListFromPreferences() {
 		String jarsListString = sqlMinusPreferences.get(Constants.PreferencesKeys.JARS_LIST, null);
-		if(jarsListString!=null){
+		if (jarsListString != null) {
 			String[] jarsListArray = jarsListString.split("<br/>");
-			Arrays.stream(jarsListArray).forEach(s->jarList.addElement(s));
+			Arrays.stream(jarsListArray).forEach(s -> jarList.addElement(s));
 		}
 	}
 
-	private void saveJarsListToPreferences(){
+	private void saveJarsListToPreferences() {
 		StringBuilder jarsListString = new StringBuilder();
-		Arrays.stream(jarList.toArray()).forEach(s->jarsListString.append(s.toString()).append("<br/>"));
+		Arrays.stream(jarList.toArray()).forEach(s -> jarsListString.append(s.toString()).append("<br/>"));
 		sqlMinusPreferences.put(Constants.PreferencesKeys.JARS_LIST, jarsListString.toString());
 	}
 
