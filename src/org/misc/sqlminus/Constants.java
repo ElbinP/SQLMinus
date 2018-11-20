@@ -7,5 +7,6 @@ public class Constants {
 		public static final String DRIVER_CLASSNAME = "DriverClassname";
 		public static final String CONNECT_STRING = "ConnectString";
 		public static final String DB_USERNAME = "DBUsername";
+		public static final String JARS_LIST = "JarsList";
 	}
 }

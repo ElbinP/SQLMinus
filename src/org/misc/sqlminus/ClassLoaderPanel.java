@@ -14,7 +14,9 @@ import java.net.URLClassLoader;
 import java.sql.Connection;
 import java.sql.Driver;
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.Properties;
+import java.util.prefs.Preferences;
 
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
@@ -28,14 +30,18 @@ import nocom.special.LookAndFeelMenu;
 
 public class ClassLoaderPanel extends JPanel implements ActionListener {
 
-	DefaultListModel listModel;
+	DefaultListModel jarList;
 	JList driversList;
 	JFileChooser fileChooser;
 	JButton addButton, removeButton;
+	private Preferences sqlMinusPreferences;
 
 	public ClassLoaderPanel(LookAndFeelMenu laf, Insets insets, Color backgroundColor, Color buttonColor, Font f,
 			Font tfont) {
 		super();
+
+		sqlMinusPreferences = Preferences.userNodeForPackage(SQLMinus.class);
+
 		GridBagLayout gridbag = new GridBagLayout();
 		GridBagConstraints c = new GridBagConstraints();
 		setLayout(gridbag);
@@ -43,14 +49,13 @@ public class ClassLoaderPanel extends JPanel implements ActionListener {
 		fileChooser.addChoosableFileFilter(new CustomFileFilter());
 		laf.addComponentToMonitor(fileChooser);
 
-		listModel = new DefaultListModel();
-		listModel.addElement(ResourceLoader.getResourceString("jarFile1"));
-		listModel.addElement(ResourceLoader.getResourceString("jarFile2"));
-		driversList = new JList(listModel);
+		jarList = new DefaultListModel();
+		loadJarsListFromPreferences();
+		driversList = new JList(jarList);
 		driversList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		// driversList.setFont(tfont);
-		if (listModel.getSize() > 0) {
-			driversList.setSelectedIndex(listModel.getSize() - 1);
+		if (jarList.getSize() > 0) {
+			driversList.setSelectedIndex(jarList.getSize() - 1);
 		}
 
 		c.insets = insets;
@@ -92,18 +97,20 @@ public class ClassLoaderPanel extends JPanel implements ActionListener {
 			if (returnValue == JFileChooser.APPROVE_OPTION) {
 				String s = fileChooser.getSelectedFile().getPath();
 				if (new File(s).exists()) {
-					listModel.addElement(s);
-					if (listModel.getSize() > 0) {
-						driversList.setSelectedIndex(listModel.getSize() - 1);
+					jarList.addElement(s);
+					saveJarsListToPreferences();
+					if (jarList.getSize() > 0) {
+						driversList.setSelectedIndex(jarList.getSize() - 1);
 					}
 				}
 			}
 		}
 		if (ae.getActionCommand().equals("Remove")) {
 			if (driversList.getSelectedIndex() != -1) {
-				listModel.removeElementAt(driversList.getSelectedIndex());
-				if (listModel.getSize() > 0) {
-					driversList.setSelectedIndex(listModel.getSize() - 1);
+				jarList.removeElementAt(driversList.getSelectedIndex());
+				saveJarsListToPreferences();
+				if (jarList.getSize() > 0) {
+					driversList.setSelectedIndex(jarList.getSize() - 1);
 				}
 			}
 		}
@@ -111,9 +118,9 @@ public class ClassLoaderPanel extends JPanel implements ActionListener {
 
 	public Connection getConnection(String driverName, String connectString, String username, String password)
 			throws Exception {
-		URL[] url = new URL[listModel.getSize()];
-		for (int i = 0; i < listModel.getSize(); i++) {
-			url[i] = new URL("file:" + (String) listModel.getElementAt(i));
+		URL[] url = new URL[jarList.getSize()];
+		for (int i = 0; i < jarList.getSize(); i++) {
+			url[i] = new URL("file:" + (String) jarList.getElementAt(i));
 		}
 		URLClassLoader classLoader = new URLClassLoader(url);
 		Driver driver = (Driver) Class.forName(driverName, true, classLoader).newInstance();
@@ -129,6 +136,20 @@ public class ClassLoaderPanel extends JPanel implements ActionListener {
 		} catch (NullPointerException ne) {
 			throw new SQLException("Invalid connect string");
 		}
+	}
+
+	private void loadJarsListFromPreferences(){
+		String jarsListString = sqlMinusPreferences.get(Constants.PreferencesKeys.JARS_LIST, null);
+		if(jarsListString!=null){
+			String[] jarsListArray = jarsListString.split("<br/>");
+			Arrays.stream(jarsListArray).forEach(s->jarList.addElement(s));
+		}
+	}
+
+	private void saveJarsListToPreferences(){
+		StringBuilder jarsListString = new StringBuilder();
+		Arrays.stream(jarList.toArray()).forEach(s->jarsListString.append(s.toString()).append("<br/>"));
+		sqlMinusPreferences.put(Constants.PreferencesKeys.JARS_LIST, jarsListString.toString());
 	}
 
 }
