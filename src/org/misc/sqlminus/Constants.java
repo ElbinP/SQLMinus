@@ -8,5 +8,9 @@ public class Constants {
 		public static final String CONNECT_STRING = "ConnectString";
 		public static final String DB_USERNAME = "DBUsername";
 		public static final String JARS_LIST = "JarsList";
+		public static final String WINDOW_WIDTH = "WindowWidth";
+		public static final String WINDOW_HEIGHT = "WindowHeight";
+		public static final String WINDOW_X = "WindowX";
+		public static final String WINDOW_Y = "WindowY";
 	}
 }

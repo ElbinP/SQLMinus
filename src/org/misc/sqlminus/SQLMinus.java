@@ -902,7 +902,12 @@ public class SQLMinus extends JFrame implements ActionListener {
 			}
 		});
 		pack();
-		setBounds(10, 10, 950, 700);
+		int windowHeight = sqlMinusPreferences.getInt(Constants.PreferencesKeys.WINDOW_HEIGHT, 950);
+		int windowWidth = sqlMinusPreferences.getInt(Constants.PreferencesKeys.WINDOW_WIDTH, 700);
+		int windowX = sqlMinusPreferences.getInt(Constants.PreferencesKeys.WINDOW_X, 10);
+		int windowY = sqlMinusPreferences.getInt(Constants.PreferencesKeys.WINDOW_Y, 10);
+
+		setBounds(windowX, windowY, windowWidth, windowHeight);
 		setVisible(true);
 		enableTextOutputSettings(btText.isSelected());
 
@@ -984,6 +989,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 			conn.close();
 		} catch (Exception e) {
 		}
+		saveWindowSizeAndPositionInPreferences();
 		System.exit(0);
 	}
 
@@ -1462,4 +1468,12 @@ public class SQLMinus extends JFrame implements ActionListener {
 		statusBar.setText(info);
 	}
 
+	private void saveWindowSizeAndPositionInPreferences() {
+		sqlMinusPreferences.putInt(Constants.PreferencesKeys.WINDOW_HEIGHT,
+				((Double) getBounds().getHeight()).intValue());
+		sqlMinusPreferences.putInt(Constants.PreferencesKeys.WINDOW_WIDTH,
+				((Double) getBounds().getWidth()).intValue());
+		sqlMinusPreferences.putInt(Constants.PreferencesKeys.WINDOW_X, ((Double) getBounds().getX()).intValue());
+		sqlMinusPreferences.putInt(Constants.PreferencesKeys.WINDOW_Y, ((Double) getBounds().getY()).intValue());
+	}
 }
