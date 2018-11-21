@@ -1,15 +1,23 @@
 package org.misc.sqlminus;
 
-import nocom.special.CustomizedMouseAdapter;
-import nocom.special.ImageReader;
-import nocom.special.LookAndFeelMenu;
-
-import javax.swing.*;
-import javax.swing.border.BevelBorder;
-import javax.swing.plaf.metal.MetalComboBoxEditor;
-import javax.swing.text.JTextComponent;
-import java.awt.*;
-import java.awt.event.*;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.GridLayout;
+import java.awt.Image;
+import java.awt.Insets;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.InputEvent;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -17,12 +25,45 @@ import java.sql.Statement;
 import java.util.Arrays;
 import java.util.prefs.Preferences;
 
+import javax.swing.BorderFactory;
+import javax.swing.BoxLayout;
+import javax.swing.ButtonGroup;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JCheckBoxMenuItem;
+import javax.swing.JComboBox;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JPasswordField;
+import javax.swing.JRadioButton;
+import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
+import javax.swing.JTabbedPane;
+import javax.swing.JTable;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
+import javax.swing.ListSelectionModel;
+import javax.swing.SwingUtilities;
+import javax.swing.border.BevelBorder;
+import javax.swing.plaf.metal.MetalComboBoxEditor;
+import javax.swing.text.JTextComponent;
+
+import nocom.special.CustomizedMouseAdapter;
+import nocom.special.ImageReader;
+import nocom.special.LookAndFeelMenu;
+
 public class SQLMinus extends JFrame implements ActionListener {
 
 	private final int MINCOLWIDTH = 15, MAXCOLWIDTH = 50, INTERCOLSPACE = 4, MAXDATALENGTH = 1000;
 	private final String COMMIT_TRANSACTIONS_COMMAND = "COMMIT_TRANSACTIONS";
 	private final String ROLLBACK_TRANSACTIONS_COMMAND = "ROLLBACK_TRANSACTIONS";
-	public LookAndFeelMenu laf = new LookAndFeelMenu(new Component[]{}, KeyEvent.VK_L, null);
+	public LookAndFeelMenu laf = new LookAndFeelMenu(new Component[] {}, KeyEvent.VK_L, null);
 	public CustomizedMouseAdapter commonAdapter = new CustomizedMouseAdapter(false);
 	private JTextArea textOutput;
 	private SQLFrame textareaFrame;
@@ -47,7 +88,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 	private JRadioButton btText, btTable;
 	private JScrollPane textSpane, tableSpane;
 	private Preferences sqlMinusPreferences;
-	private String[] rowsComboBoxOptions = {"100", "500", "All"};
+	private String[] rowsComboBoxOptions = { "100", "500", "All" };
 
 	/************** The Constructor for SQLMinus ***********************/
 
@@ -654,8 +695,8 @@ public class SQLMinus extends JFrame implements ActionListener {
 		c.weightx = 50;
 		c.weighty = 1;
 		// sqlText=new JTextField("select * from emp",50);
-		Object[] optionArray = {makeObj(ResourceLoader.getResourceString("sample1SQLStatement")),
-				makeObj(ResourceLoader.getResourceString("sample2SQLStatement"))};
+		Object[] optionArray = { makeObj(ResourceLoader.getResourceString("sample1SQLStatement")),
+				makeObj(ResourceLoader.getResourceString("sample2SQLStatement")) };
 		sqlText = new JComboBox(optionArray);
 		loadSQLTextsFromPreferences();
 		MetalComboBoxEditor editor = new MetalComboBoxEditor();

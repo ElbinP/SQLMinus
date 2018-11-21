@@ -1,16 +1,22 @@
 package org.misc.sqlminus.sqlhistory;
 
-import org.misc.sqlminus.sqlhistory.entity.SQLHistory;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
-import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.zip.GZIPInputStream;
-import java.util.zip.GZIPOutputStream;
+
+import org.misc.sqlminus.sqlhistory.entity.SQLHistory;
 
 public class SQLHistoryHelper {
 
@@ -31,12 +37,13 @@ public class SQLHistoryHelper {
 				JAXBContext jaxbContext = JAXBContext.newInstance(SQLHistory.class);
 
 				Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
-				SQLHistory sqlHistory = (SQLHistory) jaxbUnmarshaller.unmarshal(new ByteArrayInputStream(baos.toByteArray()));
+				SQLHistory sqlHistory = (SQLHistory) jaxbUnmarshaller
+						.unmarshal(new ByteArrayInputStream(baos.toByteArray()));
 				if (sqlHistory.getSqlCommands() != null) {
 					history.addAll(sqlHistory.getSqlCommands());
 				}
 			} finally {
-				//close resources
+				// close resources
 				baos.close();
 				gis.close();
 				fis.close();
@@ -69,13 +76,14 @@ public class SQLHistoryHelper {
 				jaxbMarshaller.marshal(sqlHistory, baos);
 				gzipOS.write(baos.toByteArray(), 0, baos.size());
 			} finally {
-				//close resources
+				// close resources
 				gzipOS.close();
 				fos.close();
 				baos.close();
 			}
 		} else {
-			throw new IllegalStateException("Unable to create file " + sqhistoryZipFile.getPath() + ". Folder exists with same name");
+			throw new IllegalStateException(
+					"Unable to create file " + sqhistoryZipFile.getPath() + ". Folder exists with same name");
 		}
 	}
 
