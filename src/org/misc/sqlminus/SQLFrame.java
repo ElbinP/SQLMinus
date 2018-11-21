@@ -152,6 +152,18 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 
 		getContentPane().add(toolBar, BorderLayout.NORTH);
 
+		List<String> sqlHistory = null;
+		try {
+			sqlHistory = SQLHistoryHelper.getSQLCommandsFromHistory();
+			if (sqlHistory.size() > 0) {
+				sqlCommands.removeAllElements();
+				sqlCommands.addAll(sqlHistory);
+				textInput.setText(sqlCommands.get(0));
+			}
+		} catch (Exception e) {
+			sqlMinusObject.popMessage("Error loading SQL History. " + e.getMessage());
+		}
+
 		updateToolBarButtons();
 		textInput.setFont(tfont);
 		textInput.setToolTipText("Ctrl+E to execute");
@@ -252,6 +264,7 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 				sqlMinusObject.showSQLFrame(false);
 			}
 		});
+
 	}
 
 	private void updateToolBarButtons() {
