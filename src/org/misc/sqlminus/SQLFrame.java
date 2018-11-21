@@ -1,51 +1,23 @@
 package org.misc.sqlminus;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Font;
-import java.awt.Point;
-import java.awt.Toolkit;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
+import nocom.special.ImageReader;
+import nocom.special.IndexedVector;
+import nocom.special.UndoableTextArea;
+import nocom.special.VectorIndexOutOfBoundsException;
+import org.misc.sqlminus.sqlhistory.SQLHistoryHelper;
 
-import javax.swing.BorderFactory;
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
-import javax.swing.JFileChooser;
-import javax.swing.JFrame;
-import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JPopupMenu;
-import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
-import javax.swing.JToolBar;
-import javax.swing.SwingUtilities;
+import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.undo.CannotRedoException;
 import javax.swing.undo.CannotUndoException;
-
-import nocom.special.ImageReader;
-import nocom.special.IndexedVector;
-import nocom.special.UndoableTextArea;
-import nocom.special.VectorIndexOutOfBoundsException;
+import java.awt.*;
+import java.awt.event.*;
+import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class SQLFrame extends JFrame implements ActionListener, DocumentListener, ChangeListener, FocusListener {
 
@@ -189,6 +161,7 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 				try {
 					if (ke.isControlDown() && (ke.getKeyCode() == ke.VK_E)) {
 						sqlCommands.insertString(textInput.getText().trim());
+						saveSQLCommandsToHistoryFile();
 						sqlMinusObject.executeStatement(textInput.getText());
 					} else if (ke.isControlDown() && (ke.getKeyCode() == ke.VK_UP)) {
 						textInput.setText(sqlCommands.getPrevious(textInput.getText().trim()));
@@ -297,6 +270,7 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 			String actionCommand = ae.getActionCommand();
 			if (actionCommand.equals("Execute")) {
 				sqlCommands.insertString(textInput.getText().trim());
+				saveSQLCommandsToHistoryFile();
 				sqlMinusObject.executeStatement(textInput.getText());
 			} else if (actionCommand.equals("Back")) {
 				textInput.setText(sqlCommands.getPrevious(textInput.getText().trim()));
@@ -322,8 +296,10 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 				openFile();
 			else if (actionCommand.equals("Save"))
 				saveToFile();
-			else if (actionCommand.equals("Empty"))
+			else if (actionCommand.equals("Empty")) {
 				sqlCommands.clearHistory();
+				saveSQLCommandsToHistoryFile();
+			}
 		} catch (VectorIndexOutOfBoundsException ve) {
 			Toolkit.getDefaultToolkit().beep();
 		} catch (CannotUndoException e) {
@@ -479,6 +455,18 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 				SwingUtilities.invokeLater(fileOpener.setFile(f));
 			}
 		}
+	}
+
+	private void saveSQLCommandsToHistoryFile() {
+		List<String> sqlHistory = new ArrayList<>(sqlCommands);
+		Thread saveThread = new Thread(() -> {
+			try {
+				SQLHistoryHelper.saveSQLCommandsToHistory(sqlHistory);
+			} catch (Exception e) {
+				sqlMinusObject.popMessage("Error saving SQL History. " + e.getMessage());
+			}
+		});
+		saveThread.start();
 	}
 
 }
