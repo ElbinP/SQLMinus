@@ -311,6 +311,7 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 				saveToFile();
 			else if (actionCommand.equals("Empty")) {
 				sqlCommands.clearHistory();
+				textInput.setText("");
 				saveSQLCommandsToHistoryFile();
 			}
 		} catch (VectorIndexOutOfBoundsException ve) {

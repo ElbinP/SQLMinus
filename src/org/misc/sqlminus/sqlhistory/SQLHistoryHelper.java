@@ -16,10 +16,10 @@ public class SQLHistoryHelper {
 
 	public static List<String> getSQLCommandsFromHistory() throws IOException, JAXBException {
 		String homeDirectory = System.getProperty("user.home");
-		File sqhistoryZipFile = new File(homeDirectory + "/.org.misc.sqlminus/SQLHistory.xml.gz");
+		File sqlHistoryZipFile = new File(homeDirectory + "/.org.misc.sqlminus/SQLHistory.xml.gz");
 		List<String> history = new ArrayList<>();
-		if (sqhistoryZipFile.exists() && !sqhistoryZipFile.isDirectory()) {
-			FileInputStream fis = new FileInputStream(sqhistoryZipFile);
+		if (sqlHistoryZipFile.exists() && !sqlHistoryZipFile.isDirectory()) {
+			FileInputStream fis = new FileInputStream(sqlHistoryZipFile);
 			GZIPInputStream gis = new GZIPInputStream(fis);
 			ByteArrayOutputStream baos = new ByteArrayOutputStream();
 			try {
@@ -32,7 +32,9 @@ public class SQLHistoryHelper {
 
 				Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
 				SQLHistory sqlHistory = (SQLHistory) jaxbUnmarshaller.unmarshal(new ByteArrayInputStream(baos.toByteArray()));
-				history.addAll(sqlHistory.getSqlCommands());
+				if (sqlHistory.getSqlCommands() != null) {
+					history.addAll(sqlHistory.getSqlCommands());
+				}
 			} finally {
 				//close resources
 				baos.close();
