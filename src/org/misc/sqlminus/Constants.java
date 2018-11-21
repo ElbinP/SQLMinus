@@ -13,4 +13,6 @@ public class Constants {
 		public static final String WINDOW_X = "WindowX";
 		public static final String WINDOW_Y = "WindowY";
 	}
+
+	public static final String SQL_HISTORY_FILE_PATH = "/.org.misc.sqlminus/SQLHistory.xml.gz";
 }

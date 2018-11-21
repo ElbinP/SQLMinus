@@ -16,13 +16,14 @@ import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
 
+import org.misc.sqlminus.Constants;
 import org.misc.sqlminus.sqlhistory.entity.SQLHistory;
 
 public class SQLHistoryHelper {
 
 	public static List<String> getSQLCommandsFromHistory() throws IOException, JAXBException {
 		String homeDirectory = System.getProperty("user.home");
-		File sqlHistoryZipFile = new File(homeDirectory + "/.org.misc.sqlminus/SQLHistory.xml.gz");
+		File sqlHistoryZipFile = new File(homeDirectory + Constants.SQL_HISTORY_FILE_PATH);
 		List<String> history = new ArrayList<>();
 		if (sqlHistoryZipFile.exists() && !sqlHistoryZipFile.isDirectory()) {
 			FileInputStream fis = new FileInputStream(sqlHistoryZipFile);
@@ -56,12 +57,12 @@ public class SQLHistoryHelper {
 	public static void saveSQLCommandsToHistory(List<String> sqlCommands) throws JAXBException, IOException {
 		sqlCommands.removeIf(s -> s.trim().length() == 0);
 		String homeDirectory = System.getProperty("user.home");
-		File sqhistoryZipFile = new File(homeDirectory + "/.org.misc.sqlminus/SQLHistory.xml.gz");
-		File parent = sqhistoryZipFile.getParentFile();
+		File sqlHistoryZipFile = new File(homeDirectory + Constants.SQL_HISTORY_FILE_PATH);
+		File parent = sqlHistoryZipFile.getParentFile();
 		if (!parent.exists() && !parent.mkdirs()) {
 			throw new IllegalStateException("Couldn't create dir: " + parent);
 		}
-		if (!sqhistoryZipFile.exists() || (sqhistoryZipFile.exists() && !sqhistoryZipFile.isDirectory())) {
+		if (!sqlHistoryZipFile.exists() || (sqlHistoryZipFile.exists() && !sqlHistoryZipFile.isDirectory())) {
 			JAXBContext jaxbContext = JAXBContext.newInstance(SQLHistory.class);
 			Marshaller jaxbMarshaller = jaxbContext.createMarshaller();
 
@@ -70,7 +71,7 @@ public class SQLHistoryHelper {
 			SQLHistory sqlHistory = new SQLHistory();
 			sqlHistory.setSqlCommands(sqlCommands);
 			ByteArrayOutputStream baos = new ByteArrayOutputStream();
-			FileOutputStream fos = new FileOutputStream(sqhistoryZipFile, false);
+			FileOutputStream fos = new FileOutputStream(sqlHistoryZipFile, false);
 			GZIPOutputStream gzipOS = new GZIPOutputStream(fos);
 			try {
 				jaxbMarshaller.marshal(sqlHistory, baos);
@@ -83,7 +84,7 @@ public class SQLHistoryHelper {
 			}
 		} else {
 			throw new IllegalStateException(
-					"Unable to create file " + sqhistoryZipFile.getPath() + ". Folder exists with same name");
+					"Unable to create file " + sqlHistoryZipFile.getPath() + ". Folder exists with same name");
 		}
 	}
 
