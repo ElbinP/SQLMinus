@@ -208,10 +208,10 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 						saveSQLCommandsToHistoryFile();
 						sqlMinusObject.executeStatement(textInput.getText());
 					} else if (ke.isControlDown() && (ke.getKeyCode() == ke.VK_UP)) {
-						textInput.setText(sqlCommands.getPrevious(textInput.getText().trim()));
+						textInput.setText(sqlCommands.getNext(textInput.getText().trim()));
 						textInput.discardAllEdits();
 					} else if (ke.isControlDown() && (ke.getKeyCode() == ke.VK_DOWN)) {
-						textInput.setText(sqlCommands.getNext(textInput.getText().trim()));
+						textInput.setText(sqlCommands.getPrevious(textInput.getText().trim()));
 						textInput.discardAllEdits();
 					} else if (ke.isControlDown() && (ke.getKeyCode() == ke.VK_Z)) {
 						textInput.undo();
@@ -223,6 +223,7 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 						saveToFile();
 					} else if (ke.isControlDown() && (ke.getKeyCode() == ke.VK_U)) {
 						sqlCommands.insertString(textInput.getText().trim());
+						saveSQLCommandsToHistoryFile();
 					}
 				} catch (VectorIndexOutOfBoundsException ve) {
 					Toolkit.getDefaultToolkit().beep();
