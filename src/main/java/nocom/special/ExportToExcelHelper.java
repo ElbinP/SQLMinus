@@ -84,7 +84,13 @@ public class ExportToExcelHelper {
 					row.createCell(cols).setCellValue("");
 				}
 			}
+			row.setHeight((short) -1);
 		}
+
+		for (int headings = 0; headings < model.getColumnCount(); headings++) { // For each column
+			sheet.autoSizeColumn(headings);
+		}
+
 		FileOutputStream outputStream = new FileOutputStream(saveToFile.getPath());
 		try {
 			wb.write(outputStream);// Save the file
