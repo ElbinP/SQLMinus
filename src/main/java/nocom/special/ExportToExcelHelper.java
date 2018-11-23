@@ -34,7 +34,7 @@ public class ExportToExcelHelper {
 	}
 
 	public void triggerExportToXlsx(JTable table) {
-		int returnValue = fileChooser.showSaveDialog(table);
+		int returnValue = fileChooser.showSaveDialog(null);
 		if (returnValue == JFileChooser.APPROVE_OPTION) {
 			String s = fileChooser.getSelectedFile().getPath();
 			if (FilenameUtils.getExtension(s).length() == 0) {
@@ -42,7 +42,7 @@ public class ExportToExcelHelper {
 			}
 			File f = new File(s);
 			if (f.exists()) {
-				int overwrite = JOptionPane.showConfirmDialog(table, "Do you want to overwrite the file", "Overwrite?",
+				int overwrite = JOptionPane.showConfirmDialog(null, "Do you want to overwrite the file", "Overwrite?",
 						JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
 				if (overwrite == JOptionPane.YES_OPTION)
 					SwingUtilities.invokeLater(fileSaver.setFile(f, table));
