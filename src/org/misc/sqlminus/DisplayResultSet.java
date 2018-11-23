@@ -1,14 +1,12 @@
 package org.misc.sqlminus;
 
+import nocom.special.UtilityFunctions;
+
+import javax.swing.*;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Vector;
-
-import javax.swing.JOptionPane;
-import javax.swing.JTextArea;
-
-import nocom.special.UtilityFunctions;
 
 public class DisplayResultSet implements java.lang.Runnable {
 
@@ -32,7 +30,7 @@ public class DisplayResultSet implements java.lang.Runnable {
 	}
 
 	public void setDisplayParams(Integer rowsToReturn, ResultSet rst, JTextArea textOutput, SQLMinus sqlMinusObject,
-			int maxColWidth, int spacing, boolean rowDividers, int maxDataLength, String nullRep) throws Exception {
+								 int maxColWidth, int spacing, boolean rowDividers, int maxDataLength, String nullRep) throws Exception {
 		if (!busy) {
 			busy = true;
 			if (sqlMinusObject != null)
@@ -244,7 +242,7 @@ public class DisplayResultSet implements java.lang.Runnable {
 						// textOutput.append(" ");//++++++++++++++++
 						for (int j = 1; j <= (columnSize[i]
 								- UtilityFunctions.getMaxLength(
-										(String[]) columnName[i].toArray(new String[columnName[i].size()]))
+								(String[]) columnName[i].toArray(new String[columnName[i].size()]))
 								+ spacing); j++) {
 							if (stopExecution)
 								throw new ThreadKilledException("Thread killed");
@@ -292,7 +290,7 @@ public class DisplayResultSet implements java.lang.Runnable {
 					if (sqlMinusObject != null)
 						sqlMinusObject.setStatusBarText(" " + rowlength + " row(s) selected");
 
-					try {
+					if (rowsToReturn != null) {
 						// If there are remaining rows should we display them too?
 						if (hasAnotherRow && rowsToReturn.intValue() > 0) {
 							option = JOptionPane.showConfirmDialog(null, "Show the next " + rowsToReturn + " rows?",
@@ -303,9 +301,6 @@ public class DisplayResultSet implements java.lang.Runnable {
 									"\nYou have set the number of rows to be fetched to " + rowsToReturn.intValue());
 							textOutput.append("\nNo rows will be displayed\n");
 						}
-					} catch (NullPointerException ne) {
-						// NullPointerException may be thrown when rowsToReturn is null,
-						// which is the case when all rows are to be returned.
 					}
 
 				} while (option == JOptionPane.YES_OPTION);
