@@ -1,6 +1,7 @@
 package org.misc.sqlminus;
 
 import nocom.special.CustomizedMouseAdapter;
+import nocom.special.ExportToExcelMouseAdapter;
 import nocom.special.ImageReader;
 import nocom.special.LookAndFeelMenu;
 
@@ -753,6 +754,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 		tableOutput.setBackground(backgroundColor);
 		tableOutput.setFont(tfont);
 		tableOutput.setCellEditorFont(tfont);
+		tableOutput.addMouseListener(new ExportToExcelMouseAdapter());
 		laf.addComponentToMonitor(tableOutput.getCellEditorPopupMenu());
 		laf.addComponentToMonitor(tableOutput.getContentsViewFrame());
 		laf.addComponentToMonitor(tableOutput.getContentsViewPopupMenu());
