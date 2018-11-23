@@ -11,6 +11,9 @@ import javax.swing.SwingUtilities;
 import javax.swing.table.TableModel;
 
 import org.apache.commons.io.FilenameUtils;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.Font;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -56,8 +59,17 @@ public class ExportToExcelHelper {
 		TableModel model = table.getModel(); // Table model
 
 		Row headerRow = sheet.createRow(0); // Create row at line 0
+		Font boldFont = wb.createFont();
+		boldFont.setBold(true);
+
+		Cell headerCell;
+		CellStyle headerCellStyle;
 		for (int headings = 0; headings < model.getColumnCount(); headings++) { // For each column
-			headerRow.createCell(headings).setCellValue(model.getColumnName(headings));// Write column name
+			headerCell = headerRow.createCell(headings);
+			headerCell.setCellValue(model.getColumnName(headings));// Write column name
+			headerCellStyle = headerCell.getCellStyle();
+			headerCellStyle.setFont(boldFont);
+			headerCell.setCellStyle(headerCellStyle);
 		}
 
 		Row row;
