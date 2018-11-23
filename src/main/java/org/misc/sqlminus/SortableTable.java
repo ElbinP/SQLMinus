@@ -10,6 +10,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Vector;
 
+import javax.swing.JFileChooser;
 import javax.swing.JPopupMenu;
 import javax.swing.JTable;
 import javax.swing.JTextField;
@@ -18,6 +19,7 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumn;
 
 import nocom.special.CustomizedMouseAdapter;
+import nocom.special.ExportToExcelMouseAdapter;
 import nocom.special.MultilineTextCellEditor;
 import nocom.special.UtilityFunctions;
 
@@ -33,6 +35,7 @@ public class SortableTable extends JTable {
 	private Color backgroundColor;
 	private Image iconImage;
 	private Font tFont;
+	private ExportToExcelMouseAdapter excelMouseAdapter;
 
 	public SortableTable(DisplayResultSetTableModel model, int minColWidth, int maxColWidth, Color backgroundColor,
 			Image iconImage, Font tFont) {
@@ -74,9 +77,20 @@ public class SortableTable extends JTable {
 			}
 		});
 
+		excelMouseAdapter = new ExportToExcelMouseAdapter();
+		addMouseListener(excelMouseAdapter);
+
 		getSelectionModel().addListSelectionListener(e -> {
 			contentsViewFrame.setVisible(false);
 		});
+	}
+
+	public JPopupMenu getPopup() {
+		return excelMouseAdapter.getPopupMenu();
+	}
+
+	public JFileChooser getExcelFileChooser() {
+		return excelMouseAdapter.getFileChooser();
 	}
 
 	public Component getContentsViewFrame() {

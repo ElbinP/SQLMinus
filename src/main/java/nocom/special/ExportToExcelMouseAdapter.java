@@ -1,15 +1,19 @@
 package nocom.special;
 
-import javax.swing.*;
-import java.awt.*;
+import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
+import javax.swing.JFileChooser;
+import javax.swing.JMenuItem;
+import javax.swing.JPopupMenu;
+import javax.swing.JTable;
+
 /**
- * A mouse adapter for JTable that shows a popup menu with
- * Export to Excel menu item.
+ * A mouse adapter for JTable that shows a popup menu with Export to Excel menu
+ * item.
  */
 public class ExportToExcelMouseAdapter extends MouseAdapter implements ActionListener {
 
@@ -17,6 +21,7 @@ public class ExportToExcelMouseAdapter extends MouseAdapter implements ActionLis
 	private JMenuItem exportToExcel;
 	private JTable table;
 	private final String EXPORT_TO_EXCEL_MENU_TEXT = "Export to Excel Workbook";
+	private ExportToExcelHelper excelHelper;
 
 	public ExportToExcelMouseAdapter() {
 		super();
@@ -25,6 +30,12 @@ public class ExportToExcelMouseAdapter extends MouseAdapter implements ActionLis
 		exportToExcel.addActionListener(this);
 		popup = new JPopupMenu();
 		popup.add(exportToExcel);
+
+		excelHelper = new ExportToExcelHelper();
+	}
+
+	public JFileChooser getFileChooser() {
+		return excelHelper.getFileChooser();
 	}
 
 	public JPopupMenu getPopupMenu() {
@@ -35,7 +46,7 @@ public class ExportToExcelMouseAdapter extends MouseAdapter implements ActionLis
 		if (table != null) {
 			String command = ae.getActionCommand();
 			if (command.equals(EXPORT_TO_EXCEL_MENU_TEXT)) {
-				ExportToExcelHelper.triggerExportToXlsx(table);
+				excelHelper.triggerExportToXlsx(table);
 			}
 
 			table = null;

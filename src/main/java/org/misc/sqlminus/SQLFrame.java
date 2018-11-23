@@ -75,7 +75,7 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 		textInput = new UndoableTextArea();
 		textInput.setBorder(BorderFactory.createLoweredBevelBorder());
 		sqlCommands = new IndexedVector();
-		fileChooser = new JFileChooser(System.getProperty("user.dir"));
+		fileChooser = new JFileChooser(System.getProperty("user.home"));
 		sqlMinusObject.laf.addComponentToMonitor(fileChooser);
 		lineSeparator = System.getProperty("line.separator");
 		fileSaver = new FileSaverThread();
