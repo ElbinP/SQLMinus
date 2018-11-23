@@ -909,9 +909,11 @@ public class SQLMinus extends JFrame implements ActionListener {
 		int windowX = sqlMinusPreferences.getInt(Constants.PreferencesKeys.WINDOW_X, 10);
 		int windowY = sqlMinusPreferences.getInt(Constants.PreferencesKeys.WINDOW_Y, 10);
 
+		enableTextOutputSettings(btText.isSelected());
+
 		setBounds(windowX, windowY, windowWidth, windowHeight);
 		setVisible(true);
-		enableTextOutputSettings(btText.isSelected());
+		dbPassword.requestFocus();
 
 	}
 
