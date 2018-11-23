@@ -6,7 +6,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.io.IOException;
 
 /**
  * A mouse adapter for JTable that shows a popup menu with
@@ -36,11 +35,7 @@ public class ExportToExcelMouseAdapter extends MouseAdapter implements ActionLis
 		if (table != null) {
 			String command = ae.getActionCommand();
 			if (command.equals(EXPORT_TO_EXCEL_MENU_TEXT)) {
-				try {
-					ExportToExcelHelper.exportToXlsx(table);
-				} catch (IOException e) {
-					JOptionPane.showMessageDialog(null, e.getMessage());
-				}
+				ExportToExcelHelper.triggerExportToXlsx(table);
 			}
 
 			table = null;
