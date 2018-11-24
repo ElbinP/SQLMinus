@@ -7,7 +7,6 @@ import java.io.IOException;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
-import javax.swing.SwingUtilities;
 import javax.swing.table.TableModel;
 
 import org.apache.commons.io.FilenameUtils;
@@ -44,10 +43,11 @@ public class ExportToExcelHelper {
 			if (f.exists()) {
 				int overwrite = JOptionPane.showConfirmDialog(null, "Do you want to overwrite the file", "Overwrite?",
 						JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
-				if (overwrite == JOptionPane.YES_OPTION)
-					SwingUtilities.invokeLater(fileSaver.setFile(f, table));
+				if (overwrite == JOptionPane.YES_OPTION) {
+					startExcelSaveThread(fileSaver.setFile(f, table));
+				}
 			} else {
-				SwingUtilities.invokeLater(fileSaver.setFile(f, table));
+				startExcelSaveThread(fileSaver.setFile(f, table));
 			}
 		}
 	}
@@ -98,6 +98,11 @@ public class ExportToExcelHelper {
 			outputStream.close();
 			wb.close();
 		}
+	}
+
+	private void startExcelSaveThread(Runnable runnable) {
+		Thread excelSaveThread = new Thread(runnable, "EXCEL_EXPORT_THREAD");
+		excelSaveThread.start();
 	}
 
 	private class FileSaverThread implements java.lang.Runnable {
