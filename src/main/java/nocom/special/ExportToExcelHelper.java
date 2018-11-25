@@ -119,8 +119,11 @@ public class ExportToExcelHelper {
 			if (f != null) {
 				try {
 					exportToXlsx(table, f);
+					JOptionPane.showMessageDialog(null, "Export to file complete", "Export to Excel",
+							JOptionPane.INFORMATION_MESSAGE);
 				} catch (Exception e) {
-					JOptionPane.showMessageDialog(null, "Error saving results to file. " + e);
+					JOptionPane.showMessageDialog(null, "Error saving results to file. " + e, "Export to Excel",
+							JOptionPane.ERROR_MESSAGE);
 				} finally {
 					f = null;
 				}
