@@ -12,10 +12,8 @@ import javax.swing.table.TableModel;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
-import org.apache.poi.ss.usermodel.Font;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFFont;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
@@ -73,16 +71,21 @@ public class ExportToExcelHelper {
 		}
 
 		Row row;
+		Cell cell;
+		CellStyle cellStyle = wb.createCellStyle();
+		cellStyle.setWrapText(true);
 		for (int rows = 0; rows < model.getRowCount(); rows++) { // For each table row
 			// Set the row to the next one in the sequence
 			row = sheet.createRow((rows + 1));
 			for (int cols = 0; cols < table.getColumnCount(); cols++) { // For each table column
 				Object cellValue = model.getValueAt(rows, cols);
+				cell = row.createCell(cols);
 				if (cellValue != null) {
-					row.createCell(cols).setCellValue(cellValue.toString()); // Write value
+					cell.setCellValue(cellValue.toString()); // Write value
 				} else {
-					row.createCell(cols).setCellValue("");
+					cell.setCellValue("");
 				}
+				cell.setCellStyle(cellStyle);
 			}
 			row.setHeight((short) -1);
 		}
