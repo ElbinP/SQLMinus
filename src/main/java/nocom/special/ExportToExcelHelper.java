@@ -16,6 +16,7 @@ import org.apache.poi.ss.usermodel.Font;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFFont;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 public class ExportToExcelHelper {
@@ -54,22 +55,21 @@ public class ExportToExcelHelper {
 
 	private void exportToXlsx(JTable table, File saveToFile) throws IOException {
 
-		Workbook wb = new XSSFWorkbook(); // Excell workbook
+		XSSFWorkbook wb = new XSSFWorkbook(); // Excell workbook
 		Sheet sheet = wb.createSheet(); // WorkSheet
 		TableModel model = table.getModel(); // Table model
 
 		Row headerRow = sheet.createRow(0); // Create row at line 0
-		Font boldFont = wb.createFont();
+		XSSFFont boldFont = wb.createFont();
 		boldFont.setBold(true);
+		CellStyle headerRowStyle = wb.createCellStyle();
+		headerRowStyle.setFont(boldFont);
 
 		Cell headerCell;
-		CellStyle headerCellStyle;
 		for (int headings = 0; headings < model.getColumnCount(); headings++) { // For each column
 			headerCell = headerRow.createCell(headings);
 			headerCell.setCellValue(model.getColumnName(headings));// Write column name
-			headerCellStyle = headerCell.getCellStyle();
-			headerCellStyle.setFont(boldFont);
-			headerCell.setCellStyle(headerCellStyle);
+			headerCell.setCellStyle(headerRowStyle);
 		}
 
 		Row row;
