@@ -77,7 +77,7 @@ public class ExportToExcelHelper {
 		for (int rows = 0; rows < model.getRowCount(); rows++) { // For each table row
 			// Set the row to the next one in the sequence
 			row = sheet.createRow((rows + 1));
-			for (int cols = 0; cols < table.getColumnCount(); cols++) { // For each table column
+			for (int cols = 0; cols < model.getColumnCount(); cols++) { // For each table column
 				Object cellValue = model.getValueAt(rows, cols);
 				cell = row.createCell(cols);
 				if (cellValue != null) {
