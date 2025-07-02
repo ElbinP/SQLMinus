@@ -18,6 +18,7 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.lang.reflect.Method;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -896,6 +897,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 		menuBar.add(laf);
 
 		setIconImage(iconImage);
+		setMacDockIcon(iconImage);
 		setJMenuBar(menuBar);
 		addWindowListener(new WindowAdapter() {
 			public void windowClosing(WindowEvent we) {
@@ -1481,5 +1483,18 @@ public class SQLMinus extends JFrame implements ActionListener {
 				((Double) getBounds().getWidth()).intValue());
 		sqlMinusPreferences.putInt(Constants.PreferencesKeys.WINDOW_X, ((Double) getBounds().getX()).intValue());
 		sqlMinusPreferences.putInt(Constants.PreferencesKeys.WINDOW_Y, ((Double) getBounds().getY()).intValue());
+	}
+
+	private void setMacDockIcon(Image iconImage) {
+		try {
+			// Java 9+ approach via reflection
+			Class<?> appClass = Class.forName("java.awt.Taskbar");
+			Object taskbar = appClass.getDeclaredMethod("getTaskbar").invoke(null);
+			Method setIconMethod = appClass.getDeclaredMethod("setIconImage", Image.class);
+			setIconMethod.invoke(taskbar, iconImage);
+		} catch (Exception e) {
+			// Fallback or log error
+			System.err.println("Unable to set Dock icon: " + e);
+		}
 	}
 }
