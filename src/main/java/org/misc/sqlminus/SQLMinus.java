@@ -63,7 +63,6 @@ public class SQLMinus extends JFrame implements ActionListener {
 	private final int MINCOLWIDTH = 15, MAXCOLWIDTH = 50, INTERCOLSPACE = 4, MAXDATALENGTH = 1000;
 	private final String COMMIT_TRANSACTIONS_COMMAND = "COMMIT_TRANSACTIONS";
 	private final String ROLLBACK_TRANSACTIONS_COMMAND = "ROLLBACK_TRANSACTIONS";
-	public LookAndFeelMenu laf = new LookAndFeelMenu(new Component[] {}, KeyEvent.VK_L, null);
 	public CustomizedMouseAdapter commonAdapter = new CustomizedMouseAdapter(false);
 	private JTextArea textOutput;
 	private SQLFrame textareaFrame;
@@ -89,6 +88,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 	private JScrollPane textSpane, tableSpane;
 	private String[] rowsComboBoxOptions = { "100", "500", "All" };
 	private SQLMinusPreferences sqlMinusPreferences = new SQLMinusPreferences();
+	public LookAndFeelMenu laf = new LookAndFeelMenu(new Component[] {}, KeyEvent.VK_L, null, sqlMinusPreferences);
 
 	/************** The Constructor for SQLMinus ***********************/
 
@@ -116,7 +116,8 @@ public class SQLMinus extends JFrame implements ActionListener {
 		Color backgroundColor = null;/////////////////////////////////////////////////////////////////////////
 		// Color backgroundLight=new Color(191,192,255);
 		Color backgroundLight = null;//////////////////////////////////////////////////////////////////////////
-		Color buttonColor = new Color(161, 161, 255);
+		Color buttonColor = null;
+		Color buttonTextColor = null;
 		Image iconImage = new ImageIcon().getImage();
 		try {
 			iconImage = ImageReader.getImage(this.getClass(), "/images/sqlminus.png");
@@ -203,7 +204,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 		button2.addActionListener(this);
 		// button2.setFont(f);
 		button2.setBackground(buttonColor);
-		button2.setForeground(Color.white);
+		button2.setForeground(buttonTextColor);
 		gridbag.setConstraints(button2, c);
 		connectionPanel.add(button2);
 
@@ -211,7 +212,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 		button3.addActionListener(this);
 		// button3.setFont(f);
 		button3.setBackground(buttonColor);
-		button3.setForeground(Color.white);
+		button3.setForeground(buttonTextColor);
 		gridbag.setConstraints(button3, c);
 		connectionPanel.add(button3);
 
@@ -219,7 +220,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 		disconnectButton.addActionListener(this);
 		// disconnectButton.setFont(f);
 		disconnectButton.setBackground(buttonColor);
-		disconnectButton.setForeground(Color.white);
+		disconnectButton.setForeground(buttonTextColor);
 		gridbag.setConstraints(disconnectButton, c);
 		connectionPanel.add(disconnectButton);
 
@@ -230,7 +231,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 		// jdbc odbc bridge driver");
 		button4.setToolTipText(ResourceLoader.getResourceString("sample1ToolTip"));
 		button4.setBackground(buttonColor);
-		button4.setForeground(Color.white);
+		button4.setForeground(buttonTextColor);
 		gridbag.setConstraints(button4, c);
 		connectionPanel.add(button4);
 
@@ -243,7 +244,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 		// Oracle thin driver");
 		button5.setToolTipText(ResourceLoader.getResourceString("sample2ToolTip"));
 		button5.setBackground(buttonColor);
-		button5.setForeground(Color.white);
+		button5.setForeground(buttonTextColor);
 		gridbag.setConstraints(button5, c);
 		connectionPanel.add(button5);
 
@@ -610,7 +611,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 		// getTableButton.setFont(f);
 		getTableButton.setToolTipText("Displays the tables matching the table pattern and their descriptions");
 		getTableButton.setBackground(buttonColor);
-		getTableButton.setForeground(Color.white);
+		getTableButton.setForeground(buttonTextColor);
 		gridbag.setConstraints(getTableButton, c);
 		miscPanel.add(getTableButton);
 
@@ -620,7 +621,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 		// getColumnButton.setFont(f);
 		getColumnButton.setToolTipText("Displays the matching columns in the matching tables and their descriptions");
 		getColumnButton.setBackground(buttonColor);
-		getColumnButton.setForeground(Color.white);
+		getColumnButton.setForeground(buttonTextColor);
 		gridbag.setConstraints(getColumnButton, c);
 		miscPanel.add(getColumnButton);
 
@@ -646,7 +647,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 		// getSchemaButton.setFont(f);
 		getSchemaButton.setToolTipText("Displays all the schemas");
 		getSchemaButton.setBackground(buttonColor);
-		getSchemaButton.setForeground(Color.white);
+		getSchemaButton.setForeground(buttonTextColor);
 		gridbag.setConstraints(getSchemaButton, c);
 		miscPanel.add(getSchemaButton);
 
@@ -656,7 +657,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 		// getCatalogButton.setFont(f);
 		getCatalogButton.setToolTipText("Displays all the catalogs");
 		getCatalogButton.setBackground(buttonColor);
-		getCatalogButton.setForeground(Color.white);
+		getCatalogButton.setForeground(buttonTextColor);
 		gridbag.setConstraints(getCatalogButton, c);
 		miscPanel.add(getCatalogButton);
 
@@ -916,6 +917,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 		setVisible(true);
 		dbPassword.requestFocus();
 
+		laf.setSavedLookAndFeel();
 	}
 
 	public static void main(String[] args) {

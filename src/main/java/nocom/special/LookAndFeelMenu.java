@@ -11,6 +11,10 @@ import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
+import javax.swing.UnsupportedLookAndFeelException;
+
+import org.misc.sqlminus.Constants;
+import org.misc.sqlminus.SQLMinusPreferences;
 
 public class LookAndFeelMenu extends JMenu implements ActionListener {
 
@@ -18,16 +22,19 @@ public class LookAndFeelMenu extends JMenu implements ActionListener {
 	private int mnemonic;
 	private Color bg;
 	private Vector<LookAndFeelMenu.MyMenuItem> menus;
+	private final SQLMinusPreferences sqlMinusPreferences;
 
-	public LookAndFeelMenu(Component rootComponent, int mnemonic, Color bg) {
-		this(new Component[] { rootComponent }, mnemonic, bg, true);
+	public LookAndFeelMenu(Component rootComponent, int mnemonic, Color bg, SQLMinusPreferences sqlMinusPreferences) {
+		this(new Component[] { rootComponent }, mnemonic, bg, true, sqlMinusPreferences);
 	}
 
-	public LookAndFeelMenu(Component[] rootComponents, int mnemonic, Color bg) {
-		this(rootComponents, mnemonic, bg, true);
+	public LookAndFeelMenu(Component[] rootComponents, int mnemonic, Color bg,
+			SQLMinusPreferences sqlMinusPreferences) {
+		this(rootComponents, mnemonic, bg, true, sqlMinusPreferences);
 	}
 
-	public LookAndFeelMenu(Component[] rootComponents, int mnemonic, Color bg, boolean addDefaults) {
+	public LookAndFeelMenu(Component[] rootComponents, int mnemonic, Color bg, boolean addDefaults,
+			SQLMinusPreferences sqlMinusPreferences) {
 		super("LookAndFeel");
 		setMnemonic(mnemonic);
 		this.bg = bg;
@@ -39,6 +46,7 @@ public class LookAndFeelMenu extends JMenu implements ActionListener {
 		if (addDefaults) {
 			addDefaultMenus();
 		}
+		this.sqlMinusPreferences = sqlMinusPreferences;
 	}
 
 	public void addComponentToMonitor(Component component) {
@@ -73,20 +81,39 @@ public class LookAndFeelMenu extends JMenu implements ActionListener {
 		addLookAndFeelItem("Kunststoff", "com.incors.plaf.kunststoff.KunststoffLookAndFeel", KeyEvent.VK_K);
 		addLookAndFeelItem("Nimbus", "javax.swing.plaf.nimbus.NimbusLookAndFeel", KeyEvent.VK_N);
 		addLookAndFeelItem("Pgs", "com.pagosoft.plaf.PgsLookAndFeel", KeyEvent.VK_P);
+		addLookAndFeelItem("Aqua", "com.apple.laf.AquaLookAndFeel", KeyEvent.VK_A);
 	}
 
 	public void actionPerformed(ActionEvent ae) {
 		try {
 			for (int i = 0; i < menus.size(); i++) {
 				if (ae.getActionCommand().equals(menus.get(i).getMenuText())) {
-					UIManager.setLookAndFeel(menus.get(i).getClassName());
-					updateComponentTree();
+					String lookAndFeelClassName = menus.get(i).getClassName();
+					setLookAndFeel(lookAndFeelClassName);
+					sqlMinusPreferences.put(Constants.PreferencesKeys.LOOK_AND_FEEL_CLASS, lookAndFeelClassName);
 					break;
 				}
 			}
 		} catch (Exception e) {
 			System.err.println(e);
 		}
+	}
+
+	public void setSavedLookAndFeel() {
+		try {
+			String savedLookAndFeelClass = sqlMinusPreferences.get(Constants.PreferencesKeys.LOOK_AND_FEEL_CLASS,
+					"javax.swing.plaf.nimbus.NimbusLookAndFeel");
+			setLookAndFeel(savedLookAndFeelClass);
+		} catch (ClassNotFoundException | InstantiationException | IllegalAccessException
+				| UnsupportedLookAndFeelException e) {
+			System.err.println(e);
+		}
+	}
+
+	private void setLookAndFeel(String lookAndFeelClassName) throws ClassNotFoundException, InstantiationException,
+			IllegalAccessException, UnsupportedLookAndFeelException {
+		UIManager.setLookAndFeel(lookAndFeelClassName);
+		updateComponentTree();
 	}
 
 	private void updateComponentTree() {
