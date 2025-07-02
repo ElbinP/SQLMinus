@@ -36,8 +36,8 @@ public class ClassLoaderPanel extends JPanel implements ActionListener {
 	JButton addButton, removeButton;
 	private Preferences sqlMinusPreferences;
 
-	public ClassLoaderPanel(LookAndFeelMenu laf, Insets insets, Color backgroundColor, Color buttonColor, Font f,
-			Font tfont) {
+	public ClassLoaderPanel(LookAndFeelMenu laf, Insets insets, Color backgroundColor, Color buttonColor,
+			Color buttonTextColor, Font f, Font tfont) {
 		super();
 
 		sqlMinusPreferences = Preferences.userNodeForPackage(SQLMinus.class);
@@ -72,14 +72,14 @@ public class ClassLoaderPanel extends JPanel implements ActionListener {
 		addButton = new JButton("Add");
 		addButton.setToolTipText("Add a jar or zip file that contains the necessary driver classes");
 		addButton.setBackground(buttonColor);
-		addButton.setForeground(Color.white);
+		addButton.setForeground(buttonTextColor);
 		// addButton.setFont(f);
 		addButton.addActionListener(this);
 		buttonsPanel.add(addButton);
 		removeButton = new JButton("Remove");
 		removeButton.setToolTipText("Remove the selected file from the list");
 		removeButton.setBackground(buttonColor);
-		removeButton.setForeground(Color.white);
+		removeButton.setForeground(buttonTextColor);
 		// removeButton.setFont(f);
 		removeButton.addActionListener(this);
 		buttonsPanel.add(removeButton);

@@ -668,7 +668,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 		 * driverPanel
 		 ***********/
 
-		driverPanel = new ClassLoaderPanel(laf, c.insets, backgroundColor, buttonColor, f, tfont);
+		driverPanel = new ClassLoaderPanel(laf, c.insets, backgroundColor, buttonColor, buttonTextColor, f, tfont);
 
 		/****************
 		 * driverPanel components end here******************** now the Tabbed Pane is
