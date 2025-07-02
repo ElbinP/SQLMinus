@@ -17,7 +17,7 @@ public class LookAndFeelMenu extends JMenu implements ActionListener {
 	private Vector rootComponents;
 	private int mnemonic;
 	private Color bg;
-	private Vector menus;
+	private Vector<LookAndFeelMenu.MyMenuItem> menus;
 
 	public LookAndFeelMenu(Component rootComponent, int mnemonic, Color bg) {
 		this(new Component[] { rootComponent }, mnemonic, bg, true);
@@ -35,7 +35,7 @@ public class LookAndFeelMenu extends JMenu implements ActionListener {
 		for (int i = 0; i < rootComponents.length; i++) {
 			this.rootComponents.add(rootComponents[i]);
 		}
-		menus = new Vector();
+		menus = new Vector<>();
 		if (addDefaults) {
 			addDefaultMenus();
 		}
@@ -77,8 +77,8 @@ public class LookAndFeelMenu extends JMenu implements ActionListener {
 	public void actionPerformed(ActionEvent ae) {
 		try {
 			for (int i = 0; i < menus.size(); i++) {
-				if (ae.getActionCommand().equals(((LookAndFeelMenu.MyMenuItem) menus.get(i)).getMenuText())) {
-					UIManager.setLookAndFeel(((LookAndFeelMenu.MyMenuItem) menus.get(i)).getClassName());
+				if (ae.getActionCommand().equals(menus.get(i).getMenuText())) {
+					UIManager.setLookAndFeel(menus.get(i).getClassName());
 					updateComponentTree();
 					break;
 				}
