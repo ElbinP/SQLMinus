@@ -72,6 +72,7 @@ public class LookAndFeelMenu extends JMenu implements ActionListener {
 		addLookAndFeelItem("Metal", "javax.swing.plaf.metal.MetalLookAndFeel", KeyEvent.VK_T);
 		addLookAndFeelItem("Kunststoff", "com.incors.plaf.kunststoff.KunststoffLookAndFeel", KeyEvent.VK_K);
 		addLookAndFeelItem("Nimbus", "javax.swing.plaf.nimbus.NimbusLookAndFeel", KeyEvent.VK_N);
+		addLookAndFeelItem("Pgs", "com.pagosoft.plaf.PgsLookAndFeel", KeyEvent.VK_P);
 	}
 
 	public void actionPerformed(ActionEvent ae) {
