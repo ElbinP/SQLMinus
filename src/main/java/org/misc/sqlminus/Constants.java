@@ -13,6 +13,7 @@ public class Constants {
 		public static final String WINDOW_HEIGHT = "WindowHeight";
 		public static final String WINDOW_X = "WindowX";
 		public static final String WINDOW_Y = "WindowY";
+		public static final String LOOK_AND_FEEL_CLASS = "LookAndFeelClass";
 	}
 
 	public static final String SQL_HISTORY_FULL_FILE_PATH = System.getProperty("user.home")
