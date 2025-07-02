@@ -23,7 +23,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Arrays;
-import java.util.prefs.Preferences;
 
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
@@ -87,15 +86,14 @@ public class SQLMinus extends JFrame implements ActionListener {
 	private SortableTable tableOutput;
 	private JRadioButton btText, btTable;
 	private JScrollPane textSpane, tableSpane;
-	private Preferences sqlMinusPreferences;
 	private String[] rowsComboBoxOptions = { "100", "500", "All" };
+	private SQLMinusPreferences sqlMinusPreferences = new SQLMinusPreferences();
 
 	/************** The Constructor for SQLMinus ***********************/
 
 	public SQLMinus() {
 		super("SQL Minus");
 
-		sqlMinusPreferences = Preferences.userNodeForPackage(SQLMinus.class);
 		GridBagLayout gridbag = new GridBagLayout();
 		GridBagConstraints c = new GridBagConstraints();
 
@@ -120,7 +118,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 		Color buttonColor = new Color(161, 161, 255);
 		Image iconImage = new ImageIcon().getImage();
 		try {
-			iconImage = ImageReader.getImage(this.getClass(), "/images/sqlminus.gif");
+			iconImage = ImageReader.getImage(this.getClass(), "/images/sqlminus.png");
 		} catch (Exception e) {
 		}
 		// try{iconImage=new
@@ -190,7 +188,8 @@ public class SQLMinus extends JFrame implements ActionListener {
 		connectionPanel.add(label4);
 
 		c.gridwidth = GridBagConstraints.REMAINDER;
-		dbPassword = new JPasswordField(20);
+		dbPassword = new JPasswordField(
+				sqlMinusPreferences.getDecryptedValue(Constants.PreferencesKeys.DB_PASSWORD, ""), 20);
 		dbPassword.setActionCommand("CONNECT");
 		dbPassword.addActionListener(this);
 		// dbPassword.setFont(tfont);
@@ -1143,6 +1142,8 @@ public class SQLMinus extends JFrame implements ActionListener {
 		sqlMinusPreferences.put(Constants.PreferencesKeys.DRIVER_CLASSNAME, driverClassName.getText());
 		sqlMinusPreferences.put(Constants.PreferencesKeys.CONNECT_STRING, driverConnectionString.getText());
 		sqlMinusPreferences.put(Constants.PreferencesKeys.DB_USERNAME, dbUsername.getText());
+		sqlMinusPreferences.putEncryptedValue(Constants.PreferencesKeys.DB_PASSWORD,
+				new String(dbPassword.getPassword()));
 	}
 
 	public /* synchronized */ void setBusy() {
