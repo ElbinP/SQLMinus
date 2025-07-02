@@ -22,8 +22,7 @@ import jakarta.xml.bind.Unmarshaller;
 public class SQLHistoryHelper {
 
 	public static List<String> getSQLCommandsFromHistory() throws IOException, JAXBException {
-		String homeDirectory = System.getProperty("user.home");
-		File sqlHistoryZipFile = new File(homeDirectory + Constants.SQL_HISTORY_FILE_PATH);
+		File sqlHistoryZipFile = new File(Constants.SQL_HISTORY_FULL_FILE_PATH);
 		List<String> history = new ArrayList<>();
 		if (sqlHistoryZipFile.exists() && !sqlHistoryZipFile.isDirectory()) {
 			FileInputStream fis = new FileInputStream(sqlHistoryZipFile);
@@ -56,8 +55,7 @@ public class SQLHistoryHelper {
 
 	public static void saveSQLCommandsToHistory(List<String> sqlCommands) throws JAXBException, IOException {
 		sqlCommands.removeIf(s -> s.trim().length() == 0);
-		String homeDirectory = System.getProperty("user.home");
-		File sqlHistoryZipFile = new File(homeDirectory + Constants.SQL_HISTORY_FILE_PATH);
+		File sqlHistoryZipFile = new File(Constants.SQL_HISTORY_FULL_FILE_PATH);
 		File parent = sqlHistoryZipFile.getParentFile();
 		if (!parent.exists() && !parent.mkdirs()) {
 			throw new IllegalStateException("Couldn't create dir: " + parent);
