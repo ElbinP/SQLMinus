@@ -1352,13 +1352,14 @@ public class SQLMinus extends JFrame implements ActionListener {
 			} catch (Exception e) {
 				popMessage(e.toString());
 			}
-			// Do not commit automatically on disconnect
-//			try {
-//				conn.commit();
-//			} catch (NullPointerException ne) {
-//			} catch (Exception e) {
-//				popMessage(e.toString());
-//			}
+
+			try {
+				conn.rollback();
+			} catch (NullPointerException ne) {
+			} catch (Exception e) {
+				popMessage(e.toString());
+			}
+
 			try {
 				conn.close();
 			} catch (NullPointerException ne) {
