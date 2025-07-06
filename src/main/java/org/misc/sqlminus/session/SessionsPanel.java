@@ -5,6 +5,7 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Collections;
 import java.util.List;
 
 import javax.swing.BorderFactory;
@@ -114,6 +115,7 @@ public class SessionsPanel extends JPanel implements ActionListener {
 		try {
 			DefaultListModel<String> model = (DefaultListModel<String>) sessionsList.getModel();
 			List<String> sessions = sqlMinusPreferences.getSessionsList();
+			Collections.sort(sessions);
 			model.clear();
 			sessions.forEach(s -> model.addElement(s));
 		} catch (SQLMinusException e) {
