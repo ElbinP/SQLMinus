@@ -54,6 +54,8 @@ import javax.swing.border.BevelBorder;
 import javax.swing.plaf.metal.MetalComboBoxEditor;
 import javax.swing.text.JTextComponent;
 
+import org.misc.sqlminus.session.SessionsPanel;
+
 import nocom.special.CustomizedMouseAdapter;
 import nocom.special.ImageReader;
 import nocom.special.LookAndFeelMenu;

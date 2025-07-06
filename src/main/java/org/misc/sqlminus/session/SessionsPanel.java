@@ -1,19 +1,26 @@
-package org.misc.sqlminus;
+package org.misc.sqlminus.session;
 
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.List;
 
 import javax.swing.BorderFactory;
+import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JList;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
+import javax.swing.ListSelectionModel;
+
+import org.misc.sqlminus.SQLMinusException;
+import org.misc.sqlminus.SQLMinusPreferences;
 
 public class SessionsPanel extends JPanel implements ActionListener {
 
@@ -24,6 +31,7 @@ public class SessionsPanel extends JPanel implements ActionListener {
 	private final JTextField driverClassName, connectionString, userName;
 	private final JPasswordField password;
 	private final SQLMinusPreferences sqlMinusPreferences;
+	private static final String SESSION_ERROR_TITLE = "Session error";
 
 	public SessionsPanel(JTextField driverClassName, JTextField connectionString, JTextField userName,
 			JPasswordField password, SQLMinusPreferences sqlMinusPreferences) {
@@ -58,6 +66,10 @@ public class SessionsPanel extends JPanel implements ActionListener {
 		c.weightx = 1.0;
 		c.weighty = 1.0;
 		sessionsList = new JList<>();
+		sessionsList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
+		DefaultListModel<String> model = new DefaultListModel<>();
+		sessionsList.setModel(model);
 		JScrollPane scrollPane = new JScrollPane(sessionsList);
 		add(scrollPane, c);
 
@@ -83,19 +95,76 @@ public class SessionsPanel extends JPanel implements ActionListener {
 		deleteButton = new JButton("Delete");
 		deleteButton.addActionListener(this);
 		add(deleteButton, c);
+
+		loadSessionsListFromPreferences();
 	}
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		if (e.getSource() == loadButton) {
-			System.out.println("Load clicked");
-			// Implement load logic
+			loadSession();
 		} else if (e.getSource() == saveButton) {
-			System.out.println("Save clicked");
-			// Implement save logic
+			saveSession();
 		} else if (e.getSource() == deleteButton) {
-			System.out.println("Delete clicked");
-			// Implement delete logic
+			deleteSession();
 		}
 	}
+
+	private void loadSessionsListFromPreferences() {
+		try {
+			DefaultListModel<String> model = (DefaultListModel<String>) sessionsList.getModel();
+			List<String> sessions = sqlMinusPreferences.getSessionsList();
+			model.clear();
+			sessions.forEach(s -> model.addElement(s));
+		} catch (SQLMinusException e) {
+			popErrorMessage(e.getMessage());
+		}
+	}
+
+	private void saveSession() {
+		if (sessionName.getText().trim().isBlank()) {
+			popErrorMessage("Specify the session name to save");
+		} else {
+			SessionEntity sessionEntity = SessionEntity.builder().driverClassName(driverClassName.getText())
+					.password(new String(password.getPassword())).connectionString(connectionString.getText())
+					.userName(userName.getText()).build();
+			try {
+				sqlMinusPreferences.putSession(sessionName.getText().trim(), sessionEntity);
+				sessionName.setText("");
+				loadSessionsListFromPreferences();
+			} catch (SQLMinusException e1) {
+				popErrorMessage(e1.getMessage());
+			}
+		}
+	}
+
+	private void loadSession() {
+		if (sessionsList.getSelectedIndex() == -1) {
+			popErrorMessage("Select session to load");
+		} else {
+			try {
+				SessionEntity sessionEntity = sqlMinusPreferences.getSession(sessionsList.getSelectedValue());
+				driverClassName.setText(sessionEntity.getDriverClassName());
+				connectionString.setText(sessionEntity.getConnectionString());
+				userName.setText(sessionEntity.getUserName());
+				password.setText(sessionEntity.getPassword());
+			} catch (SQLMinusException e) {
+				popErrorMessage(e.getMessage());
+			}
+		}
+	}
+
+	private void deleteSession() {
+		if (sessionsList.getSelectedIndex() == -1) {
+			popErrorMessage("Select session to delete");
+		} else {
+			sqlMinusPreferences.deleteSession(sessionsList.getSelectedValue());
+			loadSessionsListFromPreferences();
+		}
+	}
+
+	private void popErrorMessage(String message) {
+		JOptionPane.showMessageDialog(null, message, SESSION_ERROR_TITLE, JOptionPane.ERROR_MESSAGE);
+	}
+
 }

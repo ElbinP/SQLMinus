@@ -11,9 +11,11 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Base64;
+import java.util.List;
 import java.util.Optional;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.crypto.BadPaddingException;
@@ -26,10 +28,15 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 
+import org.misc.sqlminus.session.SessionEntity;
+
+import com.google.gson.Gson;
+
 public class SQLMinusPreferences {
 
 	private Preferences preferences = Preferences.userNodeForPackage(SQLMinus.class);
 	private final Optional<String> passPhrase;
+	private final Gson gson = new Gson();
 
 	public SQLMinusPreferences() {
 		Optional<String> passPhraseFromFile = getPassphrase();
@@ -57,6 +64,15 @@ public class SQLMinusPreferences {
 	}
 
 	public void putEncryptedValue(String key, String value) {
+		try {
+			String encryptedValue = getEncryptedString(value);
+		} catch (SQLMinusException e) {
+			System.err.println(e.getMessage());
+		}
+
+	}
+
+	private String getEncryptedString(String plainText) throws SQLMinusException {
 		if (passPhrase.isPresent()) {
 			try {
 				// Generate random salt and IV
@@ -70,7 +86,7 @@ public class SQLMinusPreferences {
 
 				Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
 				cipher.init(Cipher.ENCRYPT_MODE, secretKey, new IvParameterSpec(iv));
-				byte[] encrypted = cipher.doFinal(value.getBytes("UTF-8"));
+				byte[] encrypted = cipher.doFinal(plainText.getBytes("UTF-8"));
 
 				// Concatenate salt + iv + ciphertext
 				byte[] combined = new byte[salt.length + iv.length + encrypted.length];
@@ -79,58 +95,102 @@ public class SQLMinusPreferences {
 				System.arraycopy(encrypted, 0, combined, salt.length + iv.length, encrypted.length);
 
 				String encryptedValue = Base64.getEncoder().encodeToString(combined);
-				preferences.put(key, encryptedValue);
+				return encryptedValue;
 			} catch (InvalidKeyException | NoSuchAlgorithmException | InvalidKeySpecException | NoSuchPaddingException
 					| InvalidAlgorithmParameterException | IllegalBlockSizeException | BadPaddingException
 					| UnsupportedEncodingException e) {
-				System.err.println(e.getMessage());
+				throw new SQLMinusException(e.getMessage(), e);
 			}
 		} else {
-			System.err.println("no passphrase available to encrypte");
+			throw new SQLMinusException("no passphrase available to encrypt");
 		}
 	}
 
 	public String getDecryptedValue(String key, String def) {
-
 		String decryptedValue;
-		if (passPhrase.isPresent()) {
-			try {
-				if (!(Stream.of(preferences.keys()).anyMatch(k -> k.equals(key)))) {
-					// Return default value if this key does not exist in preferences
-					decryptedValue = def;
-				} else {
-					String encryptedText = preferences.get(key, "");
-					byte[] allBytes = Base64.getDecoder().decode(encryptedText);
-
-					// Extract salt, iv, and ciphertext
-					byte[] salt = new byte[16];
-					byte[] iv = new byte[16];
-					byte[] cipherBytes = new byte[allBytes.length - 32];
-					System.arraycopy(allBytes, 0, salt, 0, 16);
-					System.arraycopy(allBytes, 16, iv, 0, 16);
-					System.arraycopy(allBytes, 32, cipherBytes, 0, cipherBytes.length);
-
-					SecretKey secretKey = getSecretKey(passPhrase.get().toCharArray(), salt);
-
-					Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
-					cipher.init(Cipher.DECRYPT_MODE, secretKey, new IvParameterSpec(iv));
-					byte[] decrypted = cipher.doFinal(cipherBytes);
-
-					decryptedValue = new String(decrypted, "UTF-8");
-				}
-			} catch (NoSuchAlgorithmException | InvalidKeyException | InvalidKeySpecException | NoSuchPaddingException
-					| InvalidAlgorithmParameterException | IllegalBlockSizeException | BadPaddingException
-					| UnsupportedEncodingException | BackingStoreException e) {
-				System.err.println(e.getMessage());
-				// return default value if we are not able to decrypt from preferences
+		try {
+			if (!(Stream.of(preferences.keys()).anyMatch(k -> k.equals(key)))) {
+				// Return default value if this key does not exist in preferences
+				System.err.println("Key " + key + " does not exist in preferences, returning default value");
 				decryptedValue = def;
+			} else {
+				decryptedValue = getDecryptedString(preferences.get(key, ""));
 			}
-		} else {
-			System.err.println("no passphrase available to decrypt, returning default value");
+		} catch (BackingStoreException | SQLMinusException e) {
+			System.err.println("Error getting decrypted value, " + e.getMessage() + ", returning default value");
 			decryptedValue = def;
 		}
 
 		return decryptedValue;
+	}
+
+	private String getDecryptedString(String encryptedString) throws SQLMinusException {
+		if (passPhrase.isPresent()) {
+			try {
+				byte[] allBytes = Base64.getDecoder().decode(encryptedString);
+
+				// Extract salt, iv, and ciphertext
+				byte[] salt = new byte[16];
+				byte[] iv = new byte[16];
+				byte[] cipherBytes = new byte[allBytes.length - 32];
+				System.arraycopy(allBytes, 0, salt, 0, 16);
+				System.arraycopy(allBytes, 16, iv, 0, 16);
+				System.arraycopy(allBytes, 32, cipherBytes, 0, cipherBytes.length);
+
+				SecretKey secretKey = getSecretKey(passPhrase.get().toCharArray(), salt);
+
+				Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+				cipher.init(Cipher.DECRYPT_MODE, secretKey, new IvParameterSpec(iv));
+				byte[] decrypted = cipher.doFinal(cipherBytes);
+
+				return new String(decrypted, "UTF-8");
+
+			} catch (NoSuchAlgorithmException | InvalidKeyException | InvalidKeySpecException | NoSuchPaddingException
+					| InvalidAlgorithmParameterException | IllegalBlockSizeException | BadPaddingException
+					| UnsupportedEncodingException e) {
+				throw new SQLMinusException(e.getMessage(), e);
+			}
+		} else {
+			throw new SQLMinusException("no passphrase available to decrypt");
+
+		}
+	}
+
+	public void putSession(String sessionName, SessionEntity session) throws SQLMinusException {
+
+		SessionEntity encryptedSessionEntity = SessionEntity.builder().driverClassName(session.getDriverClassName())
+				.connectionString(session.getConnectionString()).userName(session.getUserName())
+				.password(getEncryptedString(session.getPassword())).build();
+		String sessionJson = gson.toJson(encryptedSessionEntity);
+		preferences.put(Constants.PreferencesKeys.SESSION_PREFIX + sessionName, sessionJson);
+	}
+
+	public SessionEntity getSession(String sessionName) throws SQLMinusException {
+		String sessionJson = preferences.get(Constants.PreferencesKeys.SESSION_PREFIX + sessionName, "");
+		if ("".equals(sessionJson)) {
+			throw new SQLMinusException("Unable to get session " + sessionName + " from preferences");
+		}
+		SessionEntity encryptedSessionEntity = gson.fromJson(sessionJson, SessionEntity.class);
+		SessionEntity sessionEntity = SessionEntity.builder()
+				.driverClassName(encryptedSessionEntity.getDriverClassName())
+				.connectionString(encryptedSessionEntity.getConnectionString())
+				.userName(encryptedSessionEntity.getUserName())
+				.password(getDecryptedString(encryptedSessionEntity.getPassword())).build();
+		return sessionEntity;
+	}
+
+	public void deleteSession(String sessionName) {
+		preferences.remove(Constants.PreferencesKeys.SESSION_PREFIX + sessionName);
+	}
+
+	public List<String> getSessionsList() throws SQLMinusException {
+		try {
+			return Stream.of(preferences.keys()).filter(k -> k.startsWith(Constants.PreferencesKeys.SESSION_PREFIX))
+					.map(k -> k.substring(Constants.PreferencesKeys.SESSION_PREFIX.length()))
+					.collect(Collectors.toList());
+		} catch (BackingStoreException e) {
+			throw new SQLMinusException("Unable to get sessions list " + e.getMessage(), e);
+		}
 	}
 
 	private SecretKey getSecretKey(char[] password, byte[] salt)
