@@ -1,9 +1,11 @@
 package org.misc.sqlminus;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
@@ -217,9 +219,14 @@ public class SQLMinusPreferences {
 	private Optional<String> generatePassphrase() {
 		Optional<String> generatedPassPhrase;
 		try {
-			if (Files.exists(Paths.get(Constants.PREFERENCES_SECRET_KEY_FILE))) {
+			Path preferencesSecretFile = Paths.get(Constants.PREFERENCES_SECRET_KEY_FILE);
+			if (Files.exists(preferencesSecretFile)) {
 				throw new IllegalStateException(
 						"Unable to create " + Constants.PREFERENCES_SECRET_KEY_FILE + ", file already exists");
+			}
+			File parent = preferencesSecretFile.getParent().toFile();
+			if (!parent.exists() && !parent.mkdirs()) {
+				throw new IllegalStateException("Couldn't create dir: " + parent);
 			}
 
 			String CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789~!@#$%^&*()<>?:{};";
@@ -233,7 +240,7 @@ public class SQLMinusPreferences {
 			}
 			generatedPassPhrase = Optional.of(sb.toString());
 
-			Files.writeString(Paths.get(Constants.PREFERENCES_SECRET_KEY_FILE), generatedPassPhrase.get(),
+			Files.writeString(preferencesSecretFile, generatedPassPhrase.get(),
 					StandardCharsets.UTF_8);
 		} catch (IOException e) {
 			generatedPassPhrase = Optional.empty();
