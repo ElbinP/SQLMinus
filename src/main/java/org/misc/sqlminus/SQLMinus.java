@@ -24,6 +24,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Arrays;
+import java.util.List;
 
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
@@ -147,7 +148,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 
 		c.gridx = 1;
 		c.weightx = 1;
-		c.gridwidth = 3;
+		c.gridwidth = 4;
 		driverClassName = new JTextField(sqlMinusPreferences.get(Constants.PreferencesKeys.DRIVER_CLASSNAME, ""), 50);
 		driverClassName.setActionCommand("CONNECT");
 		driverClassName.addActionListener(this);
@@ -166,7 +167,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 		connectionPanel.add(label2);
 
 		c.gridx = 1;
-		c.gridwidth = 3;
+		c.gridwidth = 4;
 		c.weightx = 1;
 		driverConnectionString = new JTextField(sqlMinusPreferences.get(Constants.PreferencesKeys.CONNECT_STRING, ""),
 				50);
@@ -205,6 +206,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 
 		c.gridx = 3;
 		c.weightx = 1;
+		c.gridwidth = 2;
 		dbPassword = new JPasswordField(
 				sqlMinusPreferences.getDecryptedValue(Constants.PreferencesKeys.DB_PASSWORD, ""), 20);
 		dbPassword.setActionCommand("CONNECT");
@@ -216,25 +218,25 @@ public class SQLMinus extends JFrame implements ActionListener {
 
 		c.gridx = 1;
 		c.gridy = 3;
-		JButton button2 = new JButton("CLEAR FIELDS");
-		button2.addActionListener(this);
+		c.gridwidth = 1;
+		JButton clearFieldsButton = new JButton("CLEAR FIELDS");
+		clearFieldsButton.addActionListener(this);
 		// button2.setFont(f);
-		button2.setBackground(buttonColor);
-		button2.setForeground(buttonTextColor);
-		gridbag.setConstraints(button2, c);
-		connectionPanel.add(button2);
-
-		c.gridx = 2;
-		c.weightx = 0.1;
-		JButton button3 = new JButton("CONNECT");
-		button3.addActionListener(this);
-		// button3.setFont(f);
-		button3.setBackground(buttonColor);
-		button3.setForeground(buttonTextColor);
-		gridbag.setConstraints(button3, c);
-		connectionPanel.add(button3);
+		clearFieldsButton.setBackground(buttonColor);
+		clearFieldsButton.setForeground(buttonTextColor);
+		gridbag.setConstraints(clearFieldsButton, c);
+		connectionPanel.add(clearFieldsButton);
 
 		c.gridx = 3;
+		JButton connectButton = new JButton("CONNECT");
+		connectButton.addActionListener(this);
+		// button3.setFont(f);
+		connectButton.setBackground(buttonColor);
+		connectButton.setForeground(buttonTextColor);
+		gridbag.setConstraints(connectButton, c);
+		connectionPanel.add(connectButton);
+
+		c.gridx = 4;
 		c.weightx = 1;
 		JButton disconnectButton = new JButton("DISCONNECT");
 		disconnectButton.addActionListener(this);
@@ -244,7 +246,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 		gridbag.setConstraints(disconnectButton, c);
 		connectionPanel.add(disconnectButton);
 
-		c.gridx = 4;
+		c.gridx = 5;
 		c.gridy = 0;
 		c.gridheight = 4;
 		c.fill = GridBagConstraints.BOTH;
@@ -253,6 +255,10 @@ public class SQLMinus extends JFrame implements ActionListener {
 		gridbag.setConstraints(sessionsPanel, c);
 		connectionPanel.add(sessionsPanel);
 
+		connectionPanel
+				.setFocusTraversalPolicy(new CustomFocusTraversalPolicy(List.of(driverClassName, driverConnectionString,
+						dbUsername, dbPassword, clearFieldsButton, connectButton, disconnectButton)));
+		connectionPanel.setFocusTraversalPolicyProvider(true);
 		connectionPanel.setBackground(backgroundColor);
 
 		/*****************
