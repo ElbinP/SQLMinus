@@ -54,6 +54,8 @@ import javax.swing.border.BevelBorder;
 import javax.swing.plaf.metal.MetalComboBoxEditor;
 import javax.swing.text.JTextComponent;
 
+import org.misc.sqlminus.session.SessionsPanel;
+
 import nocom.special.CustomizedMouseAdapter;
 import nocom.special.ImageReader;
 import nocom.special.LookAndFeelMenu;
@@ -96,7 +98,6 @@ public class SQLMinus extends JFrame implements ActionListener {
 		super("SQL Minus");
 
 		GridBagLayout gridbag = new GridBagLayout();
-		GridBagConstraints c = new GridBagConstraints();
 
 		// get the font attributes for the normal font
 		String fName = ResourceLoader.getResourceString("fName");
@@ -132,17 +133,21 @@ public class SQLMinus extends JFrame implements ActionListener {
 
 		JPanel connectionPanel = new JPanel(gridbag);
 
+		GridBagConstraints c = new GridBagConstraints();
 		c.insets = new Insets(8, 8, 8, 8);
 		c.fill = GridBagConstraints.HORIZONTAL;
+		c.weightx = 0.1;
 		c.weighty = 1;
-		c.weightx = 1;
+		c.gridx = 0;
+		c.gridy = 0;
 		JLabel label1 = new JLabel("Driver Name", JLabel.RIGHT);
 		// label1.setFont(f);
 		gridbag.setConstraints(label1, c);
 		connectionPanel.add(label1);
 
-		c.weightx = 4;
-		c.gridwidth = GridBagConstraints.REMAINDER;
+		c.gridx = 1;
+		c.weightx = 1;
+		c.gridwidth = 3;
 		driverClassName = new JTextField(sqlMinusPreferences.get(Constants.PreferencesKeys.DRIVER_CLASSNAME, ""), 50);
 		driverClassName.setActionCommand("CONNECT");
 		driverClassName.addActionListener(this);
@@ -151,15 +156,18 @@ public class SQLMinus extends JFrame implements ActionListener {
 		gridbag.setConstraints(driverClassName, c);
 		connectionPanel.add(driverClassName);
 
-		c.weightx = 1;
+		c.gridx = 0;
+		c.gridy = 1;
+		c.weightx = 0.1;
 		c.gridwidth = 1;
 		JLabel label2 = new JLabel("Connect String", JLabel.RIGHT);
 		// label2.setFont(f);
 		gridbag.setConstraints(label2, c);
 		connectionPanel.add(label2);
 
-		c.weightx = 4;
-		c.gridwidth = GridBagConstraints.REMAINDER;
+		c.gridx = 1;
+		c.gridwidth = 3;
+		c.weightx = 1;
 		driverConnectionString = new JTextField(sqlMinusPreferences.get(Constants.PreferencesKeys.CONNECT_STRING, ""),
 				50);
 		driverConnectionString.setActionCommand("CONNECT");
@@ -169,13 +177,17 @@ public class SQLMinus extends JFrame implements ActionListener {
 		gridbag.setConstraints(driverConnectionString, c);
 		connectionPanel.add(driverConnectionString);
 
-		c.weightx = 1;
+		c.gridx = 0;
+		c.gridy = 2;
+		c.weightx = 0.1;
 		c.gridwidth = 1;
 		JLabel label3 = new JLabel("Username", JLabel.RIGHT);
 		// label3.setFont(f);
 		gridbag.setConstraints(label3, c);
 		connectionPanel.add(label3);
 
+		c.gridx = 1;
+		c.weightx = 1;
 		dbUsername = new JTextField(sqlMinusPreferences.get(Constants.PreferencesKeys.DB_USERNAME, ""), 20);
 		dbUsername.setActionCommand("CONNECT");
 		dbUsername.addActionListener(this);
@@ -184,12 +196,15 @@ public class SQLMinus extends JFrame implements ActionListener {
 		gridbag.setConstraints(dbUsername, c);
 		connectionPanel.add(dbUsername);
 
+		c.gridx = 2;
+		c.weightx = 0.1;
 		JLabel label4 = new JLabel("Password", JLabel.RIGHT);
 		// label4.setFont(f);
 		gridbag.setConstraints(label4, c);
 		connectionPanel.add(label4);
 
-		c.gridwidth = GridBagConstraints.REMAINDER;
+		c.gridx = 3;
+		c.weightx = 1;
 		dbPassword = new JPasswordField(
 				sqlMinusPreferences.getDecryptedValue(Constants.PreferencesKeys.DB_PASSWORD, ""), 20);
 		dbPassword.setActionCommand("CONNECT");
@@ -199,7 +214,8 @@ public class SQLMinus extends JFrame implements ActionListener {
 		gridbag.setConstraints(dbPassword, c);
 		connectionPanel.add(dbPassword);
 
-		c.gridwidth = 1;
+		c.gridx = 1;
+		c.gridy = 3;
 		JButton button2 = new JButton("CLEAR FIELDS");
 		button2.addActionListener(this);
 		// button2.setFont(f);
@@ -208,6 +224,8 @@ public class SQLMinus extends JFrame implements ActionListener {
 		gridbag.setConstraints(button2, c);
 		connectionPanel.add(button2);
 
+		c.gridx = 2;
+		c.weightx = 0.1;
 		JButton button3 = new JButton("CONNECT");
 		button3.addActionListener(this);
 		// button3.setFont(f);
@@ -216,6 +234,8 @@ public class SQLMinus extends JFrame implements ActionListener {
 		gridbag.setConstraints(button3, c);
 		connectionPanel.add(button3);
 
+		c.gridx = 3;
+		c.weightx = 1;
 		JButton disconnectButton = new JButton("DISCONNECT");
 		disconnectButton.addActionListener(this);
 		// disconnectButton.setFont(f);
@@ -224,29 +244,14 @@ public class SQLMinus extends JFrame implements ActionListener {
 		gridbag.setConstraints(disconnectButton, c);
 		connectionPanel.add(disconnectButton);
 
-		JButton button4 = new JButton("Show Sample 1");
-		button4.addActionListener(this);
-		// button4.setFont(f);
-		// button4.setToolTipText("Shows the usual configuration for connecting with Sun
-		// jdbc odbc bridge driver");
-		button4.setToolTipText(ResourceLoader.getResourceString("sample1ToolTip"));
-		button4.setBackground(buttonColor);
-		button4.setForeground(buttonTextColor);
-		gridbag.setConstraints(button4, c);
-		connectionPanel.add(button4);
-
-		c.gridwidth = GridBagConstraints.REMAINDER;
-		c.gridheight = GridBagConstraints.REMAINDER;
-		JButton button5 = new JButton("Show Sample 2");
-		button5.addActionListener(this);
-		// button5.setFont(f);
-		// button5.setToolTipText("Shows the usual configuration for connecting with
-		// Oracle thin driver");
-		button5.setToolTipText(ResourceLoader.getResourceString("sample2ToolTip"));
-		button5.setBackground(buttonColor);
-		button5.setForeground(buttonTextColor);
-		gridbag.setConstraints(button5, c);
-		connectionPanel.add(button5);
+		c.gridx = 4;
+		c.gridy = 0;
+		c.gridheight = 4;
+		c.fill = GridBagConstraints.BOTH;
+		JPanel sessionsPanel = new SessionsPanel(driverClassName, driverConnectionString, dbUsername, dbPassword,
+				sqlMinusPreferences);
+		gridbag.setConstraints(sessionsPanel, c);
+		connectionPanel.add(sessionsPanel);
 
 		connectionPanel.setBackground(backgroundColor);
 
@@ -256,10 +261,13 @@ public class SQLMinus extends JFrame implements ActionListener {
 
 		JPanel optionsPanel = new JPanel(gridbag);
 
+		c.gridx = -1;
+		c.gridy = -1;
 		c.gridwidth = 1;
 		c.gridheight = 1;
 		c.weightx = 10;
 		c.weighty = 1;
+		c.fill = GridBagConstraints.HORIZONTAL;
 		/*
 		 * JLabel dummy1=new JLabel(""); dummy1.setFont(f);
 		 * gridbag.setConstraints(dummy1,c); optionsPanel.add(dummy1);
@@ -696,8 +704,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 		c.weightx = 50;
 		c.weighty = 1;
 		// sqlText=new JTextField("select * from emp",50);
-		Object[] optionArray = { makeObj(ResourceLoader.getResourceString("sample1SQLStatement")),
-				makeObj(ResourceLoader.getResourceString("sample2SQLStatement")) };
+		Object[] optionArray = {};
 		sqlText = new JComboBox(optionArray);
 		loadSQLTextsFromPreferences();
 		MetalComboBoxEditor editor = new MetalComboBoxEditor();
@@ -949,10 +956,6 @@ public class SQLMinus extends JFrame implements ActionListener {
 				rollbackTransactions();
 			else if (command.equals(COMMIT_TRANSACTIONS_COMMAND))
 				commitTransactions();
-			else if (command.equals("Show Sample 1"))
-				showSample1();
-			else if (command.equals("Show Sample 2"))
-				showSample2();
 			else if (command.equals("Minimum column width :"))
 				minColWidth.setText("" + MINCOLWIDTH);
 			else if (command.equals("Maximum column width :"))
@@ -1205,36 +1208,6 @@ public class SQLMinus extends JFrame implements ActionListener {
 				popMessage(se.getMessage());
 			}
 		}
-	}
-
-	public /* synchronized */ void showSample1() {
-		/*
-		 * driverClassName.setText("sun.jdbc.odbc.JdbcOdbcDriver");
-		 * driverConnectionString.setText("jdbc:odbc:accesstest");
-		 * dbUsername.setText("scott"); dbPassword.setText("");
-		 * sqlText.setText("select * from emp");
-		 */
-		driverClassName.setText(ResourceLoader.getResourceString("sample1Driver"));
-		driverConnectionString.setText(ResourceLoader.getResourceString("sample1ConnectString"));
-		dbUsername.setText(ResourceLoader.getResourceString("sample1User"));
-		dbPassword.setText("");
-		// sqlText.setText(ResourceLoader.getResourceString("sample1SQLStatement"));
-		sqlText.setSelectedItem(makeObj(ResourceLoader.getResourceString("sample1SQLStatement")));
-	}
-
-	public /* synchronized */ void showSample2() {
-		/*
-		 * driverClassName.setText("oracle.jdbc.driver.OracleDriver");
-		 * driverConnectionString.setText("jdbc:oracle:thin:@127.0.0.1:1521:orakle");
-		 * dbUsername.setText("scott"); dbPassword.setText("");
-		 * sqlText.setText("select * from emp");
-		 */
-		driverClassName.setText(ResourceLoader.getResourceString("sample2Driver"));
-		driverConnectionString.setText(ResourceLoader.getResourceString("sample2ConnectString"));
-		dbUsername.setText(ResourceLoader.getResourceString("sample2User"));
-		dbPassword.setText("");
-		// sqlText.setText(ResourceLoader.getResourceString("sample2SQLStatement"));
-		sqlText.setSelectedItem(makeObj(ResourceLoader.getResourceString("sample2SQLStatement")));
 	}
 
 	public /* synchronized */ void setCommit() throws SQLException {
