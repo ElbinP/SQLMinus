@@ -11,7 +11,6 @@ import java.util.List;
 import javax.swing.BorderFactory;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
-import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -32,7 +31,7 @@ public class SessionsPanel extends JPanel implements ActionListener {
 	private final JTextField driverClassName, connectionString, userName;
 	private final JPasswordField password;
 	private final SQLMinusPreferences sqlMinusPreferences;
-	private static final String SESSION_ERROR_TITLE = "Session error";
+	private static final String SESSION_ERROR_TITLE = "Load/Save/Delete session";
 
 	public SessionsPanel(JTextField driverClassName, JTextField connectionString, JTextField userName,
 			JPasswordField password, SQLMinusPreferences sqlMinusPreferences) {
@@ -48,20 +47,15 @@ public class SessionsPanel extends JPanel implements ActionListener {
 		GridBagConstraints c = new GridBagConstraints();
 		c.insets = new Insets(1, 1, 1, 1);
 
-		// Row 0: Label
+
 		c.gridx = 0;
 		c.gridy = 0;
-		c.anchor = GridBagConstraints.WEST;
-		add(new JLabel("Saved session"), c);
-
-		// Row 1: Text field
-		c.gridy = 1;
 		c.fill = GridBagConstraints.HORIZONTAL;
 		sessionName = new JTextField(20);
 		add(sessionName, c);
 
 		// Row 2: List with scroll
-		c.gridy = 2;
+		c.gridy = 1;
 		c.gridheight = 3;
 		c.fill = GridBagConstraints.BOTH;
 		c.weightx = 1.0;
@@ -80,19 +74,19 @@ public class SessionsPanel extends JPanel implements ActionListener {
 		c.gridx = 1;
 		c.fill = GridBagConstraints.HORIZONTAL;
 
-		c.gridy = 1;
+		c.gridy = 0;
 		saveButton = new JButton("Save");
 		saveButton.addActionListener(this);
 		add(saveButton, c);
 		
-		c.gridy = 2;
+		c.gridy = 1;
 		loadButton = new JButton("Load");
 		c.anchor = GridBagConstraints.NORTHWEST;
 		loadButton.addActionListener(this);
 		add(loadButton, c);
 
 
-		c.gridy = 3;
+		c.gridy = 2;
 		c.anchor = GridBagConstraints.NORTHWEST;
 		deleteButton = new JButton("Delete");
 		deleteButton.addActionListener(this);
