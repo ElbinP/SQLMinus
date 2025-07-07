@@ -68,6 +68,7 @@ public class SQLMinusPreferences {
 	public void putEncryptedValue(String key, String value) {
 		try {
 			String encryptedValue = getEncryptedString(value);
+			preferences.put(key, encryptedValue);
 		} catch (SQLMinusException e) {
 			System.err.println(e.getMessage());
 		}
@@ -240,8 +241,7 @@ public class SQLMinusPreferences {
 			}
 			generatedPassPhrase = Optional.of(sb.toString());
 
-			Files.writeString(preferencesSecretFile, generatedPassPhrase.get(),
-					StandardCharsets.UTF_8);
+			Files.writeString(preferencesSecretFile, generatedPassPhrase.get(), StandardCharsets.UTF_8);
 		} catch (IOException e) {
 			generatedPassPhrase = Optional.empty();
 		}
