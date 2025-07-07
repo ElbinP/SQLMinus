@@ -87,6 +87,7 @@ public class SessionsPanel extends JPanel implements ActionListener {
 		
 		c.gridy = 2;
 		loadButton = new JButton("Load");
+		c.anchor = GridBagConstraints.NORTHWEST;
 		loadButton.addActionListener(this);
 		add(loadButton, c);
 
