@@ -74,24 +74,24 @@ public class SessionsPanel extends JPanel implements ActionListener {
 		JScrollPane scrollPane = new JScrollPane(sessionsList);
 		add(scrollPane, c);
 
-		// Buttons in right column (rows 2, 3, 4)
-		c.gridx = 1;
 		c.gridheight = 1;
 		c.weightx = 0;
 		c.weighty = 0;
+		c.gridx = 1;
 		c.fill = GridBagConstraints.HORIZONTAL;
 
+		c.gridy = 1;
+		saveButton = new JButton("Save");
+		saveButton.addActionListener(this);
+		add(saveButton, c);
+		
 		c.gridy = 2;
 		loadButton = new JButton("Load");
 		loadButton.addActionListener(this);
 		add(loadButton, c);
 
-		c.gridy = 3;
-		saveButton = new JButton("Save");
-		saveButton.addActionListener(this);
-		add(saveButton, c);
 
-		c.gridy = 4;
+		c.gridy = 3;
 		c.anchor = GridBagConstraints.NORTHWEST;
 		deleteButton = new JButton("Delete");
 		deleteButton.addActionListener(this);
