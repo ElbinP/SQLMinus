@@ -255,9 +255,8 @@ public class SQLMinus extends JFrame implements ActionListener {
 		gridbag.setConstraints(sessionsPanel, c);
 		connectionPanel.add(sessionsPanel);
 
-		connectionPanel
-				.setFocusTraversalPolicy(new CustomFocusTraversalPolicy(List.of(driverClassName, driverConnectionString,
-						dbUsername, dbPassword, clearFieldsButton, connectButton, disconnectButton)));
+		connectionPanel.setFocusTraversalPolicy(new CustomFocusTraversalPolicy(List.of(driverClassName,
+				driverConnectionString, dbUsername, dbPassword, clearFieldsButton, connectButton, disconnectButton)));
 		connectionPanel.setFocusTraversalPolicyProvider(true);
 		connectionPanel.setBackground(backgroundColor);
 
@@ -853,7 +852,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 		 * text area inside, the popup menu for the said text area and such.
 		 ************************************************************/
 
-		textareaFrame = new SQLFrame(this, tfont, f, backgroundLight, 0, 0);
+		textareaFrame = new SQLFrame(this, tfont, f, backgroundLight, 0, 0, sqlMinusPreferences);
 		textareaFrame.getContentPane().setBackground(backgroundColor);
 		textareaFrame.setIconImage(iconImage);
 		textareaFrame.setBounds(150, 100, 600, 300);
@@ -1261,21 +1260,37 @@ public class SQLMinus extends JFrame implements ActionListener {
 	}
 
 	private void saveSQLTextsToPreferences() {
-		StringBuilder sqlTextsString = new StringBuilder();
-		for (int i = sqlText.getItemCount() - 1; i >= 0; i--) {
-			sqlTextsString.append(sqlText.getItemAt(i).toString()).append("<br/>");
+		try {
+			StringBuilder sqlTextsString = new StringBuilder();
+			for (int i = sqlText.getItemCount() - 1; i >= 0; i--) {
+				String encryptedSqlText = sqlMinusPreferences.getEncryptedString(sqlText.getItemAt(i).toString());
+				sqlTextsString.append(encryptedSqlText).append("<br/>");
+			}
+			sqlMinusPreferences.put(Constants.PreferencesKeys.SQL_TEXTS, sqlTextsString.toString());
+		} catch (SQLMinusException e) {
+			popMessage(e.getMessage());
 		}
-		sqlMinusPreferences.put(Constants.PreferencesKeys.SQL_TEXTS, sqlTextsString.toString());
 	}
 
 	private void loadSQLTextsFromPreferences() {
-		String sqlTextsString = sqlMinusPreferences.get(Constants.PreferencesKeys.SQL_TEXTS, null);
-		if (sqlTextsString != null) {
-			String[] sqlTextArray = sqlTextsString.split("<br/>");
-			Arrays.stream(sqlTextArray).forEach(s -> {
-				if (s.trim().length() > 0)
-					insertItem(sqlText, s);
-			});
+		try {
+			String sqlTextsString = sqlMinusPreferences.get(Constants.PreferencesKeys.SQL_TEXTS, null);
+			if (sqlTextsString != null) {
+				String[] sqlTextArray = sqlTextsString.split("<br/>");
+				Arrays.stream(sqlTextArray).forEach(s -> {
+					String decryptedSqlText;
+					try {
+						decryptedSqlText = sqlMinusPreferences.getDecryptedString(s);
+					} catch (SQLMinusException e) {
+						throw new IllegalStateException(e.getMessage(), e);
+					}
+					if (decryptedSqlText.trim().length() > 0) {
+						insertItem(sqlText, decryptedSqlText);
+					}
+				});
+			}
+		} catch (IllegalStateException e) {
+			popMessage(e.getMessage());
 		}
 	}
 

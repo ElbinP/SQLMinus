@@ -75,7 +75,7 @@ public class SQLMinusPreferences {
 
 	}
 
-	private String getEncryptedString(String plainText) throws SQLMinusException {
+	public String getEncryptedString(String plainText) throws SQLMinusException {
 		if (passPhrase.isPresent()) {
 			try {
 				// Generate random salt and IV
@@ -127,7 +127,7 @@ public class SQLMinusPreferences {
 		return decryptedValue;
 	}
 
-	private String getDecryptedString(String encryptedString) throws SQLMinusException {
+	public String getDecryptedString(String encryptedString) throws SQLMinusException {
 		if (passPhrase.isPresent()) {
 			try {
 				byte[] allBytes = Base64.getDecoder().decode(encryptedString);
