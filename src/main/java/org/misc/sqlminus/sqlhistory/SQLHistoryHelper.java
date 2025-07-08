@@ -8,10 +8,13 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
 import org.misc.sqlminus.Constants;
+import org.misc.sqlminus.SQLMinusException;
+import org.misc.sqlminus.SQLMinusPreferences;
 import org.misc.sqlminus.sqlhistory.entity.SQLHistory;
 
 import jakarta.xml.bind.JAXBContext;
@@ -21,7 +24,8 @@ import jakarta.xml.bind.Unmarshaller;
 
 public class SQLHistoryHelper {
 
-	public static List<String> getSQLCommandsFromHistory() throws IOException, JAXBException {
+	public static List<String> getSQLCommandsFromHistory(SQLMinusPreferences sqlMinusPreferences)
+			throws IOException, JAXBException {
 		File sqlHistoryZipFile = new File(Constants.SQL_HISTORY_FULL_FILE_PATH);
 		List<String> history = new ArrayList<>();
 		if (sqlHistoryZipFile.exists() && !sqlHistoryZipFile.isDirectory()) {
@@ -40,7 +44,14 @@ public class SQLHistoryHelper {
 				SQLHistory sqlHistory = (SQLHistory) jaxbUnmarshaller
 						.unmarshal(new ByteArrayInputStream(baos.toByteArray()));
 				if (sqlHistory.getSqlCommands() != null) {
-					history.addAll(sqlHistory.getSqlCommands());
+					List<String> decryptedSQLHistory = sqlHistory.getSqlCommands().stream().map(s -> {
+						try {
+							return sqlMinusPreferences.getDecryptedString(s);
+						} catch (SQLMinusException e) {
+							throw new IllegalStateException(e.getMessage(), e);
+						}
+					}).collect(Collectors.toList());
+					history.addAll(decryptedSQLHistory);
 				}
 			} finally {
 				// close resources
@@ -53,7 +64,8 @@ public class SQLHistoryHelper {
 		return history;
 	}
 
-	public static void saveSQLCommandsToHistory(List<String> sqlCommands) throws JAXBException, IOException {
+	public static void saveSQLCommandsToHistory(List<String> sqlCommands, SQLMinusPreferences sqlMinusPreferences)
+			throws JAXBException, IOException {
 		sqlCommands.removeIf(s -> s.trim().length() == 0);
 		File sqlHistoryZipFile = new File(Constants.SQL_HISTORY_FULL_FILE_PATH);
 		File parent = sqlHistoryZipFile.getParentFile();
@@ -67,7 +79,14 @@ public class SQLHistoryHelper {
 			// output pretty printed
 			jaxbMarshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
 			SQLHistory sqlHistory = new SQLHistory();
-			sqlHistory.setSqlCommands(sqlCommands);
+			List<String> encryptedSqlCommands = sqlCommands.stream().map(s -> {
+				try {
+					return sqlMinusPreferences.getEncryptedString(s);
+				} catch (SQLMinusException e) {
+					throw new IllegalStateException(e.getMessage(), e);
+				}
+			}).collect(Collectors.toList());
+			sqlHistory.setSqlCommands(encryptedSqlCommands);
 			ByteArrayOutputStream baos = new ByteArrayOutputStream();
 			FileOutputStream fos = new FileOutputStream(sqlHistoryZipFile, false);
 			GZIPOutputStream gzipOS = new GZIPOutputStream(fos);

@@ -66,9 +66,12 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 	private FileSaverThread fileSaver;
 	private FileOpenerThread fileOpener;
 	private LineNumberSetter lineNumberSetter;
+	private final SQLMinusPreferences sqlMinusPreferences;
 
-	public SQLFrame(final SQLMinus sqlMinusObject, Font tfont, Font f, Color backgroundLight, int hgap, int vgap) {
+	public SQLFrame(final SQLMinus sqlMinusObject, Font tfont, Font f, Color backgroundLight, int hgap, int vgap,
+			SQLMinusPreferences sqlMinusPreferences) {
 		super("Enter SQL Statement");
+		this.sqlMinusPreferences = sqlMinusPreferences;
 
 		getContentPane().setLayout(new BorderLayout(hgap, vgap));
 		this.sqlMinusObject = sqlMinusObject;
@@ -186,7 +189,7 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 
 		List<String> sqlHistory = null;
 		try {
-			sqlHistory = SQLHistoryHelper.getSQLCommandsFromHistory();
+			sqlHistory = SQLHistoryHelper.getSQLCommandsFromHistory(sqlMinusPreferences);
 			if (sqlHistory.size() > 0) {
 				sqlCommands.removeAllElements();
 				sqlCommands.addAll(sqlHistory);
@@ -508,7 +511,7 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 		List<String> sqlHistory = new ArrayList<>(sqlCommands);
 		Thread saveThread = new Thread(() -> {
 			try {
-				SQLHistoryHelper.saveSQLCommandsToHistory(sqlHistory);
+				SQLHistoryHelper.saveSQLCommandsToHistory(sqlHistory, sqlMinusPreferences);
 			} catch (Exception e) {
 				sqlMinusObject.popMessage("Error saving SQL History. " + e.getMessage());
 			}
