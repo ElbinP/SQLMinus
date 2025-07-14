@@ -692,7 +692,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 		tabbedPane.addTab("Connection", connectionPanel);
 		tabbedPane.addTab("Options", optionsPanel);
 		tabbedPane.addTab("Display", displayFormatPanel);
-		tabbedPane.addTab("Misc", miscPanel);
+		tabbedPane.addTab("Metadata", miscPanel);
 		tabbedPane.addTab("Drivers", driverPanel);
 		tabbedPane.setMinimumSize(new Dimension(0, 0));
 		// tabbedPane.setFont(f);
