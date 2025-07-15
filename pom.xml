@@ -12,6 +12,14 @@
 		<maven.compiler.source>11</maven.compiler.source>
 		<maven.compiler.target>11</maven.compiler.target>
 	</properties>
+
+	<scm>
+		<connection>scm:git:${project.scm.url}</connection>
+		<developerConnection>scm:git:${project.scm.url}</developerConnection>
+		<url>git@github.com:ElbinP/SQLMinus.git</url>
+		<tag>HEAD</tag>
+	</scm>
+
 	<dependencies>
 		<dependency>
 			<groupId>jakarta.xml.bind</groupId>
@@ -64,6 +72,14 @@
 				</executions>
 				<configuration>
 					<mainClass>org.misc.sqlminus.SQLMinus</mainClass>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-release-plugin</artifactId>
+				<version>3.1.1</version>
+				<configuration>
+					<scmCommentPrefix>[ci skip]</scmCommentPrefix>
 				</configuration>
 			</plugin>
 		</plugins>
