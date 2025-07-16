@@ -33,7 +33,7 @@ jobs:
 
     - name: Run Maven Release
       run: |
-        mvn release:prepare release:perform -B
+        mvn release:prepare release:perform -B -Dgoals=install
 
     - name: Upload built JAR as artifact
       if: success()
