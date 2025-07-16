@@ -63,7 +63,8 @@ import nocom.special.LookAndFeelMenu;
 
 public class SQLMinus extends JFrame implements ActionListener {
 
-	private final int MINCOLWIDTH = 15, MAXCOLWIDTH = 50, INTERCOLSPACE = 4, MAXDATALENGTH = 1000;
+	private final int DEFAULT_MINCOLWIDTH = 15, DEFAULT_MAXCOLWIDTH = 50, DEFAULT_INTERCOLSPACE = 4,
+			DEFAULT_MAXDATALENGTH = 1000;
 	private final String COMMIT_TRANSACTIONS_COMMAND = "COMMIT_TRANSACTIONS";
 	private final String ROLLBACK_TRANSACTIONS_COMMAND = "ROLLBACK_TRANSACTIONS";
 	public CustomizedMouseAdapter commonAdapter = new CustomizedMouseAdapter(false);
@@ -455,7 +456,8 @@ public class SQLMinus extends JFrame implements ActionListener {
 		c.gridwidth = 1;
 
 		// -----------------------------------------------------------------------------------------
-		maxColWidth = new JTextField("" + MAXCOLWIDTH);
+		maxColWidth = new JTextField(
+				"" + sqlMinusPreferences.getInt(Constants.PreferencesKeys.MAX_COL_WIDTH, DEFAULT_MAXCOLWIDTH));
 		maxColWidth.setToolTipText("Value must be greater than 0");
 		// maxColWidth.setFont(tfont);
 		maxColWidth.addMouseListener(commonAdapter);
@@ -464,7 +466,8 @@ public class SQLMinus extends JFrame implements ActionListener {
 		maxColWidthButton.addActionListener(this);
 		// maxColWidthButton.setFont(f);
 
-		minColWidth = new JTextField("" + MINCOLWIDTH);
+		minColWidth = new JTextField(
+				"" + sqlMinusPreferences.getInt(Constants.PreferencesKeys.MIN_COL_WIDTH, DEFAULT_MINCOLWIDTH));
 		minColWidth.setToolTipText("Value must be 0 or greater");
 		// minColWidth.setFont(tfont);
 		minColWidth.addMouseListener(commonAdapter);
@@ -473,7 +476,8 @@ public class SQLMinus extends JFrame implements ActionListener {
 		minColWidthButton.addActionListener(this);
 		// minColWidthButton.setFont(f);
 
-		interColSpace = new JTextField("" + INTERCOLSPACE);
+		interColSpace = new JTextField(
+				"" + sqlMinusPreferences.getInt(Constants.PreferencesKeys.INTER_COLUMN_SPACING, DEFAULT_INTERCOLSPACE));
 		interColSpace.setToolTipText("Value must be 0 or greater");
 		// interColSpace.setFont(tfont);
 		interColSpace.addMouseListener(commonAdapter);
@@ -482,7 +486,8 @@ public class SQLMinus extends JFrame implements ActionListener {
 		interColSpaceButton.addActionListener(this);
 		// interColSpaceButton.setFont(f);
 
-		maxDataLength = new JTextField("" + MAXDATALENGTH);
+		maxDataLength = new JTextField(
+				"" + sqlMinusPreferences.getInt(Constants.PreferencesKeys.MAX_DATA_LENGTH, DEFAULT_MAXDATALENGTH));
 		maxDataLength.setToolTipText("Value must be greater than 0");
 		// maxDataLength.setFont(tfont);
 		maxDataLength.addMouseListener(commonAdapter);
@@ -800,8 +805,8 @@ public class SQLMinus extends JFrame implements ActionListener {
 
 		// adding a jtable to the bottompanel(to be used instead of the text area if so
 		// desired
-		tableOutput = new SortableTable(new DisplayResultSetTableModel(), MINCOLWIDTH, MAXCOLWIDTH, backgroundLight,
-				iconImage, tfont);
+		tableOutput = new SortableTable(new DisplayResultSetTableModel(), DEFAULT_MINCOLWIDTH, DEFAULT_MAXCOLWIDTH,
+				backgroundLight, iconImage, tfont);
 		tableOutput.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		tableOutput.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
 		tableOutput.setBackground(backgroundColor);
@@ -962,13 +967,13 @@ public class SQLMinus extends JFrame implements ActionListener {
 			else if (command.equals(COMMIT_TRANSACTIONS_COMMAND))
 				commitTransactions();
 			else if (command.equals("Minimum column width :"))
-				minColWidth.setText("" + MINCOLWIDTH);
+				minColWidth.setText("" + DEFAULT_MINCOLWIDTH);
 			else if (command.equals("Maximum column width :"))
-				maxColWidth.setText("" + MAXCOLWIDTH);
+				maxColWidth.setText("" + DEFAULT_MAXCOLWIDTH);
 			else if (command.equals("Inter-column spacing :"))
-				interColSpace.setText("" + INTERCOLSPACE);
+				interColSpace.setText("" + DEFAULT_INTERCOLSPACE);
 			else if (command.equals("Maximum data length :"))
-				maxDataLength.setText("" + MAXDATALENGTH);
+				maxDataLength.setText("" + DEFAULT_MAXDATALENGTH);
 			else if (command.equals("Output in grid"))
 				enableTextOutputSettings(false);
 			else if (command.equals("Output as text"))
@@ -1033,7 +1038,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 			sqlMinusPreferences.put(Constants.PreferencesKeys.ROWS_TO_SELECT, "All");
 		}
 
-		int minColWidthValue = MINCOLWIDTH;
+		int minColWidthValue = DEFAULT_MINCOLWIDTH;
 		try {
 			if (minColWidth.isEnabled()) {
 				minColWidthValue = Integer.parseInt(minColWidth.getText().trim());
@@ -1041,6 +1046,8 @@ public class SQLMinus extends JFrame implements ActionListener {
 					popMessageAndCloseResultSet("Maximum column width should be 0 or greater", rst);
 					minColWidth.requestFocusInWindow();
 					return;
+				} else {
+					sqlMinusPreferences.putInt(Constants.PreferencesKeys.MIN_COL_WIDTH, minColWidthValue);
 				}
 			}
 		} catch (NumberFormatException ne) {
@@ -1049,7 +1056,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 			return;
 		}
 
-		int maxColWidthValue = MAXCOLWIDTH;
+		int maxColWidthValue = DEFAULT_MAXCOLWIDTH;
 		try {
 			if (maxColWidth.isEnabled()) {
 				maxColWidthValue = Integer.parseInt(maxColWidth.getText().trim());
@@ -1057,6 +1064,8 @@ public class SQLMinus extends JFrame implements ActionListener {
 					popMessageAndCloseResultSet("Maximum column width should be greater than 0", rst);
 					maxColWidth.requestFocusInWindow();
 					return;
+				} else {
+					sqlMinusPreferences.putInt(Constants.PreferencesKeys.MAX_COL_WIDTH, maxColWidthValue);
 				}
 			}
 		} catch (NumberFormatException ne) {
@@ -1065,7 +1074,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 			return;
 		}
 
-		int interColSpaceValue = INTERCOLSPACE;
+		int interColSpaceValue = DEFAULT_INTERCOLSPACE;
 		try {
 			if (interColSpace.isEnabled()) {
 				interColSpaceValue = Integer.parseInt(interColSpace.getText().trim());
@@ -1073,6 +1082,8 @@ public class SQLMinus extends JFrame implements ActionListener {
 					popMessageAndCloseResultSet("Inter-column spacing should be 0 or greater", rst);
 					interColSpace.requestFocusInWindow();
 					return;
+				} else {
+					sqlMinusPreferences.putInt(Constants.PreferencesKeys.INTER_COLUMN_SPACING, interColSpaceValue);
 				}
 			}
 		} catch (NumberFormatException ne) {
@@ -1081,7 +1092,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 			return;
 		}
 
-		int maxDataLengthValue = MAXDATALENGTH;
+		int maxDataLengthValue = DEFAULT_MAXDATALENGTH;
 		try {
 			if (maxDataLength.isEnabled()) {
 				maxDataLengthValue = Integer.parseInt(maxDataLength.getText().trim());
@@ -1089,6 +1100,8 @@ public class SQLMinus extends JFrame implements ActionListener {
 					popMessageAndCloseResultSet("Maximum data length should be greater than 0", rst);
 					maxDataLength.requestFocusInWindow();
 					return;
+				} else {
+					sqlMinusPreferences.putInt(Constants.PreferencesKeys.MAX_DATA_LENGTH, maxDataLengthValue);
 				}
 			}
 		} catch (NumberFormatException ne) {
