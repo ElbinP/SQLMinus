@@ -301,7 +301,8 @@ public class SQLMinus extends JFrame implements ActionListener {
 		gridbag.setConstraints(displayTextAreaPanel, c);
 		optionsPanel.add(displayTextAreaPanel);
 
-		clearScreenButton = new JCheckBox("Clear screen before each result", true);
+		clearScreenButton = new JCheckBox("Clear screen before each result",
+				sqlMinusPreferences.getBoolean(Constants.PreferencesKeys.CLEAR_SCREEN_BEFORE_EACH_RESULT, true));
 		// clearScreenButton.setFont(f);
 		clearScreenButton.setBackground(backgroundColor);
 		// gridbag.setConstraints(clearScreenButton,c);
@@ -411,7 +412,8 @@ public class SQLMinus extends JFrame implements ActionListener {
 		gridbag.setConstraints(setCommitPanel, c);
 		optionsPanel.add(setCommitPanel);
 
-		enableThreads = new JCheckBox("Enable threads", false);
+		enableThreads = new JCheckBox("Enable threads",
+				sqlMinusPreferences.getBoolean(Constants.PreferencesKeys.ENABLE_THREADS, false));
 		// enableThreads.setFont(f);
 		enableThreads.setBackground(backgroundColor);
 		enableThreads.setToolTipText("Use a separate thread for displaying the result");
@@ -423,16 +425,19 @@ public class SQLMinus extends JFrame implements ActionListener {
 		optionsPanel.add(enableThreadsPanel);
 
 		btTable = new JRadioButton("Output in grid");
-		btTable.setSelected(true);
 		// btTable.setFont(f);
 		btTable.addActionListener(this);
 		btText = new JRadioButton("Output as text");
-		btText.setSelected(false);
 		// btText.setFont(f);
 		btText.addActionListener(this);
 		ButtonGroup btGroup = new ButtonGroup();
 		btGroup.add(btTable);
 		btGroup.add(btText);
+		if (sqlMinusPreferences.getBoolean(Constants.PreferencesKeys.OUTPUT_IN_GRID, true)) {
+			btTable.setSelected(true);
+		} else {
+			btText.setSelected(true);
+		}
 		JPanel buttonPanel = new JPanel();
 		buttonPanel.add(btTable);
 		buttonPanel.add(btText);
@@ -511,7 +516,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 		// ---------------------------------------------------------------------------------------------------
 
 		// ---------------------------------------------------------------------------------------------------
-		nullRep = new JTextField("<NULL>");
+		nullRep = new JTextField(sqlMinusPreferences.get(Constants.PreferencesKeys.NULL_REPRESENTATION, "<NULL>"));
 		nullRep.setToolTipText("Enter the string to display for null values");
 		nullRep.addMouseListener(commonAdapter);
 		// nullRep.setFont(tfont);
@@ -523,7 +528,8 @@ public class SQLMinus extends JFrame implements ActionListener {
 		nullRepPanel.add(nullRep);
 		nullRepPanel.setBorder(BorderFactory.createEtchedBorder());
 
-		rowDividers = new JCheckBox("Always show row dividers", false);
+		rowDividers = new JCheckBox("Always show row dividers",
+				sqlMinusPreferences.getBoolean(Constants.PreferencesKeys.ALWAYS_SHOW_ROW_DIVIDERS, false));
 		rowDividers.setToolTipText("Show row dividers even for non-multiline result sets");
 		// rowDividers.setFont(f);
 		rowDividers.setBackground(backgroundColor);
@@ -1014,6 +1020,8 @@ public class SQLMinus extends JFrame implements ActionListener {
 	}
 
 	public /* synchronized */ void clearTextOutput() {
+		sqlMinusPreferences.putBoolean(Constants.PreferencesKeys.CLEAR_SCREEN_BEFORE_EACH_RESULT,
+				clearScreenButton.isSelected());
 		if (clearScreenButton.isSelected()) {
 			textOutput.setText("");
 		}
@@ -1110,6 +1118,11 @@ public class SQLMinus extends JFrame implements ActionListener {
 			return;
 		}
 
+		sqlMinusPreferences.put(Constants.PreferencesKeys.NULL_REPRESENTATION, nullRep.getText());
+		sqlMinusPreferences.putBoolean(Constants.PreferencesKeys.ALWAYS_SHOW_ROW_DIVIDERS, rowDividers.isSelected());
+		sqlMinusPreferences.putBoolean(Constants.PreferencesKeys.ENABLE_THREADS, enableThreads.isSelected());
+		sqlMinusPreferences.putBoolean(Constants.PreferencesKeys.OUTPUT_IN_GRID, btTable.isSelected());
+
 		try {
 			// rowsToReturn will be null if all rows are to be returned
 			if (btText.isSelected()) {
@@ -1117,7 +1130,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 				textSpane.setVisible(true);
 
 				displayObject.setDisplayParams(rowsToReturn, rst, textOutput, this, maxColWidthValue,
-						interColSpaceValue, rowDividers.isSelected(), maxDataLengthValue, nullRep.getText().trim());
+						interColSpaceValue, rowDividers.isSelected(), maxDataLengthValue, nullRep.getText());
 
 				if (enableThreads.isSelected()) {
 					new Thread(displayObject, "DISPLAY-RESULT-SET-THREAD").start();
@@ -1130,7 +1143,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 				tableOutput.setMinColWidth(minColWidthValue);
 				tableOutput.setMaxColWidth(maxColWidthValue);
 
-				displayGrid.setDisplayParams(rowsToReturn, rst, this, tableOutput, nullRep.getText().trim());
+				displayGrid.setDisplayParams(rowsToReturn, rst, this, tableOutput, nullRep.getText());
 
 				if (enableThreads.isSelected()) {
 					new Thread(displayGrid, "DISPLAY-RESULT-SET-AS-GRID-THREAD").start();
@@ -1471,7 +1484,6 @@ public class SQLMinus extends JFrame implements ActionListener {
 	}
 
 	private void enableTextOutputSettings(boolean flag) {
-		enableThreads.setSelected(flag);
 		minColWidth.setEnabled(!flag);
 		minColWidthButton.setEnabled(!flag);
 		interColSpace.setEnabled(flag);
