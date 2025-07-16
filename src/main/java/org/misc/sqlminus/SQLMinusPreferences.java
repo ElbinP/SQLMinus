@@ -65,6 +65,14 @@ public class SQLMinusPreferences {
 		preferences.putInt(key, value);
 	}
 
+	public void putBoolean(String key, boolean value) {
+		preferences.putBoolean(key, value);
+	}
+
+	public boolean getBoolean(String key, boolean def) {
+		return preferences.getBoolean(key, def);
+	}
+
 	public void putEncryptedValue(String key, String value) {
 		try {
 			String encryptedValue = getEncryptedString(value);
