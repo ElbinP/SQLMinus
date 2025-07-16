@@ -1,0 +1,44 @@
+name: Maven Release
+
+on:
+  workflow_dispatch:  # Manual trigger only
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Required for release plugin and tagging
+
+    - name: Set up Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'  # Change if needed
+
+    - name: Set up SSH
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        ssh-keyscan github.com >> ~/.ssh/known_hosts
+
+    - name: Configure Git
+      run: |
+        git config user.name "${{ secrets.GIT_NAME }}"
+        git config user.email "${{ secrets.GIT_EMAIL }}"
+
+    - name: Run Maven Release
+      run: |
+        mvn release:prepare release:perform -B
+
+    - name: Upload built JAR as artifact
+      if: success()
+      uses: actions/upload-artifact@v4
+      with:
+        name: released-jar
+        path: |
+          target/*.jar
