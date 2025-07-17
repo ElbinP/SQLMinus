@@ -1,19 +1,22 @@
 package org.misc.sqlminus;
 
-import nocom.special.UtilityFunctions;
-
-import javax.swing.*;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Optional;
 import java.util.Vector;
+
+import javax.swing.JOptionPane;
+import javax.swing.JTextArea;
+
+import nocom.special.UtilityFunctions;
 
 public class DisplayResultSet implements java.lang.Runnable {
 
 	private JTextArea textOutput;
 	private ResultSet rst;
 	private SQLMinus sqlMinusObject;
-	private Integer rowsToReturn;
+	private Optional<Integer> rowsToReturn;
 	private int maxColWidth, spacing;
 	private boolean rowDividers;
 	private int maxDataLength;
@@ -29,8 +32,9 @@ public class DisplayResultSet implements java.lang.Runnable {
 		stopExecution = true;
 	}
 
-	public void setDisplayParams(Integer rowsToReturn, ResultSet rst, JTextArea textOutput, SQLMinus sqlMinusObject,
-								 int maxColWidth, int spacing, boolean rowDividers, int maxDataLength, String nullRep) throws Exception {
+	public void setDisplayParams(Optional<Integer> rowsToReturn, ResultSet rst, JTextArea textOutput,
+			SQLMinus sqlMinusObject, int maxColWidth, int spacing, boolean rowDividers, int maxDataLength,
+			String nullRep) throws Exception {
 		if (!busy) {
 			busy = true;
 			if (sqlMinusObject != null)
@@ -92,7 +96,7 @@ public class DisplayResultSet implements java.lang.Runnable {
 					int rowsRead = 0;
 
 					// rowsToReturn will be null if all rows are to be returned
-					while (hasAnotherRow && ((rowsToReturn == null) || (rowsRead < rowsToReturn.intValue()))) {
+					while (hasAnotherRow && ((rowsToReturn.isEmpty()) || (rowsRead < rowsToReturn.get().intValue()))) {
 						if (stopExecution)
 							throw new ThreadKilledException("Thread killed");
 						ArrayList arlRow = new ArrayList();// arraylist for the corresponding row
@@ -242,7 +246,7 @@ public class DisplayResultSet implements java.lang.Runnable {
 						// textOutput.append(" ");//++++++++++++++++
 						for (int j = 1; j <= (columnSize[i]
 								- UtilityFunctions.getMaxLength(
-								(String[]) columnName[i].toArray(new String[columnName[i].size()]))
+										(String[]) columnName[i].toArray(new String[columnName[i].size()]))
 								+ spacing); j++) {
 							if (stopExecution)
 								throw new ThreadKilledException("Thread killed");
@@ -290,15 +294,15 @@ public class DisplayResultSet implements java.lang.Runnable {
 					if (sqlMinusObject != null)
 						sqlMinusObject.setStatusBarText(" " + rowlength + " row(s) selected");
 
-					if (rowsToReturn != null) {
+					if (rowsToReturn.isPresent()) {
 						// If there are remaining rows should we display them too?
-						if (hasAnotherRow && rowsToReturn.intValue() > 0) {
+						if (hasAnotherRow && rowsToReturn.get().intValue() > 0) {
 							option = JOptionPane.showConfirmDialog(null, "Show the next " + rowsToReturn + " rows?",
 									"Continue?", JOptionPane.YES_NO_OPTION);
 						}
-						if (rowsToReturn.intValue() < 1) {
-							textOutput.append(
-									"\nYou have set the number of rows to be fetched to " + rowsToReturn.intValue());
+						if (rowsToReturn.get().intValue() < 1) {
+							textOutput.append("\nYou have set the number of rows to be fetched to "
+									+ rowsToReturn.get().intValue());
 							textOutput.append("\nNo rows will be displayed\n");
 						}
 					}

@@ -1031,12 +1031,12 @@ public class SQLMinus extends JFrame implements ActionListener {
 	public /* synchronized */ void displayResultSet(ResultSet rst) {
 		clearTextOutput();
 
-		Integer rowsToReturn = null;
+		Optional<Integer> rowsToReturn = Optional.empty();
 		// rowsToReturn will be null if all rows are to be returned
 		if (!(((String) rowsComboBox.getSelectedItem()).equalsIgnoreCase("All"))) {
 			try {
 				String selectedItemValue = ((String) rowsComboBox.getSelectedItem()).trim();
-				rowsToReturn = Integer.valueOf(selectedItemValue);
+				rowsToReturn = Optional.of(Integer.valueOf(selectedItemValue));
 				sqlMinusPreferences.put(Constants.PreferencesKeys.ROWS_TO_SELECT, selectedItemValue);
 			} catch (NumberFormatException ne) {
 				popMessageAndCloseResultSet("Enter an integer for the number of records to be returned", rst);
