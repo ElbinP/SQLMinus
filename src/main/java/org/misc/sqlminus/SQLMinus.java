@@ -25,6 +25,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
@@ -79,8 +80,8 @@ public class SQLMinus extends JFrame implements ActionListener {
 	private JButton indicatorLabel;
 	private JLabel schemaLabel;
 	private JSplitPane splitPane;
-	private Connection conn;
-	private Statement stmt;
+	private Optional<Connection> conn = Optional.empty();
+	private Optional<Statement> stmt = Optional.empty();
 	private JCheckBox displayTextAreaButton, clearScreenButton, setCommitButton, rowDividers, enableThreads;
 	private JComboBox rowsComboBox;
 	private DisplayResultSet displayObject = new DisplayResultSet();
@@ -996,8 +997,6 @@ public class SQLMinus extends JFrame implements ActionListener {
 			} else if (command.equals("SHOW QUERY WINDOW-COMBO COMMAND")) {
 				showSQLFrame(true);
 			}
-		} catch (NullPointerException ne) {
-			popMessage("Possibly not connected");
 		} catch (SQLException se) {
 			popMessage(se.getMessage());
 		} catch (Exception e) {
@@ -1012,7 +1011,9 @@ public class SQLMinus extends JFrame implements ActionListener {
 //		} catch (Exception e) {
 //		}
 		try {
-			conn.close();
+			if (conn.isPresent()) {
+				conn.get().close();
+			}
 		} catch (Exception e) {
 		}
 		saveWindowSizeAndPositionInPreferences();
@@ -1212,53 +1213,55 @@ public class SQLMinus extends JFrame implements ActionListener {
 	}
 
 	private void showNextResult() {
-		if (!busy) {// quit if we are in the middle of displaying a previous
-			// resultset. This method will be called again when we are
-			// free so all the resultsets _WILL_ eventually be displayed.
-			try {
-				int updateCount;
-				while (true) {// run around in circles until we have no more results to display
-					if (stmt.getMoreResults()) {
-						if (JOptionPane.showConfirmDialog(null, "Show the next resultset?", "Next?",
-								JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
-							// System.err.println("Starting next display thread");
-							displayResultSet(stmt.getResultSet());
+		if (stmt.isPresent()) {
+			if (!busy) {// quit if we are in the middle of displaying a previous
+				// resultset. This method will be called again when we are
+				// free so all the resultsets _WILL_ eventually be displayed.
+				try {
+					int updateCount;
+					while (true) {// run around in circles until we have no more results to display
+						if (stmt.get().getMoreResults()) {
+							if (JOptionPane.showConfirmDialog(null, "Show the next resultset?", "Next?",
+									JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+								// System.err.println("Starting next display thread");
+								displayResultSet(stmt.get().getResultSet());
+							}
+							return;// This resultSet is displayed in a separate thread
+							// and this method will be called again when that
+							// separate thread quits. So we can exit here.
+						} else if ((updateCount = stmt.get().getUpdateCount()) != -1) {
+							popMessage(updateCount + " row(s) updated");
+						} else {
+							return;// if getMoreResults is false and if the updatecount is -1 then
+							// there are no more results to display and we can go home.
 						}
-						return;// This resultSet is displayed in a separate thread
-						// and this method will be called again when that
-						// separate thread quits. So we can exit here.
-					} else if ((updateCount = stmt.getUpdateCount()) != -1) {
-						popMessage(updateCount + " row(s) updated");
-					} else {
-						return;// if getMoreResults is false and if the updatecount is -1 then
-						// there are no more results to display and we can go home.
 					}
+				} catch (SQLException se) {
+					popMessage(se.getMessage());
 				}
-			} catch (NullPointerException ne) {
-			} catch (SQLException se) {
-				popMessage(se.getMessage());
 			}
+		} else {
+			popMessage("Not connected");
 		}
 	}
 
 	public /* synchronized */ void setCommit() throws SQLException {
-		try {
-			conn.setAutoCommit(setCommitButton.isSelected());
-		} catch (NullPointerException ne) {
+		if (conn.isPresent()) {
+			conn.get().setAutoCommit(setCommitButton.isSelected());
 		}
 	}
 
 	public void commitTransactions() throws SQLException {
-		if (conn != null) {
-			conn.commit();
+		if (conn.isPresent()) {
+			conn.get().commit();
 		} else {
 			popMessage("Not connected");
 		}
 	}
 
 	public void rollbackTransactions() throws SQLException {
-		if (conn != null) {
-			conn.rollback();
+		if (conn.isPresent()) {
+			conn.get().rollback();
 		} else {
 			popMessage("Not connected");
 		}
@@ -1329,23 +1332,25 @@ public class SQLMinus extends JFrame implements ActionListener {
 	}
 
 	public /* synchronized */ void executeStatement(String executionCommand) {
-		if (!busy) {
-			try {
-				int updateCount;
-				setStatusBarText("");
-				if (stmt.execute(executionCommand)) {
-					displayResultSet(stmt.getResultSet());
-				} else if ((updateCount = stmt.getUpdateCount()) != -1) {
-					popMessage(updateCount + " row(s) updated");
+		if (stmt.isPresent()) {
+			if (!busy) {
+				try {
+					int updateCount;
+					setStatusBarText("");
+					if (stmt.get().execute(executionCommand)) {
+						displayResultSet(stmt.get().getResultSet());
+					} else if ((updateCount = stmt.get().getUpdateCount()) != -1) {
+						popMessage(updateCount + " row(s) updated");
+					}
+					showNextResult();
+				} catch (SQLException se) {
+					popMessage(se.getMessage());
+				} catch (Exception e) {
+					popMessage(e.toString());
 				}
-				showNextResult();
-			} catch (SQLException se) {
-				popMessage(se.getMessage());
-			} catch (NullPointerException ne) {
-				popMessage("Possibly not connected");
-			} catch (Exception e) {
-				popMessage(e.toString());
 			}
+		} else {
+			popMessage("Not connected");
 		}
 	}
 
@@ -1353,12 +1358,12 @@ public class SQLMinus extends JFrame implements ActionListener {
 		if (!busy) {
 			disconnectDatabase();
 			saveConnectionSettingsToPreferences();
-			conn = driverPanel.getConnection(driverClassName.getText(), driverConnectionString.getText(),
-					dbUsername.getText(), new String(dbPassword.getPassword()));
+			conn = Optional.of(driverPanel.getConnection(driverClassName.getText(), driverConnectionString.getText(),
+					dbUsername.getText(), new String(dbPassword.getPassword())));
 			indicatorLabel.setText("CONNECTED");
 			indicatorLabel.setForeground(Color.green);
 			// popMessage("Connected");
-			stmt = conn.createStatement();
+			stmt = Optional.of(conn.get().createStatement());
 			setCommit();
 			sqlText.requestFocus();
 		}
@@ -1367,73 +1372,92 @@ public class SQLMinus extends JFrame implements ActionListener {
 	public /* synchronized */ void disconnectDatabase() {
 		if (!busy) {
 			try {
-				stmt.close();
-			} catch (NullPointerException ne) {
+				if (stmt.isPresent()) {
+					stmt.get().close();
+					stmt = Optional.empty();
+				}
 			} catch (Exception e) {
 				popMessage(e.toString());
 			}
 
 			try {
-				conn.rollback();
-			} catch (NullPointerException ne) {
+				if (conn.isPresent()) {
+					conn.get().rollback();
+				}
 			} catch (Exception e) {
 				popMessage(e.toString());
 			}
 
 			try {
-				conn.close();
-			} catch (NullPointerException ne) {
+				if (conn.isPresent()) {
+					conn.get().close();
+					conn = Optional.empty();
+				}
+				indicatorLabel.setText("DISCONNECTED");
+				indicatorLabel.setForeground(Color.red);
 			} catch (Exception e) {
 				popMessage(e.toString());
 			}
-			stmt = null;
-			conn = null;
-			indicatorLabel.setText("DISCONNECTED");
-			indicatorLabel.setForeground(Color.red);
 			// popMessage("Disconnected");
 		}
 	}
 
-	public /* synchronized */ void getTables() throws NullPointerException, SQLException {
-		if (!busy) {
-			ResultSet rst;
-			setStatusBarText("");
-			// DatabaseMetaData metaData=conn.getMetaData();
-			if (schemaText.isEnabled()) {
-				rst = conn.getMetaData().getTables(null, schemaText.getText(), tableText.getText(), null);
-			} else {
-				rst = conn.getMetaData().getTables(null, null, tableText.getText(), null);
+	public /* synchronized */ void getTables() throws SQLException {
+		if (conn.isPresent()) {
+			if (!busy) {
+				ResultSet rst;
+				setStatusBarText("");
+				// DatabaseMetaData metaData=conn.getMetaData();
+				if (schemaText.isEnabled()) {
+					rst = conn.get().getMetaData().getTables(null, schemaText.getText(), tableText.getText(), null);
+				} else {
+					rst = conn.get().getMetaData().getTables(null, null, tableText.getText(), null);
+				}
+				displayResultSet(rst);
 			}
-			displayResultSet(rst);
+		} else {
+			popMessage("Not connected");
 		}
 	}
 
-	public /* synchronized */ void getColumns() throws NullPointerException, SQLException {
-		if (!busy) {
-			ResultSet rst;
-			setStatusBarText("");
-			// DatabaseMetaData metaData=conn.getMetaData();
-			if (schemaText.isEnabled()) {
-				rst = conn.getMetaData().getColumns(null, schemaText.getText(), tableText.getText(),
-						columnText.getText());
-			} else {
-				rst = conn.getMetaData().getColumns(null, null, tableText.getText(), columnText.getText());
+	public /* synchronized */ void getColumns() throws SQLException {
+		if (conn.isPresent()) {
+			if (!busy) {
+				ResultSet rst;
+				setStatusBarText("");
+				// DatabaseMetaData metaData=conn.getMetaData();
+				if (schemaText.isEnabled()) {
+					rst = conn.get().getMetaData().getColumns(null, schemaText.getText(), tableText.getText(),
+							columnText.getText());
+				} else {
+					rst = conn.get().getMetaData().getColumns(null, null, tableText.getText(), columnText.getText());
+				}
+				displayResultSet(rst);
 			}
-			displayResultSet(rst);
+		} else {
+			popMessage("Not connected");
 		}
 	}
 
-	public void getSchemas() throws NullPointerException, SQLException {
-		if (!busy) {
-			setStatusBarText("");
-			displayResultSet(conn.getMetaData().getSchemas());
+	public void getSchemas() throws SQLException {
+		if (conn.isPresent()) {
+			if (!busy) {
+				setStatusBarText("");
+				displayResultSet(conn.get().getMetaData().getSchemas());
+			}
+		} else {
+			popMessage("Not connected");
 		}
 	}
 
-	public void getCatalogs() throws NullPointerException, SQLException {
-		if (!busy) {
-			setStatusBarText("");
-			displayResultSet(conn.getMetaData().getCatalogs());
+	public void getCatalogs() throws SQLException {
+		if (conn.isPresent()) {
+			if (!busy) {
+				setStatusBarText("");
+				displayResultSet(conn.get().getMetaData().getCatalogs());
+			}
+		} else {
+			popMessage("Not connected");
 		}
 	}
 
