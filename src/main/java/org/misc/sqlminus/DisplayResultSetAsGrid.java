@@ -2,6 +2,7 @@ package org.misc.sqlminus;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Optional;
 import java.util.Vector;
 
 import javax.swing.JOptionPane;
@@ -11,7 +12,7 @@ public class DisplayResultSetAsGrid implements Runnable {
 
 	private ResultSet rst;
 	private SQLMinus sqlMinusObject;
-	private Integer rowsToReturn;
+	private Optional<Integer> rowsToReturn;
 	private String nullRep;
 	private volatile boolean busy, stopExecution;
 	private SortableTable table;
@@ -25,8 +26,8 @@ public class DisplayResultSetAsGrid implements Runnable {
 		stopExecution = true;
 	}
 
-	public void setDisplayParams(Integer rowsToReturn, ResultSet rst, SQLMinus sqlMinusObject, SortableTable table,
-			String nullRep) throws Exception {
+	public void setDisplayParams(Optional<Integer> rowsToReturn, ResultSet rst, SQLMinus sqlMinusObject,
+			SortableTable table, String nullRep) throws Exception {
 		if (!busy) {
 			busy = true;
 			if (sqlMinusObject != null) {
@@ -77,7 +78,7 @@ public class DisplayResultSetAsGrid implements Runnable {
 					int rowsRead = 0;
 
 					// rowsToReturn will be null if all rows are to be returned
-					while (hasAnotherRow && ((rowsToReturn == null) || (rowsRead < rowsToReturn.intValue()))) {
+					while (hasAnotherRow && ((rowsToReturn.isEmpty()) || (rowsRead < rowsToReturn.get().intValue()))) {
 						if (stopExecution)
 							throw new ThreadKilledException("Thread killed");
 						Vector row = new Vector();
@@ -103,24 +104,21 @@ public class DisplayResultSetAsGrid implements Runnable {
 					if (sqlMinusObject != null)
 						sqlMinusObject.setStatusBarText(" " + rowContents.size() + " row(s) selected");
 
-					try {
+					if (rowsToReturn.isPresent()) {
 						// If there are remaining rows should we display them too?
-						if (hasAnotherRow && rowsToReturn.intValue() > 0) {
-							option = JOptionPane.showConfirmDialog(null, "Show the next " + rowsToReturn + " rows?",
+						if (hasAnotherRow && rowsToReturn.get().intValue() > 0) {
+							option = JOptionPane.showConfirmDialog(null, "Show the next " + rowsToReturn.get() + " rows?",
 									"Continue?", JOptionPane.YES_NO_OPTION);
 						}
-						if (rowsToReturn.intValue() < 1) {
+						if (rowsToReturn.get().intValue() < 1) {
 							// textOutput.append("\nYou have set the number of rows to be fetched to
 							// "+rowsToReturn.intValue());
 							// textOutput.append("\nNo rows will be displayed\n");
 							String message = "You have set the number of rows to be fetched to "
-									+ rowsToReturn.intValue();
+									+ rowsToReturn.get().intValue();
 							message = message + "\nNo Rows will be displayed";
 							JOptionPane.showMessageDialog(null, message);
 						}
-					} catch (NullPointerException ne) {
-						// NullPointerException may be thrown when rowsToReturn is null,
-						// which is the case when all rows are to be returned.
 					}
 
 				} while (option == JOptionPane.YES_OPTION);
