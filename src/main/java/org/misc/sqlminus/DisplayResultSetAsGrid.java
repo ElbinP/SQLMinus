@@ -107,7 +107,7 @@ public class DisplayResultSetAsGrid implements Runnable {
 					if (rowsToReturn.isPresent()) {
 						// If there are remaining rows should we display them too?
 						if (hasAnotherRow && rowsToReturn.get().intValue() > 0) {
-							option = JOptionPane.showConfirmDialog(null, "Show the next " + rowsToReturn + " rows?",
+							option = JOptionPane.showConfirmDialog(null, "Show the next " + rowsToReturn.get() + " rows?",
 									"Continue?", JOptionPane.YES_NO_OPTION);
 						}
 						if (rowsToReturn.get().intValue() < 1) {
