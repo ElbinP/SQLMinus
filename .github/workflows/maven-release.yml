@@ -38,7 +38,15 @@ jobs:
 
     - name: Run Maven Release
       run: |
-        mvn release:prepare release:perform -B -Darguments=-DskipTests -DautoVersionSubmodules=true -DpushChanges=true -Dgoals=install
+        CURRENT_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+        PATCH_VERSION=$(echo $CURRENT_VERSION | awk -F. -v OFS=. '{$NF += 1 ; print}')
+        mvn release:prepare release:perform -B \
+          -DreleaseVersion=$PATCH_VERSION \
+          -DdevelopmentVersion=$PATCH_VERSION-SNAPSHOT \
+          -Darguments=-DskipTests \
+          -DautoVersionSubmodules=true \
+          -DpushChanges=true \
+          -Dgoals=install
 
     - name: Get latest Git tag
       id: get_tag
