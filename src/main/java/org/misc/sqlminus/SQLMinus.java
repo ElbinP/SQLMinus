@@ -939,7 +939,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 
 		setBounds(windowX, windowY, windowWidth, windowHeight);
 		setVisible(true);
-		dbPassword.requestFocus();
+		dbPassword.requestFocusInWindow();
 
 		laf.setSavedLookAndFeel();
 	}
@@ -1365,7 +1365,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 			// popMessage("Connected");
 			stmt = Optional.of(conn.get().createStatement());
 			setCommit();
-			sqlText.requestFocus();
+			sqlText.requestFocusInWindow();
 		}
 	}
 

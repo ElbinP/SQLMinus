@@ -121,6 +121,7 @@ public class SessionsPanel extends JPanel implements ActionListener {
 	private void saveSession() {
 		if (sessionName.getText().trim().isBlank()) {
 			popErrorMessage("Specify the session name to save");
+			sessionName.requestFocusInWindow();
 		} else {
 			SessionEntity sessionEntity = SessionEntity.builder().driverClassName(driverClassName.getText())
 					.password(new String(password.getPassword())).connectionString(connectionString.getText())
