@@ -212,15 +212,11 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 			public void keyPressed(KeyEvent ke) {
 				try {
 					if (ke.isControlDown() && (ke.getKeyCode() == ke.VK_E)) {
-						sqlCommands.insertString(textInput.getText());
-						saveSQLCommandsToHistoryFile();
-						sqlMinusObject.executeStatement(textInput.getText());
+						execute();
 					} else if (ke.isControlDown() && (ke.getKeyCode() == ke.VK_UP)) {
-						textInput.setText(sqlCommands.getNext(textInput.getText()));
-						textInput.discardAllEdits();
+						goForwardInHistory();
 					} else if (ke.isControlDown() && (ke.getKeyCode() == ke.VK_DOWN)) {
-						textInput.setText(sqlCommands.getPrevious(textInput.getText()));
-						textInput.discardAllEdits();
+						goBackInHistory();
 					} else if (ke.isControlDown() && (ke.getKeyCode() == ke.VK_Z)) {
 						textInput.undo();
 					} else if (ke.isControlDown() && (ke.getKeyCode() == ke.VK_Y)) {
@@ -367,16 +363,11 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 		try {
 			String actionCommand = ae.getActionCommand();
 			if (actionCommand.equals("Execute")) {
-				sqlCommands.insertString(textInput.getText());
-				reloadHistoryPanel();
-				saveSQLCommandsToHistoryFile();
-				sqlMinusObject.executeStatement(textInput.getText());
+				execute();
 			} else if (actionCommand.equals("Back")) {
-				textInput.setText(sqlCommands.getPrevious(textInput.getText()));
-				textInput.discardAllEdits();
+				goBackInHistory();
 			} else if (actionCommand.equals("Forward")) {
-				textInput.setText(sqlCommands.getNext(textInput.getText()));
-				textInput.discardAllEdits();
+				goForwardInHistory();
 			} else if (actionCommand.equals("Undo"))
 				textInput.undo();
 			else if (actionCommand.equals("Redo"))
@@ -410,6 +401,23 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 		} finally {
 			updateToolBarButtons();
 		}
+	}
+
+	private void execute() {
+		sqlCommands.insertString(textInput.getText());
+		reloadHistoryPanel();
+		saveSQLCommandsToHistoryFile();
+		sqlMinusObject.executeStatement(textInput.getText());
+	}
+
+	private void goBackInHistory() throws VectorIndexOutOfBoundsException {
+		textInput.setText(sqlCommands.getPrevious(textInput.getText()));
+		textInput.discardAllEdits();
+	}
+
+	private void goForwardInHistory() throws VectorIndexOutOfBoundsException {
+		textInput.setText(sqlCommands.getNext(textInput.getText()));
+		textInput.discardAllEdits();
 	}
 
 	public void changedUpdate(DocumentEvent de) {
