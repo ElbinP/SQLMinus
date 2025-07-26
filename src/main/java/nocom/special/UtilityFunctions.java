@@ -158,5 +158,22 @@ public class UtilityFunctions {
 		}
 		return retval;
 	}
+	
+	/***
+	 * Get error messages from all inner exceptions
+	 * @param e
+	 * @return
+	 */
+	public static String getExceptionMessages(Throwable e) {
+	    StringBuilder sb = new StringBuilder();
+	    while (e != null) {
+	        sb.append(e.getClass().getName())
+	          .append(": ")
+	          .append(e.getMessage())
+	          .append("\n");
+	        e = e.getCause();
+	    }
+	    return sb.toString();
+	}
 
 }

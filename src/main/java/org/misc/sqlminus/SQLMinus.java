@@ -62,6 +62,7 @@ import org.misc.sqlminus.session.SessionsPanel;
 import nocom.special.CustomizedMouseAdapter;
 import nocom.special.ImageReader;
 import nocom.special.LookAndFeelMenu;
+import nocom.special.UtilityFunctions;
 
 public class SQLMinus extends JFrame implements ActionListener {
 
@@ -1326,10 +1327,8 @@ public class SQLMinus extends JFrame implements ActionListener {
 						popMessage(updateCount + " row(s) updated");
 					}
 					showNextResult();
-				} catch (SQLException se) {
-					popMessage(se.getMessage());
 				} catch (Exception e) {
-					popMessage(e.toString());
+					popMessage(UtilityFunctions.getExceptionMessages(e));
 				}
 			}
 		} else {
