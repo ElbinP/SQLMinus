@@ -25,10 +25,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.BorderFactory;
+import javax.swing.DefaultListModel;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
+import javax.swing.JList;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -36,6 +38,7 @@ import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JToolBar;
+import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -61,12 +64,14 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 	private JPopupMenu popup;
 	private JFileChooser fileChooser;
 	private JScrollPane textSPane, lineSPane;
+	private static final int HISTORY_CHARACTER_WIDTH = 23;
 	private JPanel centerPanel;
 	private String lineSeparator;
 	private FileSaverThread fileSaver;
 	private FileOpenerThread fileOpener;
 	private LineNumberSetter lineNumberSetter;
 	private final SQLMinusPreferences sqlMinusPreferences;
+	private final DefaultListModel<String> historyModel = new DefaultListModel<String>();
 
 	public SQLFrame(final SQLMinus sqlMinusObject, Font tfont, Font f, Color backgroundLight, int hgap, int vgap,
 			SQLMinusPreferences sqlMinusPreferences) {
@@ -291,6 +296,23 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 		centerPanel.add(textSPane, BorderLayout.CENTER);
 		centerPanel.add(lineSPane, BorderLayout.WEST);
 
+		JList<String> historyList = new JList<String>(historyModel);
+		historyList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		JScrollPane historyScrollPane = new JScrollPane(historyList);
+		historyScrollPane.setBorder(BorderFactory.createTitledBorder("History"));
+		historyList.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				if (e.getClickCount() == 2 && SwingUtilities.isLeftMouseButton(e)
+						&& historyList.getSelectedIndex() != -1) {
+					textInput.setText(sqlCommands.get(historyList.getSelectedIndex() + 1));
+					SwingUtilities.invokeLater(lineNumberSetter);
+				}
+			}
+		});
+		reloadHistoryPanel();
+		getContentPane().add(historyScrollPane, BorderLayout.EAST);
+
 		this.addFocusListener(this);
 
 		getContentPane().add(centerPanel, BorderLayout.CENTER);
@@ -301,6 +323,30 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 			}
 		});
 
+	}
+
+	private void reloadHistoryPanel() {
+		historyModel.clear();
+		for (int i = 1; i < sqlCommands.size(); i++) {
+			historyModel.addElement(getFirstFewChars(sqlCommands.get(i)));
+		}
+	}
+
+	private String getFirstFewChars(String multilineText) {
+		String[] lines = multilineText.split("\\R");
+
+		for (String line : lines) {
+			String trimmed = line.trim();
+			if (!trimmed.isEmpty()) {
+				if (trimmed.length() > HISTORY_CHARACTER_WIDTH - 3) {
+					return trimmed.substring(0, HISTORY_CHARACTER_WIDTH - 3) + "...";
+				} else {
+					return String.format("%-" + HISTORY_CHARACTER_WIDTH + "s", trimmed);
+				}
+			}
+		}
+
+		return " ".repeat(HISTORY_CHARACTER_WIDTH); // all lines were empty
 	}
 
 	private void updateToolBarButtons() {
@@ -319,6 +365,7 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 			String actionCommand = ae.getActionCommand();
 			if (actionCommand.equals("Execute")) {
 				sqlCommands.insertString(textInput.getText().trim());
+				reloadHistoryPanel();
 				saveSQLCommandsToHistoryFile();
 				sqlMinusObject.executeStatement(textInput.getText());
 			} else if (actionCommand.equals("Back")) {
@@ -347,6 +394,7 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 				saveToFile();
 			else if (actionCommand.equals("Empty")) {
 				sqlCommands.clearHistory();
+				reloadHistoryPanel();
 				textInput.setText("");
 				saveSQLCommandsToHistoryFile();
 			}
