@@ -21,9 +21,8 @@ public class IndexedVector extends Vector<String> {
 	}
 
 	/*
-	 * The item at index 0 is the current item or the item being currently edited.
-	 * The items from index 1 actually represent the history, the item at index 1
-	 * being the newest.
+	 * The item at index 0 is the current item or the working copy. The items from
+	 * index 1 actually represent the history, the item at index 1 being the newest.
 	 */
 	public void insertString(String str) {
 		if (str.trim().length() > 0) {
@@ -69,6 +68,17 @@ public class IndexedVector extends Vector<String> {
 		return elementAt(selectedIndex).toString();
 	}
 
+	/***
+	 * Remove the entry at the specified index. Resets the selected index to the
+	 * working copy at 0
+	 * 
+	 * @param index
+	 */
+	public void deleteStringAt(int index) {
+		removeElementAt(index);
+		selectedIndex = 0;
+	}
+
 	public boolean canGetPrevious() {
 		return selectedIndex < (size() - 1);
 	}
@@ -96,6 +106,13 @@ public class IndexedVector extends Vector<String> {
 
 	public int getSelectedIndex() {
 		return selectedIndex;
+	}
+
+	public void setSelectedIndex(int index) throws VectorIndexOutOfBoundsException {
+		if (index > size() - 1) {
+			throw new VectorIndexOutOfBoundsException("index " + index + "greater than size of vector " + size());
+		}
+		selectedIndex = index;
 	}
 
 }

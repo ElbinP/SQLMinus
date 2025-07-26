@@ -60,7 +60,7 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 	private IndexedVector sqlCommands;
 	private SQLMinus sqlMinusObject;
 	private JTextArea lineNumberPanel;
-	private JButton back, forward, undo, redo, execute, save, open, clearHistory;
+	private JButton back, forward, undo, redo, execute, save, open, clearHistory, deleteHistoryEntryButton;
 	private JPopupMenu popup;
 	private JFileChooser fileChooser;
 	private JScrollPane textSPane, lineSPane;
@@ -110,6 +110,12 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 			forward = new JButton("Forward");
 		}
 		try {
+			deleteHistoryEntryButton = new JButton(
+					new ImageIcon(ImageReader.getImage(this.getClass(), "/images/delete.png")));
+		} catch (Exception e) {
+			deleteHistoryEntryButton = new JButton("Delete");
+		}
+		try {
 			undo = new JButton(new ImageIcon(ImageReader.getImage(this.getClass(), "/images/undo.gif")));
 		} catch (Exception e) {
 			undo = new JButton("Undo");
@@ -150,6 +156,10 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 		forward.setActionCommand("Forward");
 		forward.addActionListener(this);
 
+		deleteHistoryEntryButton.setToolTipText("Delete history entry");
+		deleteHistoryEntryButton.setActionCommand("Delete history entry");
+		deleteHistoryEntryButton.addActionListener(this);
+
 		undo.setToolTipText("Undo");
 		// undo.setFont(f);
 		undo.setActionCommand("Undo");
@@ -185,6 +195,7 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 		toolBar.addSeparator();
 		toolBar.add(back);
 		toolBar.add(forward);
+		toolBar.add(deleteHistoryEntryButton);
 		toolBar.add(undo);
 		toolBar.add(redo);
 		toolBar.addSeparator();
@@ -302,8 +313,14 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 			public void mouseClicked(MouseEvent e) {
 				if (e.getClickCount() == 2 && SwingUtilities.isLeftMouseButton(e)
 						&& historyList.getSelectedIndex() != -1) {
-					textInput.setText(sqlCommands.get(historyList.getSelectedIndex() + 1));
-					SwingUtilities.invokeLater(lineNumberSetter);
+					try {
+						textInput.setText(sqlCommands.get(historyList.getSelectedIndex() + 1));
+						sqlCommands.setSelectedIndex(historyList.getSelectedIndex() + 1);
+						updateToolBarButtons();
+						SwingUtilities.invokeLater(lineNumberSetter);
+					} catch (VectorIndexOutOfBoundsException e1) {
+						Toolkit.getDefaultToolkit().beep();
+					}
 				}
 			}
 		});
@@ -392,6 +409,8 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 				reloadHistoryPanel();
 				textInput.setText("");
 				saveSQLCommandsToHistoryFile();
+			} else if (actionCommand.equals("Delete history entry")) {
+				deleteHistoryEntry();
 			}
 		} catch (VectorIndexOutOfBoundsException ve) {
 			Toolkit.getDefaultToolkit().beep();
@@ -425,6 +444,16 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 		if (sqlCommands.getSelectedIndex() > 0) {
 			historyList.setSelectedIndex(sqlCommands.getSelectedIndex() - 1);
 		}
+	}
+
+	private void deleteHistoryEntry() {
+		if (sqlCommands.getSelectedIndex() > 0) {
+			sqlCommands.deleteStringAt(sqlCommands.getSelectedIndex());
+		}
+		textInput.setText("");
+		updateToolBarButtons();
+		reloadHistoryPanel();
+		saveSQLCommandsToHistoryFile();
 	}
 
 	public void changedUpdate(DocumentEvent de) {
