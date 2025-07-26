@@ -72,6 +72,7 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 	private LineNumberSetter lineNumberSetter;
 	private final SQLMinusPreferences sqlMinusPreferences;
 	private final DefaultListModel<String> historyModel = new DefaultListModel<String>();
+	private final JList<String> historyList;
 
 	public SQLFrame(final SQLMinus sqlMinusObject, Font tfont, Font f, Color backgroundLight, int hgap, int vgap,
 			SQLMinusPreferences sqlMinusPreferences) {
@@ -292,7 +293,7 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 		centerPanel.add(textSPane, BorderLayout.CENTER);
 		centerPanel.add(lineSPane, BorderLayout.WEST);
 
-		JList<String> historyList = new JList<String>(historyModel);
+		historyList = new JList<String>(historyModel);
 		historyList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		JScrollPane historyScrollPane = new JScrollPane(historyList);
 		historyScrollPane.setBorder(BorderFactory.createTitledBorder("History"));
@@ -413,11 +414,17 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 	private void goBackInHistory() throws VectorIndexOutOfBoundsException {
 		textInput.setText(sqlCommands.getPrevious(textInput.getText()));
 		textInput.discardAllEdits();
+		if (sqlCommands.getSelectedIndex() > 0) {
+			historyList.setSelectedIndex(sqlCommands.getSelectedIndex() - 1);
+		}
 	}
 
 	private void goForwardInHistory() throws VectorIndexOutOfBoundsException {
 		textInput.setText(sqlCommands.getNext(textInput.getText()));
 		textInput.discardAllEdits();
+		if (sqlCommands.getSelectedIndex() > 0) {
+			historyList.setSelectedIndex(sqlCommands.getSelectedIndex() - 1);
+		}
 	}
 
 	public void changedUpdate(DocumentEvent de) {
