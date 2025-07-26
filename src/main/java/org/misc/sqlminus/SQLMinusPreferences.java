@@ -168,10 +168,8 @@ public class SQLMinusPreferences {
 	}
 
 	public void putSession(String sessionName, SessionEntity session) throws SQLMinusException {
-
-		SessionEntity encryptedSessionEntity = SessionEntity.builder().driverClassName(session.getDriverClassName())
-				.connectionString(session.getConnectionString()).userName(session.getUserName())
-				.password(getEncryptedString(session.getPassword())).build();
+		SessionEntity encryptedSessionEntity = SessionEntity.builder().connectionString(session.getConnectionString())
+				.userName(session.getUserName()).password(getEncryptedString(session.getPassword())).build();
 		String sessionJson = gson.toJson(encryptedSessionEntity);
 		preferences.put(Constants.PreferencesKeys.SESSION_PREFIX + sessionName, sessionJson);
 	}
@@ -183,7 +181,6 @@ public class SQLMinusPreferences {
 		}
 		SessionEntity encryptedSessionEntity = gson.fromJson(sessionJson, SessionEntity.class);
 		SessionEntity sessionEntity = SessionEntity.builder()
-				.driverClassName(encryptedSessionEntity.getDriverClassName())
 				.connectionString(encryptedSessionEntity.getConnectionString())
 				.userName(encryptedSessionEntity.getUserName())
 				.password(getDecryptedString(encryptedSessionEntity.getPassword())).build();

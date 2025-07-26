@@ -3,8 +3,6 @@ package org.misc.sqlminus.session;
 import com.google.gson.annotations.SerializedName;
 
 public class SessionEntity {
-	@SerializedName("driverClassName")
-	private final String driverClassName;
 
 	@SerializedName("connectionString")
 	private final String connectionString;
@@ -16,14 +14,9 @@ public class SessionEntity {
 	private final String password;
 
 	private SessionEntity(Builder builder) {
-		this.driverClassName = builder.driverClassName;
 		this.connectionString = builder.connectionString;
 		this.userName = builder.userName;
 		this.password = builder.password;
-	}
-
-	public String getDriverClassName() {
-		return driverClassName;
 	}
 
 	public String getConnectionString() {
@@ -43,15 +36,9 @@ public class SessionEntity {
 	}
 
 	public static class Builder {
-		private String driverClassName;
 		private String connectionString;
 		private String userName;
 		private String password;
-
-		public Builder driverClassName(String driverClassName) {
-			this.driverClassName = driverClassName;
-			return this;
-		}
 
 		public Builder connectionString(String connectionString) {
 			this.connectionString = connectionString;
