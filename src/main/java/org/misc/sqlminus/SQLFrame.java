@@ -212,14 +212,14 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 			public void keyPressed(KeyEvent ke) {
 				try {
 					if (ke.isControlDown() && (ke.getKeyCode() == ke.VK_E)) {
-						sqlCommands.insertString(textInput.getText().trim());
+						sqlCommands.insertString(textInput.getText());
 						saveSQLCommandsToHistoryFile();
 						sqlMinusObject.executeStatement(textInput.getText());
 					} else if (ke.isControlDown() && (ke.getKeyCode() == ke.VK_UP)) {
-						textInput.setText(sqlCommands.getNext(textInput.getText().trim()));
+						textInput.setText(sqlCommands.getNext(textInput.getText()));
 						textInput.discardAllEdits();
 					} else if (ke.isControlDown() && (ke.getKeyCode() == ke.VK_DOWN)) {
-						textInput.setText(sqlCommands.getPrevious(textInput.getText().trim()));
+						textInput.setText(sqlCommands.getPrevious(textInput.getText()));
 						textInput.discardAllEdits();
 					} else if (ke.isControlDown() && (ke.getKeyCode() == ke.VK_Z)) {
 						textInput.undo();
@@ -230,7 +230,7 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 					} else if (ke.isControlDown() && (ke.getKeyCode() == ke.VK_S)) {
 						saveToFile();
 					} else if (ke.isControlDown() && (ke.getKeyCode() == ke.VK_U)) {
-						sqlCommands.insertString(textInput.getText().trim());
+						sqlCommands.insertString(textInput.getText());
 						saveSQLCommandsToHistoryFile();
 					}
 				} catch (VectorIndexOutOfBoundsException ve) {
@@ -367,15 +367,15 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 		try {
 			String actionCommand = ae.getActionCommand();
 			if (actionCommand.equals("Execute")) {
-				sqlCommands.insertString(textInput.getText().trim());
+				sqlCommands.insertString(textInput.getText());
 				reloadHistoryPanel();
 				saveSQLCommandsToHistoryFile();
 				sqlMinusObject.executeStatement(textInput.getText());
 			} else if (actionCommand.equals("Back")) {
-				textInput.setText(sqlCommands.getPrevious(textInput.getText().trim()));
+				textInput.setText(sqlCommands.getPrevious(textInput.getText()));
 				textInput.discardAllEdits();
 			} else if (actionCommand.equals("Forward")) {
-				textInput.setText(sqlCommands.getNext(textInput.getText().trim()));
+				textInput.setText(sqlCommands.getNext(textInput.getText()));
 				textInput.discardAllEdits();
 			} else if (actionCommand.equals("Undo"))
 				textInput.undo();
