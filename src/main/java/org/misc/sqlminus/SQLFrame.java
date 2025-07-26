@@ -25,10 +25,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.BorderFactory;
+import javax.swing.DefaultListModel;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
+import javax.swing.JList;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -36,6 +38,7 @@ import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JToolBar;
+import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -61,12 +64,15 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 	private JPopupMenu popup;
 	private JFileChooser fileChooser;
 	private JScrollPane textSPane, lineSPane;
+	private static final int HISTORY_CHARACTER_WIDTH = 23;
 	private JPanel centerPanel;
 	private String lineSeparator;
 	private FileSaverThread fileSaver;
 	private FileOpenerThread fileOpener;
 	private LineNumberSetter lineNumberSetter;
 	private final SQLMinusPreferences sqlMinusPreferences;
+	private final DefaultListModel<String> historyModel = new DefaultListModel<String>();
+	private final JList<String> historyList;
 
 	public SQLFrame(final SQLMinus sqlMinusObject, Font tfont, Font f, Color backgroundLight, int hgap, int vgap,
 			SQLMinusPreferences sqlMinusPreferences) {
@@ -207,15 +213,11 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 			public void keyPressed(KeyEvent ke) {
 				try {
 					if (ke.isControlDown() && (ke.getKeyCode() == ke.VK_E)) {
-						sqlCommands.insertString(textInput.getText().trim());
-						saveSQLCommandsToHistoryFile();
-						sqlMinusObject.executeStatement(textInput.getText());
+						execute();
 					} else if (ke.isControlDown() && (ke.getKeyCode() == ke.VK_UP)) {
-						textInput.setText(sqlCommands.getNext(textInput.getText().trim()));
-						textInput.discardAllEdits();
+						goForwardInHistory();
 					} else if (ke.isControlDown() && (ke.getKeyCode() == ke.VK_DOWN)) {
-						textInput.setText(sqlCommands.getPrevious(textInput.getText().trim()));
-						textInput.discardAllEdits();
+						goBackInHistory();
 					} else if (ke.isControlDown() && (ke.getKeyCode() == ke.VK_Z)) {
 						textInput.undo();
 					} else if (ke.isControlDown() && (ke.getKeyCode() == ke.VK_Y)) {
@@ -225,7 +227,7 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 					} else if (ke.isControlDown() && (ke.getKeyCode() == ke.VK_S)) {
 						saveToFile();
 					} else if (ke.isControlDown() && (ke.getKeyCode() == ke.VK_U)) {
-						sqlCommands.insertString(textInput.getText().trim());
+						sqlCommands.insertString(textInput.getText());
 						saveSQLCommandsToHistoryFile();
 					}
 				} catch (VectorIndexOutOfBoundsException ve) {
@@ -291,6 +293,23 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 		centerPanel.add(textSPane, BorderLayout.CENTER);
 		centerPanel.add(lineSPane, BorderLayout.WEST);
 
+		historyList = new JList<String>(historyModel);
+		historyList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		JScrollPane historyScrollPane = new JScrollPane(historyList);
+		historyScrollPane.setBorder(BorderFactory.createTitledBorder("History"));
+		historyList.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				if (e.getClickCount() == 2 && SwingUtilities.isLeftMouseButton(e)
+						&& historyList.getSelectedIndex() != -1) {
+					textInput.setText(sqlCommands.get(historyList.getSelectedIndex() + 1));
+					SwingUtilities.invokeLater(lineNumberSetter);
+				}
+			}
+		});
+		reloadHistoryPanel();
+		getContentPane().add(historyScrollPane, BorderLayout.EAST);
+
 		this.addFocusListener(this);
 
 		getContentPane().add(centerPanel, BorderLayout.CENTER);
@@ -301,6 +320,33 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 			}
 		});
 
+	}
+
+	private void reloadHistoryPanel() {
+		Thread historyReloadThread = new Thread(() -> {
+			historyModel.clear();
+			for (int i = 1; i < sqlCommands.size(); i++) {
+				historyModel.addElement(getFirstFewChars(sqlCommands.get(i)));
+			}
+		});
+		SwingUtilities.invokeLater(historyReloadThread);
+	}
+
+	private String getFirstFewChars(String multilineText) {
+		String[] lines = multilineText.split("\\R");
+
+		for (String line : lines) {
+			String trimmed = line.trim();
+			if (!trimmed.isEmpty()) {
+				if (trimmed.length() > HISTORY_CHARACTER_WIDTH - 3) {
+					return trimmed.substring(0, HISTORY_CHARACTER_WIDTH - 3) + "...";
+				} else {
+					return String.format("%-" + HISTORY_CHARACTER_WIDTH + "s", trimmed);
+				}
+			}
+		}
+
+		return " ".repeat(HISTORY_CHARACTER_WIDTH); // all lines were empty
 	}
 
 	private void updateToolBarButtons() {
@@ -318,15 +364,11 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 		try {
 			String actionCommand = ae.getActionCommand();
 			if (actionCommand.equals("Execute")) {
-				sqlCommands.insertString(textInput.getText().trim());
-				saveSQLCommandsToHistoryFile();
-				sqlMinusObject.executeStatement(textInput.getText());
+				execute();
 			} else if (actionCommand.equals("Back")) {
-				textInput.setText(sqlCommands.getPrevious(textInput.getText().trim()));
-				textInput.discardAllEdits();
+				goBackInHistory();
 			} else if (actionCommand.equals("Forward")) {
-				textInput.setText(sqlCommands.getNext(textInput.getText().trim()));
-				textInput.discardAllEdits();
+				goForwardInHistory();
 			} else if (actionCommand.equals("Undo"))
 				textInput.undo();
 			else if (actionCommand.equals("Redo"))
@@ -347,6 +389,7 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 				saveToFile();
 			else if (actionCommand.equals("Empty")) {
 				sqlCommands.clearHistory();
+				reloadHistoryPanel();
 				textInput.setText("");
 				saveSQLCommandsToHistoryFile();
 			}
@@ -358,6 +401,29 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 			Toolkit.getDefaultToolkit().beep();
 		} finally {
 			updateToolBarButtons();
+		}
+	}
+
+	private void execute() {
+		sqlCommands.insertString(textInput.getText());
+		reloadHistoryPanel();
+		saveSQLCommandsToHistoryFile();
+		sqlMinusObject.executeStatement(textInput.getText());
+	}
+
+	private void goBackInHistory() throws VectorIndexOutOfBoundsException {
+		textInput.setText(sqlCommands.getPrevious(textInput.getText()));
+		textInput.discardAllEdits();
+		if (sqlCommands.getSelectedIndex() > 0) {
+			historyList.setSelectedIndex(sqlCommands.getSelectedIndex() - 1);
+		}
+	}
+
+	private void goForwardInHistory() throws VectorIndexOutOfBoundsException {
+		textInput.setText(sqlCommands.getNext(textInput.getText()));
+		textInput.discardAllEdits();
+		if (sqlCommands.getSelectedIndex() > 0) {
+			historyList.setSelectedIndex(sqlCommands.getSelectedIndex() - 1);
 		}
 	}
 
@@ -508,15 +574,15 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 	}
 
 	private void saveSQLCommandsToHistoryFile() {
-		List<String> sqlHistory = new ArrayList<>(sqlCommands);
 		Thread saveThread = new Thread(() -> {
 			try {
+				List<String> sqlHistory = new ArrayList<>(sqlCommands);
 				SQLHistoryHelper.saveSQLCommandsToHistory(sqlHistory, sqlMinusPreferences);
 			} catch (Exception e) {
 				sqlMinusObject.popMessage("Error saving SQL History. " + e.getMessage());
 			}
 		});
-		saveThread.start();
+		SwingUtilities.invokeLater(saveThread);
 	}
 
 }

@@ -94,4 +94,8 @@ public class IndexedVector extends Vector<String> {
 		System.out.println("----------------------");
 	}
 
+	public int getSelectedIndex() {
+		return selectedIndex;
+	}
+
 }

@@ -867,7 +867,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 		textareaFrame = new SQLFrame(this, tfont, f, backgroundLight, 0, 0, sqlMinusPreferences);
 		textareaFrame.getContentPane().setBackground(backgroundColor);
 		textareaFrame.setIconImage(iconImage);
-		textareaFrame.setBounds(150, 100, 600, 300);
+		textareaFrame.setBounds(150, 100, 700, 300);
 		textareaFrame.setVisible(false);
 		laf.addComponentToMonitor(textareaFrame);
 
