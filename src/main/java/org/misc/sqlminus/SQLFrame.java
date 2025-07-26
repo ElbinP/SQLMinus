@@ -327,6 +327,8 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 		reloadHistoryPanel();
 		getContentPane().add(historyScrollPane, BorderLayout.EAST);
 
+		updateToolBarButtons();
+
 		this.addFocusListener(this);
 
 		getContentPane().add(centerPanel, BorderLayout.CENTER);
@@ -371,6 +373,7 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 		redo.setEnabled(textInput.canRedo());
 		forward.setEnabled(sqlCommands.canGetNext());
 		back.setEnabled(sqlCommands.canGetPrevious());
+		deleteHistoryEntryButton.setEnabled(sqlCommands.getSelectedIndex() > 0);
 		if (textInput.getText().trim().length() > 0)
 			save.setEnabled(true);
 		else
@@ -449,11 +452,11 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 	private void deleteHistoryEntry() {
 		if (sqlCommands.getSelectedIndex() > 0) {
 			sqlCommands.deleteStringAt(sqlCommands.getSelectedIndex());
+			textInput.setText("");
+			updateToolBarButtons();
+			reloadHistoryPanel();
+			saveSQLCommandsToHistoryFile();
 		}
-		textInput.setText("");
-		updateToolBarButtons();
-		reloadHistoryPanel();
-		saveSQLCommandsToHistoryFile();
 	}
 
 	public void changedUpdate(DocumentEvent de) {

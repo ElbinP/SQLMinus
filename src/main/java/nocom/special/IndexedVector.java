@@ -76,7 +76,11 @@ public class IndexedVector extends Vector<String> {
 	 */
 	public void deleteStringAt(int index) {
 		removeElementAt(index);
-		selectedIndex = 0;
+		if (size() == 1) {
+			clearHistory();
+		} else {
+			selectedIndex = 0;
+		}
 	}
 
 	public boolean canGetPrevious() {
