@@ -326,10 +326,13 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 	}
 
 	private void reloadHistoryPanel() {
-		historyModel.clear();
-		for (int i = 1; i < sqlCommands.size(); i++) {
-			historyModel.addElement(getFirstFewChars(sqlCommands.get(i)));
-		}
+		Thread historyReloadThread = new Thread(() -> {
+			historyModel.clear();
+			for (int i = 1; i < sqlCommands.size(); i++) {
+				historyModel.addElement(getFirstFewChars(sqlCommands.get(i)));
+			}
+		});
+		SwingUtilities.invokeLater(historyReloadThread);
 	}
 
 	private String getFirstFewChars(String multilineText) {
@@ -556,15 +559,15 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 	}
 
 	private void saveSQLCommandsToHistoryFile() {
-		List<String> sqlHistory = new ArrayList<>(sqlCommands);
 		Thread saveThread = new Thread(() -> {
 			try {
+				List<String> sqlHistory = new ArrayList<>(sqlCommands);
 				SQLHistoryHelper.saveSQLCommandsToHistory(sqlHistory, sqlMinusPreferences);
 			} catch (Exception e) {
 				sqlMinusObject.popMessage("Error saving SQL History. " + e.getMessage());
 			}
 		});
-		saveThread.start();
+		SwingUtilities.invokeLater(saveThread);
 	}
 
 }
