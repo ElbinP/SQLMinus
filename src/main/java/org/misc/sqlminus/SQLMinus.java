@@ -983,10 +983,8 @@ public class SQLMinus extends JFrame implements ActionListener {
 			} else if (command.equals("SHOW QUERY WINDOW-COMBO COMMAND")) {
 				showSQLFrame(true);
 			}
-		} catch (SQLException se) {
-			popMessage(se.getMessage());
 		} catch (Exception e) {
-			popMessage(e.toString());
+			popMessage(UtilityFunctions.getExceptionMessages(e));
 		}
 	}
 
