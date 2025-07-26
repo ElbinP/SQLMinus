@@ -9,13 +9,16 @@ import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.sql.Connection;
 import java.sql.Driver;
+import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Properties;
+import java.util.ServiceLoader;
 import java.util.prefs.Preferences;
 
 import javax.swing.DefaultListModel;
@@ -118,20 +121,26 @@ public class ClassLoaderPanel extends JPanel implements ActionListener {
 		}
 	}
 
-	public Connection getConnection(String driverName, String connectString, String username, String password)
-			throws Exception {
+	public Connection getConnection(String connectString, String username, String password)
+			throws SQLException, MalformedURLException {
 		URL[] url = new URL[jarList.getSize()];
 		for (int i = 0; i < jarList.getSize(); i++) {
 			url[i] = new URL("file:" + jarList.getElementAt(i));
 		}
 		URLClassLoader classLoader = new URLClassLoader(url);
-		Driver driver = (Driver) Class.forName(driverName, true, classLoader).newInstance();
+
+		// Use ServiceLoader to find the driver
+		ServiceLoader<Driver> serviceLoader = ServiceLoader.load(Driver.class, classLoader);
+		for (Driver driver : serviceLoader) {
+			DriverManager.registerDriver(new DriverShim(driver));
+		}
+
 		Properties prop = new Properties();
 		prop.setProperty("user", username);
 		prop.setProperty("password", password);
 		Connection conn;
 		try {
-			if ((conn = driver.connect(connectString, prop)) != null)
+			if ((conn = DriverManager.getConnection(connectString, prop)) != null)
 				return conn;
 			else
 				throw new SQLException("Invalid connect string");

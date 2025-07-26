@@ -19,6 +19,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.lang.reflect.Method;
+import java.net.MalformedURLException;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -71,8 +72,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 	public CustomizedMouseAdapter commonAdapter = new CustomizedMouseAdapter(false);
 	private JTextArea textOutput;
 	private SQLFrame textareaFrame;
-	private JTextField driverClassName, driverConnectionString, dbUsername, tableText, columnText, schemaText,
-			statusBar;
+	private JTextField driverConnectionString, dbUsername, tableText, columnText, schemaText, statusBar;
 	private JComboBox sqlText;
 	private JTextField minColWidth, maxColWidth, interColSpace, maxDataLength, nullRep;
 	private JButton minColWidthButton, maxColWidthButton, interColSpaceButton, maxDataLengthButton;
@@ -94,6 +94,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 	private String[] rowsComboBoxOptions = { "100", "500", "All" };
 	private SQLMinusPreferences sqlMinusPreferences = new SQLMinusPreferences();
 	public LookAndFeelMenu laf = new LookAndFeelMenu(new Component[] {}, KeyEvent.VK_L, null, sqlMinusPreferences);
+	private static final int SPLIT_PANE_DIVIDER_LOCATION = 142;
 
 	/************** The Constructor for SQLMinus ***********************/
 
@@ -143,24 +144,9 @@ public class SQLMinus extends JFrame implements ActionListener {
 		c.weighty = 1;
 		c.gridx = 0;
 		c.gridy = 0;
-		JLabel label1 = new JLabel("Driver Name", JLabel.RIGHT);
-		// label1.setFont(f);
-		gridbag.setConstraints(label1, c);
-		connectionPanel.add(label1);
-
-		c.gridx = 1;
-		c.weightx = 1;
-		c.gridwidth = 4;
-		driverClassName = new JTextField(sqlMinusPreferences.get(Constants.PreferencesKeys.DRIVER_CLASSNAME, ""), 50);
-		driverClassName.setActionCommand("CONNECT");
-		driverClassName.addActionListener(this);
-		driverClassName.addMouseListener(commonAdapter);
-		// driverClassName.setFont(tfont);
-		gridbag.setConstraints(driverClassName, c);
-		connectionPanel.add(driverClassName);
 
 		c.gridx = 0;
-		c.gridy = 1;
+		c.gridy = 0;
 		c.weightx = 0.1;
 		c.gridwidth = 1;
 		JLabel label2 = new JLabel("Connect String", JLabel.RIGHT);
@@ -181,7 +167,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 		connectionPanel.add(driverConnectionString);
 
 		c.gridx = 0;
-		c.gridy = 2;
+		c.gridy = 1;
 		c.weightx = 0.1;
 		c.gridwidth = 1;
 		JLabel label3 = new JLabel("Username", JLabel.RIGHT);
@@ -219,7 +205,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 		connectionPanel.add(dbPassword);
 
 		c.gridx = 1;
-		c.gridy = 3;
+		c.gridy = 2;
 		c.gridwidth = 1;
 		JButton clearFieldsButton = new JButton("CLEAR FIELDS");
 		clearFieldsButton.addActionListener(this);
@@ -252,13 +238,12 @@ public class SQLMinus extends JFrame implements ActionListener {
 		c.gridy = 0;
 		c.gridheight = 4;
 		c.fill = GridBagConstraints.BOTH;
-		JPanel sessionsPanel = new SessionsPanel(driverClassName, driverConnectionString, dbUsername, dbPassword,
-				sqlMinusPreferences);
+		JPanel sessionsPanel = new SessionsPanel(driverConnectionString, dbUsername, dbPassword, sqlMinusPreferences);
 		gridbag.setConstraints(sessionsPanel, c);
 		connectionPanel.add(sessionsPanel);
 
-		connectionPanel.setFocusTraversalPolicy(new CustomFocusTraversalPolicy(List.of(driverClassName,
-				driverConnectionString, dbUsername, dbPassword, clearFieldsButton, connectButton, disconnectButton)));
+		connectionPanel.setFocusTraversalPolicy(new CustomFocusTraversalPolicy(List.of(driverConnectionString,
+				dbUsername, dbPassword, clearFieldsButton, connectButton, disconnectButton)));
 		connectionPanel.setFocusTraversalPolicyProvider(true);
 		connectionPanel.setBackground(backgroundColor);
 
@@ -855,7 +840,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 
 		splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, true, tabbedPane, bottomPanel);
 		splitPane.setDividerSize(3);
-		splitPane.setDividerLocation(162);
+		splitPane.setDividerLocation(SPLIT_PANE_DIVIDER_LOCATION);
 		splitPane.setBackground(backgroundColor);
 		getContentPane().add(splitPane);
 
@@ -892,7 +877,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 		item2.addItemListener(new ItemListener() {
 			public void itemStateChanged(ItemEvent ie) {
 				if (ie.getStateChange() == ItemEvent.SELECTED) {
-					splitPane.setDividerLocation(162);
+					splitPane.setDividerLocation(SPLIT_PANE_DIVIDER_LOCATION);
 					item2.setToolTipText("Hide the settings panel");
 				} else {
 					splitPane.setDividerLocation(0);
@@ -1168,7 +1153,6 @@ public class SQLMinus extends JFrame implements ActionListener {
 	}
 
 	public /* synchronized */ void clearFields() {
-		driverClassName.setText("");
 		driverConnectionString.setText("");
 		dbUsername.setText("");
 		// sqlText.setText("");
@@ -1178,7 +1162,6 @@ public class SQLMinus extends JFrame implements ActionListener {
 	}
 
 	private void saveConnectionSettingsToPreferences() {
-		sqlMinusPreferences.put(Constants.PreferencesKeys.DRIVER_CLASSNAME, driverClassName.getText());
 		sqlMinusPreferences.put(Constants.PreferencesKeys.CONNECT_STRING, driverConnectionString.getText());
 		sqlMinusPreferences.put(Constants.PreferencesKeys.DB_USERNAME, dbUsername.getText());
 		sqlMinusPreferences.putEncryptedValue(Constants.PreferencesKeys.DB_PASSWORD,
@@ -1354,12 +1337,12 @@ public class SQLMinus extends JFrame implements ActionListener {
 		}
 	}
 
-	public /* synchronized */ void connectDatabase() throws SQLException, Exception {
+	public /* synchronized */ void connectDatabase() throws MalformedURLException, SQLException {
 		if (!busy) {
 			disconnectDatabase();
 			saveConnectionSettingsToPreferences();
-			conn = Optional.of(driverPanel.getConnection(driverClassName.getText(), driverConnectionString.getText(),
-					dbUsername.getText(), new String(dbPassword.getPassword())));
+			conn = Optional.of(driverPanel.getConnection(driverConnectionString.getText(), dbUsername.getText(),
+					new String(dbPassword.getPassword())));
 			indicatorLabel.setText("CONNECTED");
 			indicatorLabel.setForeground(Color.green);
 			// popMessage("Connected");

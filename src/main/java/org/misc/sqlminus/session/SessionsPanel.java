@@ -28,15 +28,14 @@ public class SessionsPanel extends JPanel implements ActionListener {
 	private JTextField sessionName;
 	private JList<String> sessionsList;
 	private JButton loadButton, saveButton, deleteButton;
-	private final JTextField driverClassName, connectionString, userName;
+	private final JTextField connectionString, userName;
 	private final JPasswordField password;
 	private final SQLMinusPreferences sqlMinusPreferences;
 	private static final String SESSION_ERROR_TITLE = "Load/Save/Delete session";
 
-	public SessionsPanel(JTextField driverClassName, JTextField connectionString, JTextField userName,
-			JPasswordField password, SQLMinusPreferences sqlMinusPreferences) {
+	public SessionsPanel(JTextField connectionString, JTextField userName, JPasswordField password,
+			SQLMinusPreferences sqlMinusPreferences) {
 		super();
-		this.driverClassName = driverClassName;
 		this.connectionString = connectionString;
 		this.userName = userName;
 		this.password = password;
@@ -46,7 +45,6 @@ public class SessionsPanel extends JPanel implements ActionListener {
 
 		GridBagConstraints c = new GridBagConstraints();
 		c.insets = new Insets(1, 1, 1, 1);
-
 
 		c.gridx = 0;
 		c.gridy = 0;
@@ -78,13 +76,12 @@ public class SessionsPanel extends JPanel implements ActionListener {
 		saveButton = new JButton("Save");
 		saveButton.addActionListener(this);
 		add(saveButton, c);
-		
+
 		c.gridy = 1;
 		loadButton = new JButton("Load");
 		c.anchor = GridBagConstraints.NORTHWEST;
 		loadButton.addActionListener(this);
 		add(loadButton, c);
-
 
 		c.gridy = 2;
 		c.anchor = GridBagConstraints.NORTHWEST;
@@ -123,9 +120,8 @@ public class SessionsPanel extends JPanel implements ActionListener {
 			popErrorMessage("Specify the session name to save");
 			sessionName.requestFocusInWindow();
 		} else {
-			SessionEntity sessionEntity = SessionEntity.builder().driverClassName(driverClassName.getText())
-					.password(new String(password.getPassword())).connectionString(connectionString.getText())
-					.userName(userName.getText()).build();
+			SessionEntity sessionEntity = SessionEntity.builder().password(new String(password.getPassword()))
+					.connectionString(connectionString.getText()).userName(userName.getText()).build();
 			try {
 				sqlMinusPreferences.putSession(sessionName.getText().trim(), sessionEntity);
 				sessionName.setText("");
@@ -142,7 +138,6 @@ public class SessionsPanel extends JPanel implements ActionListener {
 		} else {
 			try {
 				SessionEntity sessionEntity = sqlMinusPreferences.getSession(sessionsList.getSelectedValue());
-				driverClassName.setText(sessionEntity.getDriverClassName());
 				connectionString.setText(sessionEntity.getConnectionString());
 				userName.setText(sessionEntity.getUserName());
 				password.setText(sessionEntity.getPassword());
