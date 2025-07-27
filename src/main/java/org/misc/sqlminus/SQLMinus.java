@@ -638,7 +638,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 
 		c.gridwidth = 1;
 		c.weighty = 0;
-		catalogLabel = new JLabel("Catalog pattern", JLabel.RIGHT);
+		catalogLabel = new JLabel("Catalog name", JLabel.RIGHT);
 		catalogLabel.setEnabled(false);
 		// dummy6.setFont(f);
 		gridbag.setConstraints(catalogLabel, c);
@@ -646,7 +646,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 
 		// --------------------------------------------------------------------------------------------------------
 		// c.weightx=2;
-		catalogText = new JTextField("%", 20);
+		catalogText = new JTextField("", 20);
 		catalogText.setEnabled(false);
 		// schemaText.setFont(tfont);
 		catalogText.addMouseListener(commonAdapter);
