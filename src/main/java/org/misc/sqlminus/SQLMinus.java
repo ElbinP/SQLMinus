@@ -639,6 +639,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 		c.gridwidth = 1;
 		c.weighty = 0;
 		catalogLabel = new JLabel("Catalog pattern", JLabel.RIGHT);
+		catalogLabel.setEnabled(false);
 		// dummy6.setFont(f);
 		gridbag.setConstraints(catalogLabel, c);
 		miscPanel.add(catalogLabel);
