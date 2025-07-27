@@ -73,13 +73,13 @@ public class SQLMinus extends JFrame implements ActionListener {
 	public CustomizedMouseAdapter commonAdapter = new CustomizedMouseAdapter(false);
 	private JTextArea textOutput;
 	private SQLFrame textareaFrame;
-	private JTextField driverConnectionString, dbUsername, tableText, columnText, schemaText, statusBar;
+	private JTextField driverConnectionString, dbUsername, tableText, columnText, schemaText, catalogText, statusBar;
 	private JComboBox sqlText;
 	private JTextField minColWidth, maxColWidth, interColSpace, maxDataLength, nullRep;
 	private JButton minColWidthButton, maxColWidthButton, interColSpaceButton, maxDataLengthButton;
 	private JPasswordField dbPassword;
 	private JButton indicatorLabel;
-	private JLabel schemaLabel;
+	private JLabel schemaLabel, catalogLabel;
 	private JSplitPane splitPane;
 	private Optional<Connection> conn = Optional.empty();
 	private Optional<Statement> stmt = Optional.empty();
@@ -638,15 +638,34 @@ public class SQLMinus extends JFrame implements ActionListener {
 
 		c.gridwidth = 1;
 		c.weighty = 0;
-		JLabel dummy6 = new JLabel("");
+		catalogLabel = new JLabel("Catalog pattern", JLabel.RIGHT);
 		// dummy6.setFont(f);
-		gridbag.setConstraints(dummy6, c);
-		miscPanel.add(dummy6);
+		gridbag.setConstraints(catalogLabel, c);
+		miscPanel.add(catalogLabel);
 
-		JLabel dummy7 = new JLabel("");
-		// dummy7.setFont(f);
-		gridbag.setConstraints(dummy7, c);
-		miscPanel.add(dummy7);
+		// --------------------------------------------------------------------------------------------------------
+		// c.weightx=2;
+		catalogText = new JTextField("%", 20);
+		catalogText.setEnabled(false);
+		// schemaText.setFont(tfont);
+		catalogText.addMouseListener(commonAdapter);
+		JCheckBox catalogBox = new JCheckBox("Enable", false);
+		// schemaBox.setFont(f);
+		catalogBox.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent ae) {
+				boolean isEnabled = ((JCheckBox) ae.getSource()).isSelected();
+				catalogLabel.setEnabled(isEnabled);
+				catalogText.setEnabled(isEnabled);
+			}
+		});
+		JPanel catalogPanel = new JPanel();
+		catalogPanel.setLayout(new BoxLayout(catalogPanel, BoxLayout.X_AXIS));
+		catalogPanel.setBorder(BorderFactory.createEtchedBorder());
+		catalogPanel.add(catalogBox);
+		catalogPanel.add(catalogText);
+		gridbag.setConstraints(catalogPanel, c);
+		miscPanel.add(catalogPanel);
+		// ------------------------------------------------------------------------------------------------------
 
 		JLabel dummy8 = new JLabel("");
 		// dummy8.setFont(f);
@@ -1387,12 +1406,18 @@ public class SQLMinus extends JFrame implements ActionListener {
 			if (!busy) {
 				ResultSet rst;
 				setStatusBarText("");
-				// DatabaseMetaData metaData=conn.getMetaData();
-				if (schemaText.isEnabled()) {
-					rst = conn.get().getMetaData().getTables(null, schemaText.getText(), tableText.getText(), null);
-				} else {
-					rst = conn.get().getMetaData().getTables(null, null, tableText.getText(), null);
+
+				String catalogPattern = null;
+				if (catalogText.isEnabled()) {
+					catalogPattern = catalogText.getText();
 				}
+				String schemaPattern = null;
+				if (schemaText.isEnabled()) {
+					schemaPattern = schemaText.getText();
+				}
+
+				rst = conn.get().getMetaData().getTables(catalogPattern, schemaPattern, tableText.getText(), null);
+
 				displayResultSet(rst);
 			}
 		} else {
@@ -1405,13 +1430,19 @@ public class SQLMinus extends JFrame implements ActionListener {
 			if (!busy) {
 				ResultSet rst;
 				setStatusBarText("");
-				// DatabaseMetaData metaData=conn.getMetaData();
-				if (schemaText.isEnabled()) {
-					rst = conn.get().getMetaData().getColumns(null, schemaText.getText(), tableText.getText(),
-							columnText.getText());
-				} else {
-					rst = conn.get().getMetaData().getColumns(null, null, tableText.getText(), columnText.getText());
+
+				String catalogPattern = null;
+				if (catalogText.isEnabled()) {
+					catalogPattern = catalogText.getText();
 				}
+				String schemaPattern = null;
+				if (schemaText.isEnabled()) {
+					schemaPattern = schemaText.getText();
+				}
+
+				rst = conn.get().getMetaData().getColumns(catalogPattern, schemaPattern, tableText.getText(),
+						columnText.getText());
+
 				displayResultSet(rst);
 			}
 		} else {
@@ -1423,7 +1454,17 @@ public class SQLMinus extends JFrame implements ActionListener {
 		if (conn.isPresent()) {
 			if (!busy) {
 				setStatusBarText("");
-				displayResultSet(conn.get().getMetaData().getSchemas());
+
+				String catalogPattern = null;
+				if (catalogText.isEnabled()) {
+					catalogPattern = catalogText.getText();
+				}
+				String schemaPattern = null;
+				if (schemaText.isEnabled()) {
+					schemaPattern = schemaText.getText();
+				}
+
+				displayResultSet(conn.get().getMetaData().getSchemas(catalogPattern, schemaPattern));
 			}
 		} else {
 			popMessage("Not connected");
