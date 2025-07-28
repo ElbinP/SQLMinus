@@ -1309,14 +1309,16 @@ public class SQLMinus extends JFrame implements ActionListener {
 			if (sqlTextsString != null) {
 				String[] sqlTextArray = sqlTextsString.split("<br/>");
 				Arrays.stream(sqlTextArray).forEach(s -> {
-					String decryptedSqlText;
-					try {
-						decryptedSqlText = sqlMinusPreferences.getDecryptedString(s);
-					} catch (SQLMinusException e) {
-						throw new IllegalStateException(e.getMessage(), e);
-					}
-					if (decryptedSqlText.trim().length() > 0) {
-						insertItem(sqlText, decryptedSqlText);
+					if (s.length() > 0) {
+						String decryptedSqlText;
+						try {
+							decryptedSqlText = sqlMinusPreferences.getDecryptedString(s);
+						} catch (SQLMinusException e) {
+							throw new IllegalStateException(e.getMessage(), e);
+						}
+						if (decryptedSqlText.trim().length() > 0) {
+							insertItem(sqlText, decryptedSqlText);
+						}
 					}
 				});
 			}
