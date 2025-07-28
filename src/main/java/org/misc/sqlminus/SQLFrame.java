@@ -3,7 +3,6 @@ package org.misc.sqlminus;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Font;
-import java.awt.Point;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -36,40 +35,37 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
 import javax.swing.JToolBar;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.undo.CannotRedoException;
 import javax.swing.undo.CannotUndoException;
 
+import org.fife.ui.rsyntaxtextarea.SyntaxConstants;
+import org.fife.ui.rtextarea.RTextScrollPane;
 import org.misc.sqlminus.sqlhistory.SQLHistoryHelper;
 
 import nocom.special.ImageReader;
 import nocom.special.IndexedVector;
-import nocom.special.UndoableTextArea;
+import nocom.special.UndoableRSyntaxTextArea;
 import nocom.special.VectorIndexOutOfBoundsException;
 
-public class SQLFrame extends JFrame implements ActionListener, DocumentListener, ChangeListener, FocusListener {
+public class SQLFrame extends JFrame implements ActionListener, DocumentListener, FocusListener {
 
-	private UndoableTextArea textInput;
+	private UndoableRSyntaxTextArea textInput;
 	private IndexedVector sqlCommands;
 	private SQLMinus sqlMinusObject;
-	private JTextArea lineNumberPanel;
 	private JButton back, forward, undo, redo, execute, save, open, clearHistory, deleteHistoryEntryButton;
 	private JPopupMenu popup;
 	private JFileChooser fileChooser;
-	private JScrollPane textSPane, lineSPane;
+	private RTextScrollPane textSPane;
 	private static final int HISTORY_CHARACTER_WIDTH = 23;
 	private JPanel centerPanel;
 	private String lineSeparator;
 	private FileSaverThread fileSaver;
 	private FileOpenerThread fileOpener;
-	private LineNumberSetter lineNumberSetter;
 	private final SQLMinusPreferences sqlMinusPreferences;
 	private final DefaultListModel<String> historyModel = new DefaultListModel<String>();
 	private final JList<String> historyList;
@@ -81,7 +77,9 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 
 		getContentPane().setLayout(new BorderLayout(hgap, vgap));
 		this.sqlMinusObject = sqlMinusObject;
-		textInput = new UndoableTextArea();
+		textInput = new UndoableRSyntaxTextArea();
+		textInput.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_SQL);
+		textInput.setCodeFoldingEnabled(true);
 		textInput.setBorder(BorderFactory.createLoweredBevelBorder());
 		sqlCommands = new IndexedVector();
 		fileChooser = new JFileChooser(System.getProperty("user.home"));
@@ -89,13 +87,6 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 		lineSeparator = System.getProperty("line.separator");
 		fileSaver = new FileSaverThread();
 		fileOpener = new FileOpenerThread();
-		lineNumberSetter = new LineNumberSetter();
-
-		lineNumberPanel = new JTextArea("1  " + lineSeparator);
-		lineNumberPanel.setFont(tfont);
-		lineNumberPanel.setBorder(BorderFactory.createLoweredBevelBorder());
-		lineNumberPanel.setEditable(false);
-		lineNumberPanel.setBackground(null);
 
 		JToolBar toolBar = new JToolBar(JToolBar.HORIZONTAL);
 
@@ -296,13 +287,9 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 		textInput.getDocument().addDocumentListener(this);
 		textInput.setTabSize(4);
 
-		textSPane = new JScrollPane(textInput);
-		textSPane.getViewport().addChangeListener(this);
-		lineSPane = new JScrollPane(lineNumberPanel, JScrollPane.VERTICAL_SCROLLBAR_NEVER,
-				JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+		textSPane = new RTextScrollPane(textInput);
 		centerPanel = new JPanel(new BorderLayout());
 		centerPanel.add(textSPane, BorderLayout.CENTER);
-		centerPanel.add(lineSPane, BorderLayout.WEST);
 
 		historyList = new JList<String>(historyModel);
 		historyList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -317,7 +304,6 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 						textInput.setText(sqlCommands.get(historyList.getSelectedIndex() + 1));
 						sqlCommands.setSelectedIndex(historyList.getSelectedIndex() + 1);
 						updateToolBarButtons();
-						SwingUtilities.invokeLater(lineNumberSetter);
 					} catch (VectorIndexOutOfBoundsException e1) {
 						Toolkit.getDefaultToolkit().beep();
 					}
@@ -460,26 +446,19 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 	}
 
 	public void changedUpdate(DocumentEvent de) {
-		setLineNumbers();
 		updateToolBarButtons();
 	}
 
 	public void insertUpdate(DocumentEvent de) {
-		setLineNumbers();
 		updateToolBarButtons();
 	}
 
 	public void removeUpdate(DocumentEvent de) {
-		setLineNumbers();
 		updateToolBarButtons();
 	}
 
 	public void closePopup() {
 		popup.setVisible(false);
-	}
-
-	private void setLineNumbers() {
-		SwingUtilities.invokeLater(lineNumberSetter);
 	}
 
 	public void focusGained(FocusEvent e) {
@@ -488,39 +467,6 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 
 	public void focusLost(FocusEvent e) {
 		// nothing to do
-	}
-
-	private class LineNumberSetter implements java.lang.Runnable {
-		public void run() {
-			// System.err.println("Setting line numbers");
-			if (lineNumberPanel.getLineCount() - 1 > textInput.getLineCount()) {
-				// System.err.print("Removing lines");
-				for (int i = lineNumberPanel.getLineCount() - 1; i > textInput.getLineCount(); i--) {
-					try {
-						lineNumberPanel.replaceRange("", lineNumberPanel.getLineStartOffset(i - 1),
-								lineNumberPanel.getLineEndOffset(i - 1));
-						// System.err.print(" "+i);
-					} catch (javax.swing.text.BadLocationException e) {
-						Toolkit.getDefaultToolkit().beep();
-					}
-				}
-				// System.err.println();
-			} else if (lineNumberPanel.getLineCount() - 1 < textInput.getLineCount()) {
-				// System.err.print("Adding lines");
-				for (int i = lineNumberPanel.getLineCount() - 1; i < textInput.getLineCount(); i++) {
-					lineNumberPanel.append((i + 1) + lineSeparator);
-					// System.err.print(" "+(i+1));
-				}
-				// System.err.println();
-			}
-		}
-	}
-
-	/* Implementation of the ChangeListener */
-	public void stateChanged(ChangeEvent ae) {
-		Point p = new Point();
-		p.setLocation(0.00, textSPane.getViewport().getViewPosition().getY());
-		lineSPane.getViewport().setViewPosition(p);
 	}
 
 	private void saveToFile() {
