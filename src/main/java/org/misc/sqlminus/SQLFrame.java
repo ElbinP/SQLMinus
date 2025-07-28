@@ -80,6 +80,7 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 		textInput = new UndoableRSyntaxTextArea();
 		textInput.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_SQL);
 		textInput.setCodeFoldingEnabled(true);
+		textInput.setHighlightCurrentLine(false);
 		textInput.setBorder(BorderFactory.createLoweredBevelBorder());
 		sqlCommands = new IndexedVector();
 		fileChooser = new JFileChooser(System.getProperty("user.home"));
@@ -285,9 +286,9 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 		});
 
 		textInput.getDocument().addDocumentListener(this);
-		textInput.setTabSize(4);
 
 		textSPane = new RTextScrollPane(textInput);
+		textSPane.getGutter().setBackground(backgroundLight);
 		centerPanel = new JPanel(new BorderLayout());
 		centerPanel.add(textSPane, BorderLayout.CENTER);
 
