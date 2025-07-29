@@ -873,7 +873,14 @@ public class SQLMinus extends JFrame implements ActionListener {
 		textareaFrame = new SQLFrame(this, tfont, f, backgroundLight, 0, 0, sqlMinusPreferences);
 		textareaFrame.getContentPane().setBackground(backgroundColor);
 		textareaFrame.setIconImage(iconImage);
-		textareaFrame.setBounds(150, 100, 700, 300);
+		{
+			int windowHeight = sqlMinusPreferences.getInt(Constants.PreferencesKeys.WINDOW_HEIGHT, 950);
+			int windowWidth = sqlMinusPreferences.getInt(Constants.PreferencesKeys.WINDOW_WIDTH, 700);
+			int windowX = sqlMinusPreferences.getInt(Constants.PreferencesKeys.WINDOW_X, 10);
+			int windowY = sqlMinusPreferences.getInt(Constants.PreferencesKeys.WINDOW_Y, 10);
+			textareaFrame.setBounds(windowX, windowY, windowWidth, windowHeight);
+		}
+
 		textareaFrame.setVisible(false);
 		laf.addComponentToMonitor(textareaFrame);
 
@@ -936,14 +943,16 @@ public class SQLMinus extends JFrame implements ActionListener {
 			}
 		});
 		pack();
-		int windowHeight = sqlMinusPreferences.getInt(Constants.PreferencesKeys.WINDOW_HEIGHT, 950);
-		int windowWidth = sqlMinusPreferences.getInt(Constants.PreferencesKeys.WINDOW_WIDTH, 700);
-		int windowX = sqlMinusPreferences.getInt(Constants.PreferencesKeys.WINDOW_X, 10);
-		int windowY = sqlMinusPreferences.getInt(Constants.PreferencesKeys.WINDOW_Y, 10);
+		{
+			int windowHeight = sqlMinusPreferences.getInt(Constants.PreferencesKeys.WINDOW_HEIGHT, 950);
+			int windowWidth = sqlMinusPreferences.getInt(Constants.PreferencesKeys.WINDOW_WIDTH, 700);
+			int windowX = sqlMinusPreferences.getInt(Constants.PreferencesKeys.WINDOW_X, 10);
+			int windowY = sqlMinusPreferences.getInt(Constants.PreferencesKeys.WINDOW_Y, 10);
+
+			setBounds(windowX, windowY, windowWidth, windowHeight);
+		}
 
 		enableTextOutputSettings(btText.isSelected());
-
-		setBounds(windowX, windowY, windowWidth, windowHeight);
 		setVisible(true);
 		dbPassword.requestFocusInWindow();
 
@@ -1553,6 +1562,15 @@ public class SQLMinus extends JFrame implements ActionListener {
 				((Double) getBounds().getWidth()).intValue());
 		sqlMinusPreferences.putInt(Constants.PreferencesKeys.WINDOW_X, ((Double) getBounds().getX()).intValue());
 		sqlMinusPreferences.putInt(Constants.PreferencesKeys.WINDOW_Y, ((Double) getBounds().getY()).intValue());
+		sqlMinusPreferences.putInt(Constants.PreferencesKeys.SQLFRAME_WINDOW_HEIGHT,
+				((Double) textareaFrame.getBounds().getHeight()).intValue());
+		sqlMinusPreferences.putInt(Constants.PreferencesKeys.SQLFRAME_WINDOW_WIDTH,
+				((Double) textareaFrame.getBounds().getWidth()).intValue());
+		sqlMinusPreferences.putInt(Constants.PreferencesKeys.SQLFRAME_WINDOW_X,
+				((Double) textareaFrame.getBounds().getX()).intValue());
+		sqlMinusPreferences.putInt(Constants.PreferencesKeys.SQLFRAME_WINDOW_Y,
+				((Double) textareaFrame.getBounds().getY()).intValue());
+		sqlMinusPreferences.put(Constants.PreferencesKeys.SQLFRAME_MENU_POSITION, textareaFrame.getMenuPosition());
 	}
 
 	private void setMacDockIcon(Image iconImage) {

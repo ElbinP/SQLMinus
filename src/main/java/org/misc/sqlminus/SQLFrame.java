@@ -2,6 +2,7 @@ package org.misc.sqlminus;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Font;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
@@ -22,6 +23,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import javax.swing.BorderFactory;
 import javax.swing.DefaultListModel;
@@ -69,6 +71,7 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 	private final SQLMinusPreferences sqlMinusPreferences;
 	private final DefaultListModel<String> historyModel = new DefaultListModel<String>();
 	private final JList<String> historyList;
+	private final JToolBar toolBar;
 
 	public SQLFrame(final SQLMinus sqlMinusObject, Font tfont, Font f, Color backgroundLight, int hgap, int vgap,
 			SQLMinusPreferences sqlMinusPreferences) {
@@ -89,7 +92,7 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 		fileSaver = new FileSaverThread();
 		fileOpener = new FileOpenerThread();
 
-		JToolBar toolBar = new JToolBar(JToolBar.HORIZONTAL);
+		toolBar = new JToolBar(JToolBar.HORIZONTAL);
 
 		try {
 			back = new JButton(new ImageIcon(ImageReader.getImage(this.getClass(), "/images/back.gif")));
@@ -195,7 +198,19 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 		toolBar.add(deleteHistoryEntryButton);
 		toolBar.add(clearHistory);
 
-		getContentPane().add(toolBar, BorderLayout.NORTH);
+		String menuConstraint = BorderLayout.NORTH;
+		switch (sqlMinusPreferences.get(Constants.PreferencesKeys.SQLFRAME_MENU_POSITION, "NORTH")) {
+		case "SOUTH":
+			menuConstraint = BorderLayout.SOUTH;
+			break;
+		case "EAST":
+			menuConstraint = BorderLayout.EAST;
+			break;
+		case "WEST":
+			menuConstraint = BorderLayout.WEST;
+		}
+
+		getContentPane().add(toolBar, menuConstraint);
 
 		List<String> sqlHistory = null;
 		try {
@@ -563,6 +578,37 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 			}
 		});
 		SwingUtilities.invokeLater(saveThread);
+	}
+
+	public String getMenuPosition() {
+		Optional<String> menuConstraint = Optional.empty();
+		BorderLayout layout = (BorderLayout) getContentPane().getLayout();
+		for (String constraint : new String[] { BorderLayout.NORTH, BorderLayout.SOUTH, BorderLayout.EAST,
+				BorderLayout.WEST, BorderLayout.CENTER }) {
+
+			Component comp = layout.getLayoutComponent(getContentPane(), constraint);
+			if (comp == toolBar) {
+				menuConstraint = Optional.of(constraint);
+				break;
+			}
+		}
+
+		String menuPosition = "NORTH";
+		if (menuConstraint.isPresent()) {
+			switch (menuConstraint.get()) {
+			case BorderLayout.SOUTH:
+				menuPosition = "SOUTH";
+				break;
+			case BorderLayout.EAST:
+				menuPosition = "EAST";
+				break;
+			case BorderLayout.WEST:
+				menuPosition = "WEST";
+				break;
+			}
+		}
+
+		return menuPosition;
 	}
 
 }
