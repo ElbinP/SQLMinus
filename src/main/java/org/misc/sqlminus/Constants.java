@@ -12,6 +12,11 @@ public class Constants {
 		public static final String WINDOW_HEIGHT = "WindowHeight";
 		public static final String WINDOW_X = "WindowX";
 		public static final String WINDOW_Y = "WindowY";
+		public static final String SQLFRAME_WINDOW_WIDTH = "SqlFrameWindowWidth";
+		public static final String SQLFRAME_WINDOW_HEIGHT = "SqlFrameWindowHeight";
+		public static final String SQLFRAME_WINDOW_X = "SqlFrameWindowX";
+		public static final String SQLFRAME_WINDOW_Y = "SqlFrameWindowY";
+		public static final String SQLFRAME_MENU_POSITION = "SqlFrameMenuPosition";
 		public static final String LOOK_AND_FEEL_CLASS = "LookAndFeelClass";
 		public static final String SESSION_PREFIX = "Session-";
 		public static final String MIN_COL_WIDTH = "MinColWidth";
