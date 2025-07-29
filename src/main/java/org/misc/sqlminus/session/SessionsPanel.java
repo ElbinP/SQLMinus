@@ -5,6 +5,8 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.Collections;
 import java.util.List;
 
@@ -18,6 +20,7 @@ import javax.swing.JPasswordField;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
+import javax.swing.SwingUtilities;
 
 import org.misc.sqlminus.SQLMinusException;
 import org.misc.sqlminus.SQLMinusPreferences;
@@ -60,6 +63,14 @@ public class SessionsPanel extends JPanel implements ActionListener {
 		c.weighty = 1.0;
 		sessionsList = new JList<>();
 		sessionsList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		sessionsList.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				if (e.getClickCount() == 2 && SwingUtilities.isLeftMouseButton(e)) {
+					loadSession();
+				}
+			}
+		});
 
 		DefaultListModel<String> model = new DefaultListModel<>();
 		sessionsList.setModel(model);
