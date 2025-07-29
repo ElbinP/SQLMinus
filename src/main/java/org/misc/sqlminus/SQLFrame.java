@@ -185,12 +185,12 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 		toolBar.add(open);
 		toolBar.add(save);
 		toolBar.addSeparator();
+		toolBar.add(execute);
+		toolBar.addSeparator();
 		toolBar.add(back);
 		toolBar.add(forward);
 		toolBar.add(undo);
 		toolBar.add(redo);
-		toolBar.addSeparator();
-		toolBar.add(execute);
 		toolBar.addSeparator();
 		toolBar.add(deleteHistoryEntryButton);
 		toolBar.add(clearHistory);
