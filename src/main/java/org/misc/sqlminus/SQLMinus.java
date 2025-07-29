@@ -874,10 +874,10 @@ public class SQLMinus extends JFrame implements ActionListener {
 		textareaFrame.getContentPane().setBackground(backgroundColor);
 		textareaFrame.setIconImage(iconImage);
 		{
-			int windowHeight = sqlMinusPreferences.getInt(Constants.PreferencesKeys.WINDOW_HEIGHT, 950);
-			int windowWidth = sqlMinusPreferences.getInt(Constants.PreferencesKeys.WINDOW_WIDTH, 700);
-			int windowX = sqlMinusPreferences.getInt(Constants.PreferencesKeys.WINDOW_X, 10);
-			int windowY = sqlMinusPreferences.getInt(Constants.PreferencesKeys.WINDOW_Y, 10);
+			int windowHeight = sqlMinusPreferences.getInt(Constants.PreferencesKeys.SQLFRAME_WINDOW_HEIGHT, 150);
+			int windowWidth = sqlMinusPreferences.getInt(Constants.PreferencesKeys.SQLFRAME_WINDOW_WIDTH, 100);
+			int windowX = sqlMinusPreferences.getInt(Constants.PreferencesKeys.SQLFRAME_WINDOW_X, 700);
+			int windowY = sqlMinusPreferences.getInt(Constants.PreferencesKeys.SQLFRAME_WINDOW_Y, 300);
 			textareaFrame.setBounds(windowX, windowY, windowWidth, windowHeight);
 		}
 
@@ -1570,7 +1570,10 @@ public class SQLMinus extends JFrame implements ActionListener {
 				((Double) textareaFrame.getBounds().getX()).intValue());
 		sqlMinusPreferences.putInt(Constants.PreferencesKeys.SQLFRAME_WINDOW_Y,
 				((Double) textareaFrame.getBounds().getY()).intValue());
-		sqlMinusPreferences.put(Constants.PreferencesKeys.SQLFRAME_MENU_POSITION, textareaFrame.getMenuPosition());
+		sqlMinusPreferences.put(Constants.PreferencesKeys.SQLFRAME_TOOLBAR_POSITION,
+				textareaFrame.getToolbarPosition());
+		sqlMinusPreferences.putInt(Constants.PreferencesKeys.SQLFRAME_TOOLBAR_ORIENTATION,
+				textareaFrame.getToolbarOrientation());
 	}
 
 	private void setMacDockIcon(Image iconImage) {

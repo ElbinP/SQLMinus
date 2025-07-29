@@ -92,7 +92,8 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 		fileSaver = new FileSaverThread();
 		fileOpener = new FileOpenerThread();
 
-		toolBar = new JToolBar(JToolBar.HORIZONTAL);
+		toolBar = new JToolBar(sqlMinusPreferences.getInt(Constants.PreferencesKeys.SQLFRAME_TOOLBAR_ORIENTATION,
+				JToolBar.HORIZONTAL));
 
 		try {
 			back = new JButton(new ImageIcon(ImageReader.getImage(this.getClass(), "/images/back.gif")));
@@ -199,7 +200,7 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 		toolBar.add(clearHistory);
 
 		String menuConstraint = BorderLayout.NORTH;
-		switch (sqlMinusPreferences.get(Constants.PreferencesKeys.SQLFRAME_MENU_POSITION, "NORTH")) {
+		switch (sqlMinusPreferences.get(Constants.PreferencesKeys.SQLFRAME_TOOLBAR_POSITION, "NORTH")) {
 		case "SOUTH":
 			menuConstraint = BorderLayout.SOUTH;
 			break;
@@ -580,7 +581,7 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 		SwingUtilities.invokeLater(saveThread);
 	}
 
-	public String getMenuPosition() {
+	public String getToolbarPosition() {
 		Optional<String> menuConstraint = Optional.empty();
 		BorderLayout layout = (BorderLayout) getContentPane().getLayout();
 		for (String constraint : new String[] { BorderLayout.NORTH, BorderLayout.SOUTH, BorderLayout.EAST,
@@ -609,6 +610,10 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 		}
 
 		return menuPosition;
+	}
+
+	public int getToolbarOrientation() {
+		return toolBar.getOrientation();
 	}
 
 }

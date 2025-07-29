@@ -16,7 +16,8 @@ public class Constants {
 		public static final String SQLFRAME_WINDOW_HEIGHT = "SqlFrameWindowHeight";
 		public static final String SQLFRAME_WINDOW_X = "SqlFrameWindowX";
 		public static final String SQLFRAME_WINDOW_Y = "SqlFrameWindowY";
-		public static final String SQLFRAME_MENU_POSITION = "SqlFrameMenuPosition";
+		public static final String SQLFRAME_TOOLBAR_POSITION = "SqlFrameToolbarPosition";
+		public static final String SQLFRAME_TOOLBAR_ORIENTATION = "SqlFrameToolbarOrientation";
 		public static final String LOOK_AND_FEEL_CLASS = "LookAndFeelClass";
 		public static final String SESSION_PREFIX = "Session-";
 		public static final String MIN_COL_WIDTH = "MinColWidth";
