@@ -4,7 +4,7 @@
 
 	<groupId>org.misc</groupId>
 	<artifactId>SQLMinus</artifactId>
-	<version>1.5.15-SNAPSHOT</version>
+	<version>1.5.16</version>
 	<packaging>jar</packaging>
 	<properties>
 		<maven.compiler.source>11</maven.compiler.source>
@@ -15,7 +15,7 @@
 		<connection>scm:git:${project.scm.url}</connection>
 		<developerConnection>scm:git:${project.scm.url}</developerConnection>
 		<url>git@github.com:ElbinP/SQLMinus.git</url>
-		<tag>HEAD</tag>
+		<tag>SQLMinus-1.5.16</tag>
 	</scm>
 
 	<dependencies>
