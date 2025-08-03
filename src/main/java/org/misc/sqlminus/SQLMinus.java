@@ -1574,6 +1574,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 				textareaFrame.getToolbarPosition());
 		sqlMinusPreferences.putInt(Constants.PreferencesKeys.SQLFRAME_TOOLBAR_ORIENTATION,
 				textareaFrame.getToolbarOrientation());
+		sqlMinusPreferences.putBoolean(Constants.PreferencesKeys.SQLFRAME_WORD_WRAP, textareaFrame.getWordWrap());
 	}
 
 	private void setMacDockIcon(Image iconImage) {

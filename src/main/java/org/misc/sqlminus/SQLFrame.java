@@ -195,6 +195,11 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 		wordWrap.addActionListener(this);
 		wordWrap.setActionCommand("WORD-WRAP-SQL");
 
+		if (sqlMinusPreferences.getBoolean(Constants.PreferencesKeys.SQLFRAME_WORD_WRAP, false)) {
+			wordWrap.setSelected(true);
+			textInput.setLineWrap(true);
+		}
+
 		toolBar.add(open);
 		toolBar.add(save);
 		toolBar.addSeparator();
@@ -623,6 +628,10 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 		}
 
 		return menuPosition;
+	}
+
+	public boolean getWordWrap() {
+		return wordWrap.isSelected();
 	}
 
 	public int getToolbarOrientation() {
