@@ -46,9 +46,13 @@ import javax.swing.event.DocumentListener;
 import javax.swing.undo.CannotRedoException;
 import javax.swing.undo.CannotUndoException;
 
+import org.apache.commons.lang3.StringUtils;
 import org.fife.ui.rsyntaxtextarea.SyntaxConstants;
 import org.fife.ui.rtextarea.RTextScrollPane;
 import org.misc.sqlminus.sqlhistory.SQLHistoryHelper;
+
+import com.alibaba.druid.DbType;
+import com.alibaba.druid.sql.SQLUtils;
 
 import nocom.special.ImageReader;
 import nocom.special.IndexedVector;
@@ -294,12 +298,14 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 		JMenuItem paste = new JMenuItem("Paste");
 		JMenuItem selectAll = new JMenuItem("Select All");
 		JMenuItem clear = new JMenuItem("Clear");
+		JMenuItem formatSQL = new JMenuItem("Format SQL");
 
 		cut.addActionListener(this);
 		copy.addActionListener(this);
 		paste.addActionListener(this);
 		selectAll.addActionListener(this);
 		clear.addActionListener(this);
+		formatSQL.addActionListener(this);
 
 		popup = new JPopupMenu();
 		popup.add(cut);
@@ -308,10 +314,12 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 		popup.add(selectAll);
 		popup.addSeparator();
 		popup.add(clear);
+		popup.addSeparator();
+		popup.add(formatSQL);
 		sqlMinusObject.laf.addComponentToMonitor(popup);
 
 		textInput.addMouseListener(new MouseAdapter() {
-			public void mouseReleased(MouseEvent me) {
+			public void mousePressed(MouseEvent me) {
 				if (me.getModifiers() == me.BUTTON3_MASK) {
 					popup.show(me.getComponent(), me.getX(), me.getY());
 				}
@@ -436,15 +444,24 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 				deleteHistoryEntry();
 			} else if (actionCommand.equals("WORD-WRAP-SQL")) {
 				textInput.setLineWrap(wordWrap.isSelected());
+			} else if (actionCommand.equals("Format SQL")) {
+				formatSQL();
 			}
-		} catch (VectorIndexOutOfBoundsException ve) {
+		} catch (Exception e) {
 			Toolkit.getDefaultToolkit().beep();
-		} catch (CannotUndoException e) {
-			Toolkit.getDefaultToolkit().beep();
-		} catch (CannotRedoException e) {
-			Toolkit.getDefaultToolkit().beep();
+			System.err.println(e.toString());
 		} finally {
 			updateToolBarButtons();
+		}
+	}
+
+	private void formatSQL() {
+		if (StringUtils.isNotBlank(textInput.getSelectedText())) {
+			String formattedSQL = SQLUtils.format(textInput.getSelectedText(), DbType.postgresql);
+			textInput.replaceSelection(formattedSQL);
+		} else if (StringUtils.isNotBlank(textInput.getText())) {
+			String formattedSQL = SQLUtils.format(textInput.getText(), DbType.postgresql);
+			textInput.setText(formattedSQL);
 		}
 	}
 
