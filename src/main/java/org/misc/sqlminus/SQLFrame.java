@@ -29,6 +29,7 @@ import javax.swing.BorderFactory;
 import javax.swing.DefaultListModel;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JList;
@@ -72,6 +73,7 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 	private final DefaultListModel<String> historyModel = new DefaultListModel<String>();
 	private final JList<String> historyList;
 	private final JToolBar toolBar;
+	private final JCheckBox wordWrap;
 
 	public SQLFrame(final SQLMinus sqlMinusObject, Font tfont, Font f, Color backgroundLight, int hgap, int vgap,
 			SQLMinusPreferences sqlMinusPreferences) {
@@ -84,6 +86,8 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 		textInput.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_SQL);
 		textInput.setCodeFoldingEnabled(true);
 		textInput.setHighlightCurrentLine(false);
+		textInput.setLineWrap(false);
+		textInput.setWrapStyleWord(true);
 		textInput.setBorder(BorderFactory.createLoweredBevelBorder());
 		sqlCommands = new IndexedVector();
 		fileChooser = new JFileChooser(System.getProperty("user.home"));
@@ -186,6 +190,11 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 		clearHistory.setActionCommand("Empty");
 		clearHistory.addActionListener(this);
 
+		wordWrap = new JCheckBox();
+		wordWrap.setToolTipText("Word wrap");
+		wordWrap.addActionListener(this);
+		wordWrap.setActionCommand("WORD-WRAP-SQL");
+
 		toolBar.add(open);
 		toolBar.add(save);
 		toolBar.addSeparator();
@@ -198,6 +207,8 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 		toolBar.addSeparator();
 		toolBar.add(deleteHistoryEntryButton);
 		toolBar.add(clearHistory);
+		toolBar.addSeparator();
+		toolBar.add(wordWrap);
 
 		String menuConstraint = BorderLayout.NORTH;
 		switch (sqlMinusPreferences.get(Constants.PreferencesKeys.SQLFRAME_TOOLBAR_POSITION, "NORTH")) {
@@ -418,6 +429,8 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 				saveSQLCommandsToHistoryFile();
 			} else if (actionCommand.equals("Delete history entry")) {
 				deleteHistoryEntry();
+			} else if (actionCommand.equals("WORD-WRAP-SQL")) {
+				textInput.setLineWrap(wordWrap.isSelected());
 			}
 		} catch (VectorIndexOutOfBoundsException ve) {
 			Toolkit.getDefaultToolkit().beep();
