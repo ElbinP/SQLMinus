@@ -38,6 +38,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
+import javax.swing.JToggleButton;
 import javax.swing.JToolBar;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
@@ -77,7 +78,7 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 	private final DefaultListModel<String> historyModel = new DefaultListModel<String>();
 	private final JList<String> historyList;
 	private final JToolBar toolBar;
-	private final JCheckBox wordWrap;
+	private JToggleButton wordWrap;
 
 	public SQLFrame(final SQLMinus sqlMinusObject, Font tfont, Font f, Color backgroundLight, int hgap, int vgap,
 			SQLMinusPreferences sqlMinusPreferences) {
@@ -149,6 +150,11 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 		} catch (Exception e) {
 			clearHistory = new JButton("Empty");
 		}
+		try {
+			wordWrap = new JToggleButton(new ImageIcon(ImageReader.getImage(this.getClass(), "/images/wrapAround.png")));
+		} catch (Exception e) {
+			wordWrap = new JToggleButton("Wrap lines");
+		}
 
 		back.setToolTipText("Back");
 		// back.setFont(f);
@@ -194,7 +200,6 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 		clearHistory.setActionCommand("Empty");
 		clearHistory.addActionListener(this);
 
-		wordWrap = new JCheckBox();
 		wordWrap.setToolTipText("Word wrap");
 		wordWrap.addActionListener(this);
 		wordWrap.setActionCommand("WORD-WRAP-SQL");
