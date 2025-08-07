@@ -1041,7 +1041,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 		}
 	}
 
-	public /* synchronized */ void displayResultSet(ResultSet rst) {
+	public /* synchronized */ void displayResultSet(Optional<ResultSet> rst, Optional<String> executionCommand) {
 		clearTextOutput();
 
 		Optional<Integer> rowsToReturn = Optional.empty();
@@ -1143,7 +1143,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 				tableSpane.setVisible(false);
 				textSpane.setVisible(true);
 
-				displayObject.setDisplayParams(rowsToReturn, rst, textOutput, this, maxColWidthValue,
+				displayObject.setDisplayParams(rowsToReturn, rst, executionCommand, textOutput, this, maxColWidthValue,
 						interColSpaceValue, rowDividers.isSelected(), maxDataLengthValue, nullRep.getText());
 
 				if (enableThreads.isSelected()) {
@@ -1157,7 +1157,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 				tableOutput.setMinColWidth(minColWidthValue);
 				tableOutput.setMaxColWidth(maxColWidthValue);
 
-				displayGrid.setDisplayParams(rowsToReturn, rst, this, tableOutput, nullRep.getText());
+				displayGrid.setDisplayParams(rowsToReturn, rst, executionCommand, this, tableOutput, nullRep.getText());
 
 				if (enableThreads.isSelected()) {
 					new Thread(displayGrid, "DISPLAY-RESULT-SET-AS-GRID-THREAD").start();
@@ -1171,10 +1171,12 @@ public class SQLMinus extends JFrame implements ActionListener {
 		}
 	}
 
-	private void popMessageAndCloseResultSet(String message, ResultSet rst) {
+	private void popMessageAndCloseResultSet(String message, Optional<ResultSet> rst) {
 		try {
 			popMessage(message);
-			rst.close();
+			if (rst.isPresent()) {
+				rst.get().close();
+			}
 		} catch (Exception e) {
 			popMessage(e.toString());
 		}
@@ -1430,7 +1432,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 
 				rst = conn.get().getMetaData().getTables(catalogPattern, schemaPattern, tableText.getText(), null);
 
-				displayResultSet(rst);
+				displayResultSet(Optional.of(rst), Optional.empty());
 			}
 		} else {
 			popMessage("Not connected");
@@ -1455,7 +1457,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 				rst = conn.get().getMetaData().getColumns(catalogPattern, schemaPattern, tableText.getText(),
 						columnText.getText());
 
-				displayResultSet(rst);
+				displayResultSet(Optional.of(rst), Optional.empty());
 			}
 		} else {
 			popMessage("Not connected");
@@ -1476,7 +1478,8 @@ public class SQLMinus extends JFrame implements ActionListener {
 					schemaPattern = schemaText.getText();
 				}
 
-				displayResultSet(conn.get().getMetaData().getSchemas(catalogPattern, schemaPattern));
+				displayResultSet(Optional.of(conn.get().getMetaData().getSchemas(catalogPattern, schemaPattern)),
+						Optional.empty());
 			}
 		} else {
 			popMessage("Not connected");
@@ -1487,7 +1490,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 		if (conn.isPresent()) {
 			if (!busy) {
 				setStatusBarText("");
-				displayResultSet(conn.get().getMetaData().getCatalogs());
+				displayResultSet(Optional.of(conn.get().getMetaData().getCatalogs()), Optional.empty());
 			}
 		} else {
 			popMessage("Not connected");

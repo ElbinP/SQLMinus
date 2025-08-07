@@ -32,9 +32,9 @@ public class DisplayResultSet implements java.lang.Runnable {
 		stopExecution = true;
 	}
 
-	public void setDisplayParams(Optional<Integer> rowsToReturn, ResultSet rst, JTextArea textOutput,
-			SQLMinus sqlMinusObject, int maxColWidth, int spacing, boolean rowDividers, int maxDataLength,
-			String nullRep) throws Exception {
+	public void setDisplayParams(Optional<Integer> rowsToReturn, Optional<ResultSet> rst,
+			Optional<String> executionCommand, JTextArea textOutput, SQLMinus sqlMinusObject, int maxColWidth,
+			int spacing, boolean rowDividers, int maxDataLength, String nullRep) throws Exception {
 		if (!busy) {
 			busy = true;
 			if (sqlMinusObject != null)
@@ -297,8 +297,9 @@ public class DisplayResultSet implements java.lang.Runnable {
 					if (rowsToReturn.isPresent()) {
 						// If there are remaining rows should we display them too?
 						if (hasAnotherRow && rowsToReturn.get().intValue() > 0) {
-							option = JOptionPane.showConfirmDialog(null, "Show the next " + rowsToReturn.get() + " rows?",
-									"Continue?", JOptionPane.YES_NO_OPTION);
+							option = JOptionPane.showConfirmDialog(null,
+									"Show the next " + rowsToReturn.get() + " rows?", "Continue?",
+									JOptionPane.YES_NO_OPTION);
 						}
 						if (rowsToReturn.get().intValue() < 1) {
 							textOutput.append("\nYou have set the number of rows to be fetched to "
