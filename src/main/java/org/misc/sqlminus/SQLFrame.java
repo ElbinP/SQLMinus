@@ -273,6 +273,7 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 						saveToFile();
 					} else if (ke.isControlDown() && (ke.getKeyCode() == ke.VK_U)) {
 						sqlCommands.insertString(textInput.getText());
+						reloadHistoryPanel();
 						saveSQLCommandsToHistoryFile();
 					}
 				} catch (VectorIndexOutOfBoundsException ve) {
