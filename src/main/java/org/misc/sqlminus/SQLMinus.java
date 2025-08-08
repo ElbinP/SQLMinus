@@ -1158,7 +1158,8 @@ public class SQLMinus extends JFrame implements ActionListener {
 				tableOutput.setMinColWidth(minColWidthValue);
 				tableOutput.setMaxColWidth(maxColWidthValue);
 
-				displayGrid.setDisplayParams(rowsToReturn, rst, executionCommand, this, tableOutput, nullRep.getText());
+				displayGrid.setDisplayParams(rowsToReturn, rst, executionCommand, stmt, this, tableOutput,
+						nullRep.getText());
 
 				if (enableThreads.isSelected()) {
 					new Thread(displayGrid, "DISPLAY-RESULT-SET-AS-GRID-THREAD").start();

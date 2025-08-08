@@ -338,12 +338,10 @@ public class DisplayResultSet implements java.lang.Runnable {
 
 					} while (option == JOptionPane.YES_OPTION);
 					rst.close();
-					rst = null;
 				} catch (ThreadKilledException te) {
 					if (rst != null) {
 						rst.close();
 					}
-					rst = null;
 					textOutput.append("\n\n" + te.getMessage() + "\n");
 				}
 			} catch (SQLException se) {
