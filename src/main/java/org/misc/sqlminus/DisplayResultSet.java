@@ -14,7 +14,7 @@ import nocom.special.UtilityFunctions;
 public class DisplayResultSet implements java.lang.Runnable {
 
 	private JTextArea textOutput;
-	private ResultSet rst;
+	private Optional<ResultSet> rst;
 	private SQLMinus sqlMinusObject;
 	private Optional<Integer> rowsToReturn;
 	private int maxColWidth, spacing;

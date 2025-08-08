@@ -1237,7 +1237,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 							if (JOptionPane.showConfirmDialog(null, "Show the next resultset?", "Next?",
 									JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
 								// System.err.println("Starting next display thread");
-								displayResultSet(stmt.get().getResultSet());
+								displayResultSet(Optional.of(stmt.get().getResultSet()), Optional.empty());
 							}
 							return;// This resultSet is displayed in a separate thread
 							// and this method will be called again when that
@@ -1353,7 +1353,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 					int updateCount;
 					setStatusBarText("");
 					if (stmt.get().execute(executionCommand)) {
-						displayResultSet(stmt.get().getResultSet());
+						displayResultSet(Optional.of(stmt.get().getResultSet()), Optional.empty());
 					} else if ((updateCount = stmt.get().getUpdateCount()) != -1) {
 						popMessage(updateCount + " row(s) updated");
 					}
