@@ -2,6 +2,7 @@ package org.misc.sqlminus;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Optional;
 import java.util.Vector;
@@ -14,7 +15,9 @@ import nocom.special.UtilityFunctions;
 public class DisplayResultSet implements java.lang.Runnable {
 
 	private JTextArea textOutput;
-	private Optional<ResultSet> rst;
+	private Optional<ResultSet> resultSet;
+	private Optional<String> executionCommand;
+	private Optional<Statement> statement;
 	private SQLMinus sqlMinusObject;
 	private Optional<Integer> rowsToReturn;
 	private int maxColWidth, spacing;
@@ -32,16 +35,19 @@ public class DisplayResultSet implements java.lang.Runnable {
 		stopExecution = true;
 	}
 
-	public void setDisplayParams(Optional<Integer> rowsToReturn, Optional<ResultSet> rst,
-			Optional<String> executionCommand, JTextArea textOutput, SQLMinus sqlMinusObject, int maxColWidth,
-			int spacing, boolean rowDividers, int maxDataLength, String nullRep) throws Exception {
+	public void setDisplayParams(Optional<Integer> rowsToReturn, Optional<ResultSet> resultSet,
+			Optional<String> executionCommand, Optional<Statement> statement, JTextArea textOutput,
+			SQLMinus sqlMinusObject, int maxColWidth, int spacing, boolean rowDividers, int maxDataLength,
+			String nullRep) throws Exception {
 		if (!busy) {
 			busy = true;
 			if (sqlMinusObject != null)
 				sqlMinusObject.setBusy();
 			this.stopExecution = false;
 			this.textOutput = textOutput;
-			this.rst = rst;
+			this.resultSet = resultSet;
+			this.executionCommand = executionCommand;
+			this.statement = statement;
 			this.sqlMinusObject = sqlMinusObject;
 			this.rowsToReturn = rowsToReturn;
 			this.maxColWidth = maxColWidth;
@@ -57,7 +63,27 @@ public class DisplayResultSet implements java.lang.Runnable {
 
 	public /* synchronized */ void run() {
 		try {
+			ResultSet rst = null;
 			try {
+
+				if (executionCommand.isPresent()) {
+					if (statement.isPresent()) {
+						int updateCount;
+						if (statement.get().execute(executionCommand.get())) {
+							rst = statement.get().getResultSet();
+						} else if ((updateCount = statement.get().getUpdateCount()) != -1) {
+							sqlMinusObject.popMessage(updateCount + " row(s) updated");
+							return;
+						}
+					} else {
+						throw new SQLMinusException("Statement not available to execute command");
+					}
+				} else if (resultSet.isPresent()) {
+					rst = resultSet.get();
+				} else {
+					throw new SQLMinusException("Neither execution command nor result set provided");
+				}
+
 				int option;
 				boolean hasAnotherRow = rst.next();// The result set now points to the first row, if it has one.
 				do {
@@ -312,7 +338,9 @@ public class DisplayResultSet implements java.lang.Runnable {
 				rst.close();
 				rst = null;
 			} catch (ThreadKilledException te) {
-				rst.close();
+				if (rst != null) {
+					rst.close();
+				}
 				rst = null;
 				textOutput.append("\n\n" + te.getMessage() + "\n");
 			}

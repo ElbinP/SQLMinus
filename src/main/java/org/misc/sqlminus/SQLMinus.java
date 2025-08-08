@@ -1143,8 +1143,9 @@ public class SQLMinus extends JFrame implements ActionListener {
 				tableSpane.setVisible(false);
 				textSpane.setVisible(true);
 
-				displayObject.setDisplayParams(rowsToReturn, rst, executionCommand, textOutput, this, maxColWidthValue,
-						interColSpaceValue, rowDividers.isSelected(), maxDataLengthValue, nullRep.getText());
+				displayObject.setDisplayParams(rowsToReturn, rst, executionCommand, stmt, textOutput, this,
+						maxColWidthValue, interColSpaceValue, rowDividers.isSelected(), maxDataLengthValue,
+						nullRep.getText());
 
 				if (enableThreads.isSelected()) {
 					new Thread(displayObject, "DISPLAY-RESULT-SET-THREAD").start();
@@ -1298,10 +1299,11 @@ public class SQLMinus extends JFrame implements ActionListener {
 		String comboText = ((JTextComponent) sqlText.getEditor().getEditorComponent()).getText();
 		caretPos = caretPos > comboText.length() ? comboText.length() : caretPos;
 		((JTextComponent) sqlText.getEditor().getEditorComponent()).setCaretPosition(caretPos);
-		saveSQLTextsToPreferences();
+		Thread preferencesThread = new Thread(() -> saveSQLTextsToPreferences());
+		preferencesThread.start();
 	}
 
-	private void saveSQLTextsToPreferences() {
+	private synchronized void saveSQLTextsToPreferences() {
 		try {
 			StringBuilder sqlTextsString = new StringBuilder();
 			for (int i = sqlText.getItemCount() - 1; i >= 0; i--) {
@@ -1352,12 +1354,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 				try {
 					int updateCount;
 					setStatusBarText("");
-					if (stmt.get().execute(executionCommand)) {
-						displayResultSet(Optional.of(stmt.get().getResultSet()), Optional.empty());
-					} else if ((updateCount = stmt.get().getUpdateCount()) != -1) {
-						popMessage(updateCount + " row(s) updated");
-					}
-					showNextResult();
+					displayResultSet(Optional.empty(), Optional.of(executionCommand));
 				} catch (Exception e) {
 					popMessage(UtilityFunctions.getExceptionMessages(e));
 				}

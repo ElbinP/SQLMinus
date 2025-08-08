@@ -36,7 +36,7 @@ public class DisplayResultSetAsGrid implements Runnable {
 			}
 			this.stopExecution = false;
 			this.table = table;
-			this.rst = rst;
+			this.rst = rst.get();
 			this.sqlMinusObject = sqlMinusObject;
 			this.rowsToReturn = rowsToReturn;
 			this.nullRep = nullRep;
