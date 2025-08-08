@@ -2,6 +2,7 @@ package org.misc.sqlminus;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Optional;
 import java.util.Vector;
@@ -11,10 +12,12 @@ import javax.swing.JTextArea;
 
 import nocom.special.UtilityFunctions;
 
-public class DisplayResultSet implements java.lang.Runnable {
+public class DisplayResultSet {
 
 	private JTextArea textOutput;
-	private ResultSet rst;
+	private Optional<ResultSet> resultSet;
+	private Optional<String> executionCommand;
+	private Optional<Statement> statement;
 	private SQLMinus sqlMinusObject;
 	private Optional<Integer> rowsToReturn;
 	private int maxColWidth, spacing;
@@ -32,7 +35,8 @@ public class DisplayResultSet implements java.lang.Runnable {
 		stopExecution = true;
 	}
 
-	public void setDisplayParams(Optional<Integer> rowsToReturn, ResultSet rst, JTextArea textOutput,
+	public void setDisplayParamsAndRun(Optional<Integer> rowsToReturn, Optional<ResultSet> resultSet,
+			Optional<String> executionCommand, Optional<Statement> statement, JTextArea textOutput,
 			SQLMinus sqlMinusObject, int maxColWidth, int spacing, boolean rowDividers, int maxDataLength,
 			String nullRep) throws Exception {
 		if (!busy) {
@@ -41,7 +45,9 @@ public class DisplayResultSet implements java.lang.Runnable {
 				sqlMinusObject.setBusy();
 			this.stopExecution = false;
 			this.textOutput = textOutput;
-			this.rst = rst;
+			this.resultSet = resultSet;
+			this.executionCommand = executionCommand;
+			this.statement = statement;
 			this.sqlMinusObject = sqlMinusObject;
 			this.rowsToReturn = rowsToReturn;
 			this.maxColWidth = maxColWidth;
@@ -50,14 +56,35 @@ public class DisplayResultSet implements java.lang.Runnable {
 			this.maxDataLength = maxDataLength;
 			this.nullRep = nullRep;
 			// SwingUtilities.invokeLater(this);
+			run();
 		} else {
 			throw new Exception("Cannot set display params while displaying a resultset");
 		}
 	}
 
-	public /* synchronized */ void run() {
+	public void run() {
 		try {
+			ResultSet rst = null;
 			try {
+
+				if (executionCommand.isPresent()) {
+					if (statement.isPresent()) {
+						int updateCount;
+						if (statement.get().execute(executionCommand.get())) {
+							rst = statement.get().getResultSet();
+						} else if ((updateCount = statement.get().getUpdateCount()) != -1) {
+							sqlMinusObject.popMessage(updateCount + " row(s) updated");
+							return;
+						}
+					} else {
+						throw new SQLMinusException("Statement not available to execute command");
+					}
+				} else if (resultSet.isPresent()) {
+					rst = resultSet.get();
+				} else {
+					throw new SQLMinusException("Neither execution command nor result set provided");
+				}
+
 				int option;
 				boolean hasAnotherRow = rst.next();// The result set now points to the first row, if it has one.
 				do {
@@ -297,8 +324,9 @@ public class DisplayResultSet implements java.lang.Runnable {
 					if (rowsToReturn.isPresent()) {
 						// If there are remaining rows should we display them too?
 						if (hasAnotherRow && rowsToReturn.get().intValue() > 0) {
-							option = JOptionPane.showConfirmDialog(null, "Show the next " + rowsToReturn.get() + " rows?",
-									"Continue?", JOptionPane.YES_NO_OPTION);
+							option = JOptionPane.showConfirmDialog(null,
+									"Show the next " + rowsToReturn.get() + " rows?", "Continue?",
+									JOptionPane.YES_NO_OPTION);
 						}
 						if (rowsToReturn.get().intValue() < 1) {
 							textOutput.append("\nYou have set the number of rows to be fetched to "
@@ -309,10 +337,10 @@ public class DisplayResultSet implements java.lang.Runnable {
 
 				} while (option == JOptionPane.YES_OPTION);
 				rst.close();
-				rst = null;
 			} catch (ThreadKilledException te) {
-				rst.close();
-				rst = null;
+				if (rst != null) {
+					rst.close();
+				}
 				textOutput.append("\n\n" + te.getMessage() + "\n");
 			}
 		} catch (SQLException se) {
@@ -323,9 +351,10 @@ public class DisplayResultSet implements java.lang.Runnable {
 			// System.runFinalization();
 			// System.gc();
 			busy = false;
-			if (sqlMinusObject != null)
-				sqlMinusObject.unsetBusy();
 		}
+
+		if (sqlMinusObject != null)
+			sqlMinusObject.unsetBusy();
 	}
 
 }

@@ -1041,7 +1041,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 		}
 	}
 
-	public /* synchronized */ void displayResultSet(ResultSet rst) {
+	public /* synchronized */ void displayResultSet(Optional<ResultSet> rst, Optional<String> executionCommand) {
 		clearTextOutput();
 
 		Optional<Integer> rowsToReturn = Optional.empty();
@@ -1137,19 +1137,32 @@ public class SQLMinus extends JFrame implements ActionListener {
 		sqlMinusPreferences.putBoolean(Constants.PreferencesKeys.ENABLE_THREADS, enableThreads.isSelected());
 		sqlMinusPreferences.putBoolean(Constants.PreferencesKeys.OUTPUT_IN_GRID, btTable.isSelected());
 
+		final Optional<Integer> rowsToReturnFinal = rowsToReturn;
+		final int maxColWidthValueFinal = maxColWidthValue;
+		final int interColSpaceValueFinal = interColSpaceValue;
+		final int maxDataLengthValueFinal = maxDataLengthValue;
+
 		try {
 			// rowsToReturn will be null if all rows are to be returned
 			if (btText.isSelected()) {
 				tableSpane.setVisible(false);
 				textSpane.setVisible(true);
 
-				displayObject.setDisplayParams(rowsToReturn, rst, textOutput, this, maxColWidthValue,
-						interColSpaceValue, rowDividers.isSelected(), maxDataLengthValue, nullRep.getText());
+				Thread displayThread = new Thread(() -> {
+					try {
+						displayObject.setDisplayParamsAndRun(rowsToReturnFinal, rst, executionCommand, stmt, textOutput,
+								this, maxColWidthValueFinal, interColSpaceValueFinal, rowDividers.isSelected(),
+								maxDataLengthValueFinal, nullRep.getText());
+
+					} catch (Exception e) {
+						popMessageAndCloseResultSet(e.toString(), rst);
+					}
+				}, "DISPLAY-RESULT-SET-THREAD");
 
 				if (enableThreads.isSelected()) {
-					new Thread(displayObject, "DISPLAY-RESULT-SET-THREAD").start();
+					displayThread.start();
 				} else {
-					SwingUtilities.invokeLater(displayObject);///////////////////////////////////
+					SwingUtilities.invokeLater(displayThread);///////////////////////////////////
 				}
 			} else if (btTable.isSelected()) {
 				textSpane.setVisible(false);
@@ -1157,12 +1170,19 @@ public class SQLMinus extends JFrame implements ActionListener {
 				tableOutput.setMinColWidth(minColWidthValue);
 				tableOutput.setMaxColWidth(maxColWidthValue);
 
-				displayGrid.setDisplayParams(rowsToReturn, rst, this, tableOutput, nullRep.getText());
+				Thread displayThread = new Thread(() -> {
+					try {
+						displayGrid.setDisplayParamsAndRun(rowsToReturnFinal, rst, executionCommand, stmt, this,
+								tableOutput, nullRep.getText());
+					} catch (Exception e) {
+						popMessageAndCloseResultSet(e.toString(), rst);
+					}
+				}, "DISPLAY-RESULT-SET-AS-GRID-THREAD");
 
 				if (enableThreads.isSelected()) {
-					new Thread(displayGrid, "DISPLAY-RESULT-SET-AS-GRID-THREAD").start();
+					displayThread.start();
 				} else {
-					SwingUtilities.invokeLater(displayGrid);///////////////////////////////////
+					SwingUtilities.invokeLater(displayThread);///////////////////////////////////
 				}
 			}
 		} catch (Exception e) {
@@ -1171,10 +1191,12 @@ public class SQLMinus extends JFrame implements ActionListener {
 		}
 	}
 
-	private void popMessageAndCloseResultSet(String message, ResultSet rst) {
+	private void popMessageAndCloseResultSet(String message, Optional<ResultSet> rst) {
 		try {
 			popMessage(message);
-			rst.close();
+			if (rst.isPresent()) {
+				rst.get().close();
+			}
 		} catch (Exception e) {
 			popMessage(e.toString());
 		}
@@ -1235,7 +1257,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 							if (JOptionPane.showConfirmDialog(null, "Show the next resultset?", "Next?",
 									JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
 								// System.err.println("Starting next display thread");
-								displayResultSet(stmt.get().getResultSet());
+								displayResultSet(Optional.of(stmt.get().getResultSet()), Optional.empty());
 							}
 							return;// This resultSet is displayed in a separate thread
 							// and this method will be called again when that
@@ -1296,10 +1318,11 @@ public class SQLMinus extends JFrame implements ActionListener {
 		String comboText = ((JTextComponent) sqlText.getEditor().getEditorComponent()).getText();
 		caretPos = caretPos > comboText.length() ? comboText.length() : caretPos;
 		((JTextComponent) sqlText.getEditor().getEditorComponent()).setCaretPosition(caretPos);
-		saveSQLTextsToPreferences();
+		Thread preferencesThread = new Thread(() -> saveSQLTextsToPreferences());
+		preferencesThread.start();
 	}
 
-	private void saveSQLTextsToPreferences() {
+	private synchronized void saveSQLTextsToPreferences() {
 		try {
 			StringBuilder sqlTextsString = new StringBuilder();
 			for (int i = sqlText.getItemCount() - 1; i >= 0; i--) {
@@ -1350,12 +1373,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 				try {
 					int updateCount;
 					setStatusBarText("");
-					if (stmt.get().execute(executionCommand)) {
-						displayResultSet(stmt.get().getResultSet());
-					} else if ((updateCount = stmt.get().getUpdateCount()) != -1) {
-						popMessage(updateCount + " row(s) updated");
-					}
-					showNextResult();
+					displayResultSet(Optional.empty(), Optional.of(executionCommand));
 				} catch (Exception e) {
 					popMessage(UtilityFunctions.getExceptionMessages(e));
 				}
@@ -1430,7 +1448,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 
 				rst = conn.get().getMetaData().getTables(catalogPattern, schemaPattern, tableText.getText(), null);
 
-				displayResultSet(rst);
+				displayResultSet(Optional.of(rst), Optional.empty());
 			}
 		} else {
 			popMessage("Not connected");
@@ -1455,7 +1473,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 				rst = conn.get().getMetaData().getColumns(catalogPattern, schemaPattern, tableText.getText(),
 						columnText.getText());
 
-				displayResultSet(rst);
+				displayResultSet(Optional.of(rst), Optional.empty());
 			}
 		} else {
 			popMessage("Not connected");
@@ -1476,7 +1494,8 @@ public class SQLMinus extends JFrame implements ActionListener {
 					schemaPattern = schemaText.getText();
 				}
 
-				displayResultSet(conn.get().getMetaData().getSchemas(catalogPattern, schemaPattern));
+				displayResultSet(Optional.of(conn.get().getMetaData().getSchemas(catalogPattern, schemaPattern)),
+						Optional.empty());
 			}
 		} else {
 			popMessage("Not connected");
@@ -1487,7 +1506,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 		if (conn.isPresent()) {
 			if (!busy) {
 				setStatusBarText("");
-				displayResultSet(conn.get().getMetaData().getCatalogs());
+				displayResultSet(Optional.of(conn.get().getMetaData().getCatalogs()), Optional.empty());
 			}
 		} else {
 			popMessage("Not connected");

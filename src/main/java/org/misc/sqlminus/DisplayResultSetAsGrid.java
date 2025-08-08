@@ -2,15 +2,18 @@ package org.misc.sqlminus;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Optional;
 import java.util.Vector;
 
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
-public class DisplayResultSetAsGrid implements Runnable {
+public class DisplayResultSetAsGrid {
 
-	private ResultSet rst;
+	private Optional<ResultSet> resultSet;
+	private Optional<String> executionCommand;
+	private Optional<Statement> statement;
 	private SQLMinus sqlMinusObject;
 	private Optional<Integer> rowsToReturn;
 	private String nullRep;
@@ -26,7 +29,8 @@ public class DisplayResultSetAsGrid implements Runnable {
 		stopExecution = true;
 	}
 
-	public void setDisplayParams(Optional<Integer> rowsToReturn, ResultSet rst, SQLMinus sqlMinusObject,
+	public void setDisplayParamsAndRun(Optional<Integer> rowsToReturn, Optional<ResultSet> resultSet,
+			Optional<String> executionCommand, Optional<Statement> statement, SQLMinus sqlMinusObject,
 			SortableTable table, String nullRep) throws Exception {
 		if (!busy) {
 			busy = true;
@@ -35,19 +39,43 @@ public class DisplayResultSetAsGrid implements Runnable {
 			}
 			this.stopExecution = false;
 			this.table = table;
-			this.rst = rst;
+			this.resultSet = resultSet;
+			this.executionCommand = executionCommand;
+			this.statement = statement;
 			this.sqlMinusObject = sqlMinusObject;
 			this.rowsToReturn = rowsToReturn;
 			this.nullRep = nullRep;
 			table.setNullRep(nullRep);
+
+			run();
 		} else {
 			throw new Exception("Cannot set display params while displaying a resultset");
 		}
 	}
 
-	public /* synchronized */ void run() {
+	public void run() {
 		try {
+			ResultSet rst = null;
 			try {
+
+				if (executionCommand.isPresent()) {
+					if (statement.isPresent()) {
+						int updateCount;
+						if (statement.get().execute(executionCommand.get())) {
+							rst = statement.get().getResultSet();
+						} else if ((updateCount = statement.get().getUpdateCount()) != -1) {
+							sqlMinusObject.popMessage(updateCount + " row(s) updated");
+							return;
+						}
+					} else {
+						throw new SQLMinusException("Statement not available to execute command");
+					}
+				} else if (resultSet.isPresent()) {
+					rst = resultSet.get();
+				} else {
+					throw new SQLMinusException("Neither execution command nor result set provided");
+				}
+
 				int option;
 				boolean hasAnotherRow = rst.next();// The result set now points to the first row, if it has one.
 				do {
@@ -107,8 +135,9 @@ public class DisplayResultSetAsGrid implements Runnable {
 					if (rowsToReturn.isPresent()) {
 						// If there are remaining rows should we display them too?
 						if (hasAnotherRow && rowsToReturn.get().intValue() > 0) {
-							option = JOptionPane.showConfirmDialog(null, "Show the next " + rowsToReturn.get() + " rows?",
-									"Continue?", JOptionPane.YES_NO_OPTION);
+							option = JOptionPane.showConfirmDialog(null,
+									"Show the next " + rowsToReturn.get() + " rows?", "Continue?",
+									JOptionPane.YES_NO_OPTION);
 						}
 						if (rowsToReturn.get().intValue() < 1) {
 							// textOutput.append("\nYou have set the number of rows to be fetched to
@@ -123,10 +152,10 @@ public class DisplayResultSetAsGrid implements Runnable {
 
 				} while (option == JOptionPane.YES_OPTION);
 				rst.close();
-				rst = null;
 			} catch (ThreadKilledException te) {
-				rst.close();
-				rst = null;
+				if (rst != null) {
+					rst.close();
+				}
 				JOptionPane.showMessageDialog(null, te.getMessage());
 			}
 		} catch (SQLException se) {
@@ -151,10 +180,11 @@ public class DisplayResultSetAsGrid implements Runnable {
 				}
 			});
 			busy = false;
-			if (sqlMinusObject != null)
-				sqlMinusObject.unsetBusy();
 			// System.err.println("Display thread exiting");
 		}
+
+		if (sqlMinusObject != null)
+			sqlMinusObject.unsetBusy();
 	}
 
 }

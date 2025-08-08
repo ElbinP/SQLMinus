@@ -619,7 +619,7 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 				sqlMinusObject.popMessage("Error saving SQL History. " + e.getMessage());
 			}
 		});
-		SwingUtilities.invokeLater(saveThread);
+		saveThread.start();
 	}
 
 	public String getToolbarPosition() {
