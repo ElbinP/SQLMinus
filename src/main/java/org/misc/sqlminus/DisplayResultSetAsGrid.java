@@ -9,7 +9,7 @@ import java.util.Vector;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
-public class DisplayResultSetAsGrid implements Runnable {
+public class DisplayResultSetAsGrid {
 
 	private Optional<ResultSet> resultSet;
 	private Optional<String> executionCommand;
@@ -29,7 +29,7 @@ public class DisplayResultSetAsGrid implements Runnable {
 		stopExecution = true;
 	}
 
-	public void setDisplayParams(Optional<Integer> rowsToReturn, Optional<ResultSet> resultSet,
+	public void setDisplayParamsAndRun(Optional<Integer> rowsToReturn, Optional<ResultSet> resultSet,
 			Optional<String> executionCommand, Optional<Statement> statement, SQLMinus sqlMinusObject,
 			SortableTable table, String nullRep) throws Exception {
 		if (!busy) {
@@ -46,12 +46,14 @@ public class DisplayResultSetAsGrid implements Runnable {
 			this.rowsToReturn = rowsToReturn;
 			this.nullRep = nullRep;
 			table.setNullRep(nullRep);
+
+			run();
 		} else {
 			throw new Exception("Cannot set display params while displaying a resultset");
 		}
 	}
 
-	public /* synchronized */ void run() {
+	public void run() {
 		try {
 			ResultSet rst = null;
 			try {

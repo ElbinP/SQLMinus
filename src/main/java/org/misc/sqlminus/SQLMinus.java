@@ -1137,20 +1137,32 @@ public class SQLMinus extends JFrame implements ActionListener {
 		sqlMinusPreferences.putBoolean(Constants.PreferencesKeys.ENABLE_THREADS, enableThreads.isSelected());
 		sqlMinusPreferences.putBoolean(Constants.PreferencesKeys.OUTPUT_IN_GRID, btTable.isSelected());
 
+		final Optional<Integer> rowsToReturnFinal = rowsToReturn;
+		final int maxColWidthValueFinal = maxColWidthValue;
+		final int interColSpaceValueFinal = interColSpaceValue;
+		final int maxDataLengthValueFinal = maxDataLengthValue;
+
 		try {
 			// rowsToReturn will be null if all rows are to be returned
 			if (btText.isSelected()) {
 				tableSpane.setVisible(false);
 				textSpane.setVisible(true);
 
-				displayObject.setDisplayParams(rowsToReturn, rst, executionCommand, stmt, textOutput, this,
-						maxColWidthValue, interColSpaceValue, rowDividers.isSelected(), maxDataLengthValue,
-						nullRep.getText());
+				Thread displayThread = new Thread(() -> {
+					try {
+						displayObject.setDisplayParamsAndRun(rowsToReturnFinal, rst, executionCommand, stmt, textOutput,
+								this, maxColWidthValueFinal, interColSpaceValueFinal, rowDividers.isSelected(),
+								maxDataLengthValueFinal, nullRep.getText());
+
+					} catch (Exception e) {
+						popMessageAndCloseResultSet(e.toString(), rst);
+					}
+				}, "DISPLAY-RESULT-SET-THREAD");
 
 				if (enableThreads.isSelected()) {
-					new Thread(displayObject, "DISPLAY-RESULT-SET-THREAD").start();
+					displayThread.start();
 				} else {
-					SwingUtilities.invokeLater(displayObject);///////////////////////////////////
+					SwingUtilities.invokeLater(displayThread);///////////////////////////////////
 				}
 			} else if (btTable.isSelected()) {
 				textSpane.setVisible(false);
@@ -1158,13 +1170,19 @@ public class SQLMinus extends JFrame implements ActionListener {
 				tableOutput.setMinColWidth(minColWidthValue);
 				tableOutput.setMaxColWidth(maxColWidthValue);
 
-				displayGrid.setDisplayParams(rowsToReturn, rst, executionCommand, stmt, this, tableOutput,
-						nullRep.getText());
+				Thread displayThread = new Thread(() -> {
+					try {
+						displayGrid.setDisplayParamsAndRun(rowsToReturnFinal, rst, executionCommand, stmt, this,
+								tableOutput, nullRep.getText());
+					} catch (Exception e) {
+						popMessageAndCloseResultSet(e.toString(), rst);
+					}
+				}, "DISPLAY-RESULT-SET-AS-GRID-THREAD");
 
 				if (enableThreads.isSelected()) {
-					new Thread(displayGrid, "DISPLAY-RESULT-SET-AS-GRID-THREAD").start();
+					displayThread.start();
 				} else {
-					SwingUtilities.invokeLater(displayGrid);///////////////////////////////////
+					SwingUtilities.invokeLater(displayThread);///////////////////////////////////
 				}
 			}
 		} catch (Exception e) {

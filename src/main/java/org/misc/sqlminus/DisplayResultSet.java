@@ -12,7 +12,7 @@ import javax.swing.JTextArea;
 
 import nocom.special.UtilityFunctions;
 
-public class DisplayResultSet implements java.lang.Runnable {
+public class DisplayResultSet {
 
 	private JTextArea textOutput;
 	private Optional<ResultSet> resultSet;
@@ -35,7 +35,7 @@ public class DisplayResultSet implements java.lang.Runnable {
 		stopExecution = true;
 	}
 
-	public void setDisplayParams(Optional<Integer> rowsToReturn, Optional<ResultSet> resultSet,
+	public void setDisplayParamsAndRun(Optional<Integer> rowsToReturn, Optional<ResultSet> resultSet,
 			Optional<String> executionCommand, Optional<Statement> statement, JTextArea textOutput,
 			SQLMinus sqlMinusObject, int maxColWidth, int spacing, boolean rowDividers, int maxDataLength,
 			String nullRep) throws Exception {
@@ -56,12 +56,13 @@ public class DisplayResultSet implements java.lang.Runnable {
 			this.maxDataLength = maxDataLength;
 			this.nullRep = nullRep;
 			// SwingUtilities.invokeLater(this);
+			run();
 		} else {
 			throw new Exception("Cannot set display params while displaying a resultset");
 		}
 	}
 
-	public /* synchronized */ void run() {
+	public void run() {
 		try {
 			ResultSet rst = null;
 			try {
