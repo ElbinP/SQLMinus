@@ -215,10 +215,10 @@ public class DisplayResultSetAsGrid {
 			});
 			busy.set(false);
 			// System.err.println("Display thread exiting");
+			if (sqlMinusObject != null)
+				sqlMinusObject.unsetBusy();
 		}
 
-		if (sqlMinusObject != null)
-			sqlMinusObject.unsetBusy();
 	}
 
 }

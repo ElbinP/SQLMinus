@@ -382,10 +382,10 @@ public class DisplayResultSet {
 			// System.runFinalization();
 			// System.gc();
 			busy.set(false);
+			if (sqlMinusObject != null)
+				sqlMinusObject.unsetBusy();
 		}
 
-		if (sqlMinusObject != null)
-			sqlMinusObject.unsetBusy();
 	}
 
 }
