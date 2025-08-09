@@ -57,6 +57,7 @@ import javax.swing.border.BevelBorder;
 import javax.swing.plaf.metal.MetalComboBoxEditor;
 import javax.swing.text.JTextComponent;
 
+import org.misc.sqlminus.MetadataRequestEntity.MetadataRequestType;
 import org.misc.sqlminus.session.SessionsPanel;
 
 import nocom.special.CustomizedMouseAdapter;
@@ -1041,7 +1042,8 @@ public class SQLMinus extends JFrame implements ActionListener {
 		}
 	}
 
-	public /* synchronized */ void displayResultSet(Optional<ResultSet> rst, Optional<String> executionCommand) {
+	public /* synchronized */ void displayResultSet(Optional<ResultSet> rst, Optional<String> executionCommand,
+			Optional<MetadataRequestEntity> metadataRequestEntity) {
 		clearTextOutput();
 
 		Optional<Integer> rowsToReturn = Optional.empty();
@@ -1172,8 +1174,8 @@ public class SQLMinus extends JFrame implements ActionListener {
 
 				Thread displayThread = new Thread(() -> {
 					try {
-						displayGrid.setDisplayParamsAndRun(rowsToReturnFinal, rst, executionCommand, stmt, this,
-								tableOutput, nullRep.getText());
+						displayGrid.setDisplayParamsAndRun(rowsToReturnFinal, executionCommand, stmt, rst, conn, this,
+								tableOutput, nullRep.getText(), metadataRequestEntity);
 					} catch (Exception e) {
 						popMessageAndCloseResultSet(e.toString(), rst);
 					}
@@ -1257,7 +1259,8 @@ public class SQLMinus extends JFrame implements ActionListener {
 							if (JOptionPane.showConfirmDialog(null, "Show the next resultset?", "Next?",
 									JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
 								// System.err.println("Starting next display thread");
-								displayResultSet(Optional.of(stmt.get().getResultSet()), Optional.empty());
+								displayResultSet(Optional.of(stmt.get().getResultSet()), Optional.empty(),
+										Optional.empty());
 							}
 							return;// This resultSet is displayed in a separate thread
 							// and this method will be called again when that
@@ -1373,7 +1376,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 				try {
 					int updateCount;
 					setStatusBarText("");
-					displayResultSet(Optional.empty(), Optional.of(executionCommand));
+					displayResultSet(Optional.empty(), Optional.of(executionCommand), Optional.empty());
 				} catch (Exception e) {
 					popMessage(UtilityFunctions.getExceptionMessages(e));
 				}
@@ -1445,10 +1448,10 @@ public class SQLMinus extends JFrame implements ActionListener {
 				if (schemaText.isEnabled()) {
 					schemaPattern = schemaText.getText();
 				}
+				MetadataRequestEntity entity = new MetadataRequestEntity(catalogPattern, schemaPattern,
+						tableText.getText(), null, MetadataRequestType.TABLES);
 
-				rst = conn.get().getMetaData().getTables(catalogPattern, schemaPattern, tableText.getText(), null);
-
-				displayResultSet(Optional.of(rst), Optional.empty());
+				displayResultSet(Optional.empty(), Optional.empty(), Optional.of(entity));
 			}
 		} else {
 			popMessage("Not connected");
@@ -1470,10 +1473,10 @@ public class SQLMinus extends JFrame implements ActionListener {
 					schemaPattern = schemaText.getText();
 				}
 
-				rst = conn.get().getMetaData().getColumns(catalogPattern, schemaPattern, tableText.getText(),
-						columnText.getText());
+				MetadataRequestEntity entity = new MetadataRequestEntity(catalogPattern, schemaPattern,
+						tableText.getText(), columnText.getText(), MetadataRequestType.COLUMNS);
 
-				displayResultSet(Optional.of(rst), Optional.empty());
+				displayResultSet(Optional.empty(), Optional.empty(), Optional.of(entity));
 			}
 		} else {
 			popMessage("Not connected");
@@ -1493,9 +1496,10 @@ public class SQLMinus extends JFrame implements ActionListener {
 				if (schemaText.isEnabled()) {
 					schemaPattern = schemaText.getText();
 				}
+				MetadataRequestEntity entity = new MetadataRequestEntity(catalogPattern, schemaPattern, null, null,
+						MetadataRequestType.SCHEMAS);
 
-				displayResultSet(Optional.of(conn.get().getMetaData().getSchemas(catalogPattern, schemaPattern)),
-						Optional.empty());
+				displayResultSet(Optional.empty(), Optional.empty(), Optional.of(entity));
 			}
 		} else {
 			popMessage("Not connected");
@@ -1506,7 +1510,9 @@ public class SQLMinus extends JFrame implements ActionListener {
 		if (conn.isPresent()) {
 			if (!busy) {
 				setStatusBarText("");
-				displayResultSet(Optional.of(conn.get().getMetaData().getCatalogs()), Optional.empty());
+				MetadataRequestEntity entity = new MetadataRequestEntity(null, null, null, null,
+						MetadataRequestType.CATALOGS);
+				displayResultSet(Optional.empty(), Optional.empty(), Optional.of(entity));
 			}
 		} else {
 			popMessage("Not connected");
