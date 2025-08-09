@@ -219,15 +219,12 @@ public class DisplayResultSet {
 						for (int i = 1; i <= rowlength; i++) {
 							if (stopExecution)
 								throw new ThreadKilledException("Thread killed");
-							try {
-								// if(columnSize[j]<columnValue[i][j].length())
-								// columnSize[j]=columnValue[i][j].length();//+++++++++++++++++++++++++++++
-								if (columnSize[j] < UtilityFunctions.getMaxLength(
-										(String[]) columnValue[i][j].toArray(new String[columnValue[i][j].size()]))) {
-									columnSize[j] = UtilityFunctions.getMaxLength(
-											(String[]) columnValue[i][j].toArray(new String[columnValue[i][j].size()]));
-								}
-							} catch (NullPointerException ne) {
+							// if(columnSize[j]<columnValue[i][j].length())
+							// columnSize[j]=columnValue[i][j].length();//+++++++++++++++++++++++++++++
+							if (columnSize[j] < UtilityFunctions.getMaxLength(
+									(String[]) columnValue[i][j].toArray(new String[columnValue[i][j].size()]))) {
+								columnSize[j] = UtilityFunctions.getMaxLength(
+										(String[]) columnValue[i][j].toArray(new String[columnValue[i][j].size()]));
 							}
 						}
 					}
