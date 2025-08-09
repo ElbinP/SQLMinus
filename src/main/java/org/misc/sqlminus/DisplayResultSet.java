@@ -7,6 +7,7 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Optional;
 import java.util.Vector;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.swing.JOptionPane;
 import javax.swing.JTextArea;
@@ -27,26 +28,21 @@ public class DisplayResultSet {
 	private boolean rowDividers;
 	private int maxDataLength;
 	private String nullRep;
-	private volatile boolean busy, stopExecution;
-
-	public DisplayResultSet() {
-		busy = false;
-		stopExecution = false;
-	}
+	private final AtomicBoolean busy = new AtomicBoolean(false);
+	private final AtomicBoolean stopExecution = new AtomicBoolean(false);
 
 	public void killThread() {
-		stopExecution = true;
+		stopExecution.set(true);
 	}
 
 	public void setDisplayParamsAndRun(Optional<Integer> rowsToReturn, Optional<String> executionCommand,
 			Optional<Statement> statement, Optional<ResultSet> resultSet, Optional<Connection> connection,
 			JTextArea textOutput, SQLMinus sqlMinusObject, int maxColWidth, int spacing, boolean rowDividers,
 			int maxDataLength, String nullRep, Optional<MetadataRequestEntity> metadataRequestEntity) throws Exception {
-		if (!busy) {
-			busy = true;
+		if (busy.compareAndSet(false, true)) {
 			if (sqlMinusObject != null)
 				sqlMinusObject.setBusy();
-			this.stopExecution = false;
+			this.stopExecution.set(false);
 			this.textOutput = textOutput;
 			this.resultSet = resultSet;
 			this.executionCommand = executionCommand;
@@ -126,7 +122,7 @@ public class DisplayResultSet {
 				int option;
 				boolean hasAnotherRow = rst.next();// The result set now points to the first row, if it has one.
 				do {
-					if (stopExecution)
+					if (stopExecution.get())
 						throw new ThreadKilledException("Thread killed");
 					option = JOptionPane.NO_OPTION;
 					if (sqlMinusObject != null)
@@ -146,7 +142,7 @@ public class DisplayResultSet {
 					// String[columnCount+1];//++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 					Vector[] columnName = new Vector[columnCount + 1];
 					for (int i = 1; i <= columnCount; i++) {
-						if (stopExecution)
+						if (stopExecution.get())
 							throw new ThreadKilledException("Thread killed");
 						// columnName[i]=rst.getMetaData().getColumnName(i);//++++++++++++++++++++++++++++++++++++++++++++++
 						String temp = rst.getMetaData().getColumnLabel(i);
@@ -162,11 +158,11 @@ public class DisplayResultSet {
 
 					// rowsToReturn will be null if all rows are to be returned
 					while (hasAnotherRow && ((rowsToReturn.isEmpty()) || (rowsRead < rowsToReturn.get().intValue()))) {
-						if (stopExecution)
+						if (stopExecution.get())
 							throw new ThreadKilledException("Thread killed");
 						ArrayList arlRow = new ArrayList();// arraylist for the corresponding row
 						for (int i = 1; i <= columnCount; i++) {
-							if (stopExecution)
+							if (stopExecution.get())
 								throw new ThreadKilledException("Thread killed");
 							String temp = rst.getString(i);
 							if (temp == null) {
@@ -190,12 +186,12 @@ public class DisplayResultSet {
 					// String[rowlength+1][columnCount+1];//++++++++++++++++++++++++++++++++
 					Vector[][] columnValue = new Vector[rowlength + 1][columnCount + 1];
 					for (int i = 1; i <= rowlength; i++) {
-						if (stopExecution)
+						if (stopExecution.get())
 							throw new ThreadKilledException("Thread killed");
 						Object[] temp = ((ArrayList) row[i - 1]).toArray();
 						row[i - 1] = null;
 						for (int j = 1; j <= columnCount; j++) {
-							if (stopExecution)
+							if (stopExecution.get())
 								throw new ThreadKilledException("Thread killed");
 							// columnValue[i][j]=(String)temp[j-1];//++++++++++++++++++++++++++++++++++++++++++
 							columnValue[i][j] = UtilityFunctions.splitUpString((String) temp[j - 1], maxColWidth);
@@ -207,17 +203,17 @@ public class DisplayResultSet {
 					// This section determines the maximum size an entry in a column will have
 					int[] columnSize = new int[columnCount + 1];
 					for (int i = 1; i <= columnCount; i++) {
-						if (stopExecution)
+						if (stopExecution.get())
 							throw new ThreadKilledException("Thread killed");
 						// columnSize[i]=columnName[i].length();//+++++++++++++++++++++++++++++++++++++++++++++
 						columnSize[i] = UtilityFunctions
 								.getMaxLength((String[]) columnName[i].toArray(new String[columnName[i].size()]));
 					}
 					for (int j = 1; j <= columnCount; j++) {
-						if (stopExecution)
+						if (stopExecution.get())
 							throw new ThreadKilledException("Thread killed");
 						for (int i = 1; i <= rowlength; i++) {
-							if (stopExecution)
+							if (stopExecution.get())
 								throw new ThreadKilledException("Thread killed");
 							// if(columnSize[j]<columnValue[i][j].length())
 							// columnSize[j]=columnValue[i][j].length();//+++++++++++++++++++++++++++++
@@ -231,14 +227,14 @@ public class DisplayResultSet {
 
 					int maxRowSize = 0;
 					for (int i = 1; i <= columnCount; i++) {
-						if (stopExecution)
+						if (stopExecution.get())
 							throw new ThreadKilledException("Thread killed");
 						maxRowSize = maxRowSize + columnSize[i] + spacing;
 					}
 
 					int columnNameMaxRows = 1;
 					for (int i = 1; i <= columnCount; i++) {
-						if (stopExecution)
+						if (stopExecution.get())
 							throw new ThreadKilledException("Thread killed");
 						if (columnNameMaxRows < columnName[i].size()) {
 							columnNameMaxRows = columnName[i].size();
@@ -247,11 +243,11 @@ public class DisplayResultSet {
 
 					int[] columnValueMaxRows = new int[rowlength + 1];
 					for (int i = 1; i <= rowlength; i++) {
-						if (stopExecution)
+						if (stopExecution.get())
 							throw new ThreadKilledException("Thread killed");
 						columnValueMaxRows[i] = 1;
 						for (int j = 1; j <= columnCount; j++) {
-							if (stopExecution)
+							if (stopExecution.get())
 								throw new ThreadKilledException("Thread killed");
 							if (columnValueMaxRows[i] < columnValue[i][j].size()) {
 								columnValueMaxRows[i] = columnValue[i][j].size();
@@ -261,7 +257,7 @@ public class DisplayResultSet {
 
 					int maxRowRows = 1;
 					for (int i = 1; i <= rowlength; i++) {
-						if (stopExecution)
+						if (stopExecution.get())
 							throw new ThreadKilledException("Thread killed");
 						if (maxRowRows < columnValueMaxRows[i]) {
 							maxRowRows = columnValueMaxRows[i];
@@ -272,11 +268,11 @@ public class DisplayResultSet {
 					// display
 					// textOutput.append("\n");//+++++++++++++++++++++++++++++++++++++++++
 					for (int m = 1; m <= columnNameMaxRows; m++) {
-						if (stopExecution)
+						if (stopExecution.get())
 							throw new ThreadKilledException("Thread killed");
 						textOutput.append("\n");
 						for (int i = 1; i <= columnCount; i++) {
-							if (stopExecution)
+							if (stopExecution.get())
 								throw new ThreadKilledException("Thread killed");
 							int temp = 0;
 							try {
@@ -286,7 +282,7 @@ public class DisplayResultSet {
 								// ArrayIndexOutOfBoundsException will be thrown when there is no elementAt(m-1)
 							}
 							for (int j = 1; j <= (columnSize[i] - temp) + spacing; j++) {
-								if (stopExecution)
+								if (stopExecution.get())
 									throw new ThreadKilledException("Thread killed");
 								textOutput.append(" ");
 							}
@@ -294,13 +290,13 @@ public class DisplayResultSet {
 					}
 					textOutput.append("\n");
 					for (int i = 1; i <= columnCount; i++) {
-						if (stopExecution)
+						if (stopExecution.get())
 							throw new ThreadKilledException("Thread killed");
 						// for(int j=1;j<=columnName[i].length();j++)
 						// textOutput.append("_");//+++++++++++++++++++++++
 						for (int j = 1; j <= UtilityFunctions.getMaxLength(
 								(String[]) columnName[i].toArray(new String[columnName[i].size()])); j++) {
-							if (stopExecution)
+							if (stopExecution.get())
 								throw new ThreadKilledException("Thread killed");
 							textOutput.append("_");
 						}
@@ -310,7 +306,7 @@ public class DisplayResultSet {
 								- UtilityFunctions.getMaxLength(
 										(String[]) columnName[i].toArray(new String[columnName[i].size()]))
 								+ spacing); j++) {
-							if (stopExecution)
+							if (stopExecution.get())
 								throw new ThreadKilledException("Thread killed");
 							textOutput.append(" ");
 						}
@@ -319,14 +315,14 @@ public class DisplayResultSet {
 					// This section displays the actual row contents
 					// textOutput.append("\n");//+++++++++++++++++++++++++++++++++++++++++++++
 					for (int i = 1; i <= rowlength; i++) {
-						if (stopExecution)
+						if (stopExecution.get())
 							throw new ThreadKilledException("Thread killed");
 						for (int m = 1; m <= columnValueMaxRows[i]; m++) {
-							if (stopExecution)
+							if (stopExecution.get())
 								throw new ThreadKilledException("Thread killed");
 							textOutput.append("\n");
 							for (int j = 1; j <= columnCount; j++) {
-								if (stopExecution)
+								if (stopExecution.get())
 									throw new ThreadKilledException("Thread killed");
 								int temp = 0;
 								try {
@@ -336,7 +332,7 @@ public class DisplayResultSet {
 									// ArrayIndexOutOfBoundsException will be thrown when there is no elementAt(m-1)
 								}
 								for (int k = 1; k <= (columnSize[j] - temp) + spacing; k++) {
-									if (stopExecution)
+									if (stopExecution.get())
 										throw new ThreadKilledException("Thread killed");
 									textOutput.append(" ");
 								}
@@ -346,7 +342,7 @@ public class DisplayResultSet {
 						if (rowDividers || maxRowRows > 1) {
 							textOutput.append("\n");
 							for (int p = 1; p <= maxRowSize; p++) {
-								if (stopExecution)
+								if (stopExecution.get())
 									throw new ThreadKilledException("Thread killed");
 								textOutput.append("-");
 							}
@@ -385,7 +381,7 @@ public class DisplayResultSet {
 		} finally {
 			// System.runFinalization();
 			// System.gc();
-			busy = false;
+			busy.set(false);
 		}
 
 		if (sqlMinusObject != null)
