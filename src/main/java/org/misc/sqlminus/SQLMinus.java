@@ -1152,9 +1152,10 @@ public class SQLMinus extends JFrame implements ActionListener {
 
 				Thread displayThread = new Thread(() -> {
 					try {
-						displayObject.setDisplayParamsAndRun(rowsToReturnFinal, rst, executionCommand, stmt, textOutput,
-								this, maxColWidthValueFinal, interColSpaceValueFinal, rowDividers.isSelected(),
-								maxDataLengthValueFinal, nullRep.getText());
+						displayObject.setDisplayParamsAndRun(rowsToReturnFinal, executionCommand, stmt, rst, conn,
+								textOutput, this, maxColWidthValueFinal, interColSpaceValueFinal,
+								rowDividers.isSelected(), maxDataLengthValueFinal, nullRep.getText(),
+								metadataRequestEntity);
 
 					} catch (Exception e) {
 						popMessageAndCloseResultSet(e.toString(), rst);

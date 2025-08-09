@@ -1,5 +1,6 @@
 package org.misc.sqlminus;
 
+import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -15,7 +16,9 @@ import nocom.special.UtilityFunctions;
 public class DisplayResultSet {
 
 	private JTextArea textOutput;
+	private Optional<MetadataRequestEntity> metadataRequestEntity;
 	private Optional<ResultSet> resultSet;
+	private Optional<Connection> connection;
 	private Optional<String> executionCommand;
 	private Optional<Statement> statement;
 	private SQLMinus sqlMinusObject;
@@ -35,10 +38,10 @@ public class DisplayResultSet {
 		stopExecution = true;
 	}
 
-	public void setDisplayParamsAndRun(Optional<Integer> rowsToReturn, Optional<ResultSet> resultSet,
-			Optional<String> executionCommand, Optional<Statement> statement, JTextArea textOutput,
-			SQLMinus sqlMinusObject, int maxColWidth, int spacing, boolean rowDividers, int maxDataLength,
-			String nullRep) throws Exception {
+	public void setDisplayParamsAndRun(Optional<Integer> rowsToReturn, Optional<String> executionCommand,
+			Optional<Statement> statement, Optional<ResultSet> resultSet, Optional<Connection> connection,
+			JTextArea textOutput, SQLMinus sqlMinusObject, int maxColWidth, int spacing, boolean rowDividers,
+			int maxDataLength, String nullRep, Optional<MetadataRequestEntity> metadataRequestEntity) throws Exception {
 		if (!busy) {
 			busy = true;
 			if (sqlMinusObject != null)
@@ -48,6 +51,7 @@ public class DisplayResultSet {
 			this.resultSet = resultSet;
 			this.executionCommand = executionCommand;
 			this.statement = statement;
+			this.connection = connection;
 			this.sqlMinusObject = sqlMinusObject;
 			this.rowsToReturn = rowsToReturn;
 			this.maxColWidth = maxColWidth;
@@ -55,11 +59,43 @@ public class DisplayResultSet {
 			this.rowDividers = rowDividers;
 			this.maxDataLength = maxDataLength;
 			this.nullRep = nullRep;
+			this.metadataRequestEntity = metadataRequestEntity;
+
 			// SwingUtilities.invokeLater(this);
 			run();
 		} else {
 			throw new Exception("Cannot set display params while displaying a resultset");
 		}
+	}
+
+	private ResultSet getMetadataResult(MetadataRequestEntity metadataRequestEntity)
+			throws SQLException, SQLMinusException {
+		if (connection.isEmpty()) {
+			throw new SQLMinusException("connection not available");
+		}
+		ResultSet rst;
+		switch (metadataRequestEntity.metadataRequestType()) {
+		case CATALOGS:
+			rst = connection.get().getMetaData().getCatalogs();
+			break;
+		case SCHEMAS:
+			rst = connection.get().getMetaData().getSchemas(metadataRequestEntity.catalogName(),
+					metadataRequestEntity.schemaPattern());
+			break;
+		case TABLES:
+			rst = connection.get().getMetaData().getTables(metadataRequestEntity.catalogName(),
+					metadataRequestEntity.schemaPattern(), metadataRequestEntity.tablePattern(), null);
+			break;
+		case COLUMNS:
+			rst = connection.get().getMetaData().getColumns(metadataRequestEntity.catalogName(),
+					metadataRequestEntity.schemaPattern(), metadataRequestEntity.tablePattern(),
+					metadataRequestEntity.columnPattern());
+			break;
+		default:
+			throw new SQLMinusException("Unknown metadata request type " + metadataRequestEntity.metadataRequestType());
+		}
+
+		return rst;
 	}
 
 	public void run() {
@@ -81,8 +117,10 @@ public class DisplayResultSet {
 					}
 				} else if (resultSet.isPresent()) {
 					rst = resultSet.get();
+				} else if (metadataRequestEntity.isPresent()) {
+					rst = getMetadataResult(metadataRequestEntity.get());
 				} else {
-					throw new SQLMinusException("Neither execution command nor result set provided");
+					throw new SQLMinusException("None of execution command, result set and metadata request provided");
 				}
 
 				int option;
