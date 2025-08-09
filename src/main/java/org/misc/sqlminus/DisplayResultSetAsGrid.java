@@ -6,6 +6,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Optional;
 import java.util.Vector;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
@@ -17,31 +18,26 @@ public class DisplayResultSetAsGrid {
 	private SQLMinus sqlMinusObject;
 	private Optional<Integer> rowsToReturn;
 	private String nullRep;
-	private volatile boolean busy, stopExecution;
+	private final AtomicBoolean busy = new AtomicBoolean(false);
+	private final AtomicBoolean stopExecution = new AtomicBoolean(false);
 	private SortableTable table;
 	private Optional<MetadataRequestEntity> metadataRequestEntity;
 	private Optional<ResultSet> resultSet;
 	private Optional<Connection> connection;
 
-	public DisplayResultSetAsGrid() {
-		busy = false;
-		stopExecution = false;
-	}
-
 	public void killThread() {
-		stopExecution = true;
+		stopExecution.set(true);
 	}
 
 	public void setDisplayParamsAndRun(Optional<Integer> rowsToReturn, Optional<String> executionCommand,
 			Optional<Statement> statement, Optional<ResultSet> resultSet, Optional<Connection> connection,
 			SQLMinus sqlMinusObject, SortableTable table, String nullRep,
 			Optional<MetadataRequestEntity> metadataRequestEntity) throws Exception {
-		if (!busy) {
-			busy = true;
+		if (busy.compareAndSet(false, true)) {
 			if (sqlMinusObject != null) {
 				sqlMinusObject.setBusy();
 			}
-			this.stopExecution = false;
+			this.stopExecution.set(false);
 			this.table = table;
 			this.executionCommand = executionCommand;
 			this.statement = statement;
@@ -117,7 +113,7 @@ public class DisplayResultSetAsGrid {
 				int option;
 				boolean hasAnotherRow = rst.next();// The result set now points to the first row, if it has one.
 				do {
-					if (stopExecution)
+					if (stopExecution.get())
 						throw new ThreadKilledException("Thread killed");
 					option = JOptionPane.NO_OPTION;
 					if (sqlMinusObject != null)
@@ -130,7 +126,7 @@ public class DisplayResultSetAsGrid {
 					int columnCount = rst.getMetaData().getColumnCount();
 					int[] columnTypes = new int[columnCount];
 					for (int i = 1; i <= columnCount; i++) {
-						if (stopExecution)
+						if (stopExecution.get())
 							throw new ThreadKilledException("Thread killed");
 						temp = rst.getMetaData().getColumnLabel(i);
 						/*
@@ -145,11 +141,11 @@ public class DisplayResultSetAsGrid {
 
 					// rowsToReturn will be null if all rows are to be returned
 					while (hasAnotherRow && ((rowsToReturn.isEmpty()) || (rowsRead < rowsToReturn.get().intValue()))) {
-						if (stopExecution)
+						if (stopExecution.get())
 							throw new ThreadKilledException("Thread killed");
 						Vector row = new Vector();
 						for (int i = 1; i <= columnCount; i++) {
-							if (stopExecution)
+							if (stopExecution.get())
 								throw new ThreadKilledException("Thread killed");
 							if (DisplayResultSetTableModel
 									.getClassForType(columnTypes[i - 1]) == java.lang.String.class)
@@ -217,7 +213,7 @@ public class DisplayResultSetAsGrid {
 					}
 				}
 			});
-			busy = false;
+			busy.set(false);
 			// System.err.println("Display thread exiting");
 		}
 

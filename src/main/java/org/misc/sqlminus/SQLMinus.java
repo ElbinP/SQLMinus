@@ -27,6 +27,7 @@ import java.sql.Statement;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
@@ -89,7 +90,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 	private DisplayResultSet displayObject = new DisplayResultSet();
 	private DisplayResultSetAsGrid displayGrid = new DisplayResultSetAsGrid();
 	private ClassLoaderPanel driverPanel;
-	private volatile boolean busy = false;
+	private final AtomicBoolean busy = new AtomicBoolean(false);
 	private SortableTable tableOutput;
 	private JRadioButton btText, btTable;
 	private JScrollPane textSpane, tableSpane;
@@ -1222,7 +1223,8 @@ public class SQLMinus extends JFrame implements ActionListener {
 	}
 
 	public /* synchronized */ void setBusy() {
-		busy = true;
+		busy.set(true);
+		;
 		indicatorLabel.setBorder(BorderFactory.createEtchedBorder());
 		indicatorLabel.setForeground(Color.red);
 		indicatorLabel.setText("BUSY");
@@ -1230,7 +1232,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 	}
 
 	public /* synchronized */ void unsetBusy() {
-		busy = false;
+		busy.set(false);
 		indicatorLabel.setBorder(BorderFactory.createEmptyBorder());
 		indicatorLabel.setForeground(Color.green);
 		indicatorLabel.setText("Finished");
@@ -1250,7 +1252,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 
 	private void showNextResult() {
 		if (stmt.isPresent()) {
-			if (!busy) {// quit if we are in the middle of displaying a previous
+			if (!busy.get()) {// quit if we are in the middle of displaying a previous
 				// resultset. This method will be called again when we are
 				// free so all the resultsets _WILL_ eventually be displayed.
 				try {
@@ -1373,7 +1375,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 
 	public /* synchronized */ void executeStatement(String executionCommand) {
 		if (stmt.isPresent()) {
-			if (!busy) {
+			if (!busy.get()) {
 				try {
 					int updateCount;
 					setStatusBarText("");
@@ -1388,7 +1390,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 	}
 
 	public /* synchronized */ void connectDatabase() throws MalformedURLException, SQLException {
-		if (!busy) {
+		if (!busy.get()) {
 			disconnectDatabase();
 			saveConnectionSettingsToPreferences();
 			conn = Optional.of(driverPanel.getConnection(driverConnectionString.getText(), dbUsername.getText(),
@@ -1403,7 +1405,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 	}
 
 	public /* synchronized */ void disconnectDatabase() {
-		if (!busy) {
+		if (!busy.get()) {
 			try {
 				if (stmt.isPresent()) {
 					stmt.get().close();
@@ -1437,7 +1439,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 
 	public /* synchronized */ void getTables() throws SQLException {
 		if (conn.isPresent()) {
-			if (!busy) {
+			if (!busy.get()) {
 				ResultSet rst;
 				setStatusBarText("");
 
@@ -1461,7 +1463,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 
 	public /* synchronized */ void getColumns() throws SQLException {
 		if (conn.isPresent()) {
-			if (!busy) {
+			if (!busy.get()) {
 				ResultSet rst;
 				setStatusBarText("");
 
@@ -1486,7 +1488,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 
 	public void getSchemas() throws SQLException {
 		if (conn.isPresent()) {
-			if (!busy) {
+			if (!busy.get()) {
 				setStatusBarText("");
 
 				String catalogPattern = null;
@@ -1509,7 +1511,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 
 	public void getCatalogs() throws SQLException {
 		if (conn.isPresent()) {
-			if (!busy) {
+			if (!busy.get()) {
 				setStatusBarText("");
 				MetadataRequestEntity entity = new MetadataRequestEntity(null, null, null, null,
 						MetadataRequestType.CATALOGS);
