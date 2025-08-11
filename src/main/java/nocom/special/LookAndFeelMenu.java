@@ -2,16 +2,20 @@ package nocom.special;
 
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.util.Vector;
 
+import javax.swing.InputMap;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
+import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
+import javax.swing.text.DefaultEditorKit;
 
 import org.misc.sqlminus.Constants;
 import org.misc.sqlminus.SQLMinusPreferences;
@@ -114,6 +118,26 @@ public class LookAndFeelMenu extends JMenu implements ActionListener {
 			IllegalAccessException, UnsupportedLookAndFeelException {
 		UIManager.setLookAndFeel(lookAndFeelClassName);
 		updateComponentTree();
+		// Set cut, copy, paste commands to use CTRL or COMMAND as appropriate for the platform
+		fixPlatformShortcuts(Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx());
+		updateComponentTree();
+	}
+	
+	private static void fixPlatformShortcuts(int shortcutKey) {
+	    UIManager.put("TextField.focusInputMap", createPlatformInputMap(shortcutKey));
+	    UIManager.put("PasswordField.focusInputMap", createPlatformInputMap(shortcutKey));
+	    UIManager.put("TextArea.focusInputMap", createPlatformInputMap(shortcutKey));
+	    UIManager.put("EditorPane.focusInputMap", createPlatformInputMap(shortcutKey));
+	    UIManager.put("TextPane.focusInputMap", createPlatformInputMap(shortcutKey));
+	}
+
+	private static InputMap createPlatformInputMap(int shortcutKey) {
+	    InputMap map = new InputMap();
+	    map.put(KeyStroke.getKeyStroke(KeyEvent.VK_X, shortcutKey), DefaultEditorKit.cutAction);
+	    map.put(KeyStroke.getKeyStroke(KeyEvent.VK_C, shortcutKey), DefaultEditorKit.copyAction);
+	    map.put(KeyStroke.getKeyStroke(KeyEvent.VK_V, shortcutKey), DefaultEditorKit.pasteAction);
+	    map.put(KeyStroke.getKeyStroke(KeyEvent.VK_A, shortcutKey), DefaultEditorKit.selectAllAction);
+	    return map;
 	}
 
 	private void updateComponentTree() {
