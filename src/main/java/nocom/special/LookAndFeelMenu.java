@@ -9,8 +9,13 @@ import java.awt.event.KeyEvent;
 import java.util.Vector;
 
 import javax.swing.InputMap;
+import javax.swing.JComponent;
+import javax.swing.JEditorPane;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
+import javax.swing.JTextPane;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
@@ -119,25 +124,40 @@ public class LookAndFeelMenu extends JMenu implements ActionListener {
 		UIManager.setLookAndFeel(lookAndFeelClassName);
 		updateComponentTree();
 		// Set cut, copy, paste commands to use CTRL or COMMAND as appropriate for the platform
-		fixPlatformShortcuts(Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx());
+		fixPlatformShortcuts();
 		updateComponentTree();
 	}
 	
-	private static void fixPlatformShortcuts(int shortcutKey) {
-	    UIManager.put("TextField.focusInputMap", createPlatformInputMap(shortcutKey));
-	    UIManager.put("PasswordField.focusInputMap", createPlatformInputMap(shortcutKey));
-	    UIManager.put("TextArea.focusInputMap", createPlatformInputMap(shortcutKey));
-	    UIManager.put("EditorPane.focusInputMap", createPlatformInputMap(shortcutKey));
-	    UIManager.put("TextPane.focusInputMap", createPlatformInputMap(shortcutKey));
+	private static void fixPlatformShortcuts() {
+		// Set cut, copy, paste commands to use CTRL or COMMAND as appropriate for the platform
+		int shortcutKey = Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx();
+		UIManager.put("TextField.focusInputMap", createPlatformInputMapFromExisting(new JTextField(), shortcutKey));
+		UIManager.put("TextArea.focusInputMap", createPlatformInputMapFromExisting(new JTextArea(), shortcutKey));
+		UIManager.put("TextPane.focusInputMap", createPlatformInputMapFromExisting(new JTextPane(), shortcutKey));
+		UIManager.put("EditorPane.focusInputMap", createPlatformInputMapFromExisting(new JEditorPane(), shortcutKey));
+
 	}
 
-	private static InputMap createPlatformInputMap(int shortcutKey) {
-	    InputMap map = new InputMap();
-	    map.put(KeyStroke.getKeyStroke(KeyEvent.VK_X, shortcutKey), DefaultEditorKit.cutAction);
-	    map.put(KeyStroke.getKeyStroke(KeyEvent.VK_C, shortcutKey), DefaultEditorKit.copyAction);
-	    map.put(KeyStroke.getKeyStroke(KeyEvent.VK_V, shortcutKey), DefaultEditorKit.pasteAction);
-	    map.put(KeyStroke.getKeyStroke(KeyEvent.VK_A, shortcutKey), DefaultEditorKit.selectAllAction);
-	    return map;
+	private static InputMap createPlatformInputMapFromExisting(JComponent sample, int shortcutKey) {
+	    // Get the current map so we preserve Delete, Backspace, navigation keys, etc.
+	    InputMap existingMap = sample.getInputMap(JComponent.WHEN_FOCUSED);
+	    InputMap newMap = new InputMap();
+
+	    // Copy all existing bindings
+	    KeyStroke[] keys = existingMap.allKeys();
+	    if (keys != null) {
+	        for (KeyStroke ks : keys) {
+	            newMap.put(ks, existingMap.get(ks));
+	        }
+	    }
+
+	    // Override only the shortcuts that need platform adaptation
+	    newMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_X, shortcutKey), DefaultEditorKit.cutAction);
+	    newMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_C, shortcutKey), DefaultEditorKit.copyAction);
+	    newMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_V, shortcutKey), DefaultEditorKit.pasteAction);
+	    newMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_A, shortcutKey), DefaultEditorKit.selectAllAction);
+
+	    return newMap;
 	}
 
 	private void updateComponentTree() {
