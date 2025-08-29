@@ -42,11 +42,7 @@ public class SQLMinusPreferences {
 
 	public SQLMinusPreferences() {
 		Optional<String> passPhraseFromFile = getPassphrase();
-		if (passPhraseFromFile.isEmpty()) {
-			passPhrase = generatePassphrase();
-		} else {
-			passPhrase = Optional.of(passPhraseFromFile.get());
-		}
+        passPhrase = passPhraseFromFile.or(this::generatePassphrase);
 	}
 
 	public String get(String key, String def) {
