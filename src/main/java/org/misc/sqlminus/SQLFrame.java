@@ -29,7 +29,6 @@ import javax.swing.BorderFactory;
 import javax.swing.DefaultListModel;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
-import javax.swing.JCheckBox;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JList;
@@ -151,7 +150,8 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 			clearHistory = new JButton("Empty");
 		}
 		try {
-			wordWrap = new JToggleButton(new ImageIcon(ImageReader.getImage(this.getClass(), "/images/wrapAround.png")));
+			wordWrap = new JToggleButton(
+					new ImageIcon(ImageReader.getImage(this.getClass(), "/images/wrapAround.png")));
 		} catch (Exception e) {
 			wordWrap = new JToggleButton("Wrap lines");
 		}
