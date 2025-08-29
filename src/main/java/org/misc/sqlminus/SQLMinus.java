@@ -1254,7 +1254,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 			// free so all the resultsets _WILL_ eventually be displayed.
 			try {
 				int updateCount;
-				while (true) {// run around in circles until we have no more results to display
+				while (!stmt.isClosed()) {// run around in circles until we have no more results to display
 					if (stmt.getMoreResults()) {
 						if (JOptionPane.showConfirmDialog(null, "Show the next resultset?", "Next?",
 								JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
