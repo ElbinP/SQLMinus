@@ -14,7 +14,6 @@ import javax.swing.SwingUtilities;
 public class DisplayResultSetAsGrid {
 
 	private Optional<String> executionCommand;
-	private Optional<Statement> statement;
 	private SQLMinus sqlMinusObject;
 	private Optional<Integer> rowsToReturn;
 	private String nullRep;
@@ -30,9 +29,9 @@ public class DisplayResultSetAsGrid {
 	}
 
 	public void setDisplayParamsAndRun(Optional<Integer> rowsToReturn, Optional<String> executionCommand,
-			Optional<Statement> statement, Optional<ResultSet> resultSet, Optional<Connection> connection,
-			SQLMinus sqlMinusObject, SortableTable table, String nullRep,
-			Optional<MetadataRequestEntity> metadataRequestEntity) throws Exception {
+			Optional<ResultSet> resultSet, Optional<Connection> connection, SQLMinus sqlMinusObject,
+			SortableTable table, String nullRep, Optional<MetadataRequestEntity> metadataRequestEntity)
+			throws Exception {
 		if (busy.compareAndSet(false, true)) {
 			if (sqlMinusObject != null) {
 				sqlMinusObject.setBusy();
@@ -40,7 +39,6 @@ public class DisplayResultSetAsGrid {
 			this.stopExecution.set(false);
 			this.table = table;
 			this.executionCommand = executionCommand;
-			this.statement = statement;
 			this.sqlMinusObject = sqlMinusObject;
 			this.rowsToReturn = rowsToReturn;
 			this.nullRep = nullRep;
@@ -56,12 +54,15 @@ public class DisplayResultSetAsGrid {
 	}
 
 	public void run() {
+		Optional<Statement> statement = Optional.empty();
 		try {
 			ResultSet rst = null;
 			try {
 
 				if (executionCommand.isPresent()) {
-					if (statement.isPresent()) {
+					if (connection.isPresent()) {
+						statement = Optional
+								.of(StatementFactory.getStatement(connection.get(), executionCommand.get()));
 						int updateCount;
 						if (statement.get().execute(executionCommand.get())) {
 							rst = statement.get().getResultSet();
@@ -70,7 +71,7 @@ public class DisplayResultSetAsGrid {
 							return;
 						}
 					} else {
-						throw new SQLMinusException("Statement not available to execute command");
+						throw new SQLMinusException("Not connected");
 					}
 				} else if (resultSet.isPresent()) {
 					rst = resultSet.get();
@@ -186,7 +187,7 @@ public class DisplayResultSetAsGrid {
 			busy.set(false);
 			// System.err.println("Display thread exiting");
 			if (sqlMinusObject != null)
-				sqlMinusObject.unsetBusy();
+				sqlMinusObject.unsetBusy(statement);
 		}
 
 	}

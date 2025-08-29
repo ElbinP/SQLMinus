@@ -84,7 +84,6 @@ public class SQLMinus extends JFrame implements ActionListener {
 	private JLabel schemaLabel, catalogLabel;
 	private JSplitPane splitPane;
 	private Optional<Connection> conn = Optional.empty();
-	private Optional<Statement> stmt = Optional.empty();
 	private JCheckBox displayTextAreaButton, clearScreenButton, setCommitButton, rowDividers, enableThreads;
 	private JComboBox rowsComboBox;
 	private DisplayResultSet displayObject = new DisplayResultSet();
@@ -1153,10 +1152,9 @@ public class SQLMinus extends JFrame implements ActionListener {
 
 				Thread displayThread = new Thread(() -> {
 					try {
-						displayObject.setDisplayParamsAndRun(rowsToReturnFinal, executionCommand, stmt, rst, conn,
-								textOutput, this, maxColWidthValueFinal, interColSpaceValueFinal,
-								rowDividers.isSelected(), maxDataLengthValueFinal, nullRep.getText(),
-								metadataRequestEntity);
+						displayObject.setDisplayParamsAndRun(rowsToReturnFinal, executionCommand, rst, conn, textOutput,
+								this, maxColWidthValueFinal, interColSpaceValueFinal, rowDividers.isSelected(),
+								maxDataLengthValueFinal, nullRep.getText(), metadataRequestEntity);
 
 					} catch (Exception e) {
 						popMessageAndCloseResultSet(e.toString(), rst);
@@ -1176,7 +1174,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 
 				Thread displayThread = new Thread(() -> {
 					try {
-						displayGrid.setDisplayParamsAndRun(rowsToReturnFinal, executionCommand, stmt, rst, conn, this,
+						displayGrid.setDisplayParamsAndRun(rowsToReturnFinal, executionCommand, rst, conn, this,
 								tableOutput, nullRep.getText(), metadataRequestEntity);
 					} catch (Exception e) {
 						popMessageAndCloseResultSet(e.toString(), rst);
@@ -1231,7 +1229,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 		indicatorLabel.setToolTipText("Click to kill the display thread");
 	}
 
-	public /* synchronized */ void unsetBusy() {
+	public /* synchronized */ void unsetBusy(Optional<Statement> stmt) {
 		busy.set(false);
 		indicatorLabel.setBorder(BorderFactory.createEmptyBorder());
 		indicatorLabel.setForeground(Color.green);
@@ -1247,40 +1245,37 @@ public class SQLMinus extends JFrame implements ActionListener {
 				}
 			}
 		});
-		showNextResult();
+		stmt.ifPresent(this::showNextResult);
 	}
 
-	private void showNextResult() {
-		if (stmt.isPresent()) {
-			if (!busy.get()) {// quit if we are in the middle of displaying a previous
-				// resultset. This method will be called again when we are
-				// free so all the resultsets _WILL_ eventually be displayed.
-				try {
-					int updateCount;
-					while (true) {// run around in circles until we have no more results to display
-						if (stmt.get().getMoreResults()) {
-							if (JOptionPane.showConfirmDialog(null, "Show the next resultset?", "Next?",
-									JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
-								// System.err.println("Starting next display thread");
-								displayResultSet(Optional.of(stmt.get().getResultSet()), Optional.empty(),
-										Optional.empty());
-							}
-							return;// This resultSet is displayed in a separate thread
-							// and this method will be called again when that
-							// separate thread quits. So we can exit here.
-						} else if ((updateCount = stmt.get().getUpdateCount()) != -1) {
-							popMessage(updateCount + " row(s) updated");
-						} else {
-							return;// if getMoreResults is false and if the updatecount is -1 then
-							// there are no more results to display and we can go home.
+	private void showNextResult(Statement stmt) {
+		if (!busy.get()) {// quit if we are in the middle of displaying a previous
+			// resultset. This method will be called again when we are
+			// free so all the resultsets _WILL_ eventually be displayed.
+			try {
+				int updateCount;
+				while (true) {// run around in circles until we have no more results to display
+					if (stmt.getMoreResults()) {
+						if (JOptionPane.showConfirmDialog(null, "Show the next resultset?", "Next?",
+								JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+							// System.err.println("Starting next display thread");
+							displayResultSet(Optional.of(stmt.getResultSet()), Optional.empty(), Optional.empty());
 						}
+						return;// This resultSet is displayed in a separate thread
+						// and this method will be called again when that
+						// separate thread quits. So we can exit here.
+					} else if ((updateCount = stmt.getUpdateCount()) != -1) {
+						popMessage(updateCount + " row(s) updated");
+						showNextResult(stmt);
+					} else {
+						stmt.close();
+						return;// if getMoreResults is false and if the updatecount is -1 then
+						// there are no more results to display and we can go home.
 					}
-				} catch (SQLException se) {
-					popMessage(se.getMessage());
 				}
+			} catch (SQLException se) {
+				popMessage(se.getMessage());
 			}
-		} else {
-			popMessage("Not connected");
 		}
 	}
 
@@ -1374,7 +1369,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 	}
 
 	public /* synchronized */ void executeStatement(String executionCommand) {
-		if (stmt.isPresent()) {
+		if (conn.isPresent()) {
 			if (!busy.get()) {
 				try {
 					int updateCount;
@@ -1398,7 +1393,6 @@ public class SQLMinus extends JFrame implements ActionListener {
 			indicatorLabel.setText("CONNECTED");
 			indicatorLabel.setForeground(Color.green);
 			// popMessage("Connected");
-			stmt = Optional.of(conn.get().createStatement());
 			setCommit();
 			sqlText.requestFocusInWindow();
 		}
@@ -1406,15 +1400,6 @@ public class SQLMinus extends JFrame implements ActionListener {
 
 	public /* synchronized */ void disconnectDatabase() {
 		if (!busy.get()) {
-			try {
-				if (stmt.isPresent()) {
-					stmt.get().close();
-					stmt = Optional.empty();
-				}
-			} catch (Exception e) {
-				popMessage(e.toString());
-			}
-
 			try {
 				if (conn.isPresent()) {
 					conn.get().rollback();

@@ -21,7 +21,6 @@ public class DisplayResultSet {
 	private Optional<ResultSet> resultSet;
 	private Optional<Connection> connection;
 	private Optional<String> executionCommand;
-	private Optional<Statement> statement;
 	private SQLMinus sqlMinusObject;
 	private Optional<Integer> rowsToReturn;
 	private int maxColWidth, spacing;
@@ -36,9 +35,9 @@ public class DisplayResultSet {
 	}
 
 	public void setDisplayParamsAndRun(Optional<Integer> rowsToReturn, Optional<String> executionCommand,
-			Optional<Statement> statement, Optional<ResultSet> resultSet, Optional<Connection> connection,
-			JTextArea textOutput, SQLMinus sqlMinusObject, int maxColWidth, int spacing, boolean rowDividers,
-			int maxDataLength, String nullRep, Optional<MetadataRequestEntity> metadataRequestEntity) throws Exception {
+			Optional<ResultSet> resultSet, Optional<Connection> connection, JTextArea textOutput,
+			SQLMinus sqlMinusObject, int maxColWidth, int spacing, boolean rowDividers, int maxDataLength,
+			String nullRep, Optional<MetadataRequestEntity> metadataRequestEntity) throws Exception {
 		if (busy.compareAndSet(false, true)) {
 			if (sqlMinusObject != null)
 				sqlMinusObject.setBusy();
@@ -46,7 +45,6 @@ public class DisplayResultSet {
 			this.textOutput = textOutput;
 			this.resultSet = resultSet;
 			this.executionCommand = executionCommand;
-			this.statement = statement;
 			this.connection = connection;
 			this.sqlMinusObject = sqlMinusObject;
 			this.rowsToReturn = rowsToReturn;
@@ -65,12 +63,14 @@ public class DisplayResultSet {
 	}
 
 	public void run() {
+		Optional<Statement> statement = Optional.empty();
 		try {
 			ResultSet rst = null;
 			try {
-
 				if (executionCommand.isPresent()) {
-					if (statement.isPresent()) {
+					if (connection.isPresent()) {
+						statement = Optional
+								.of(StatementFactory.getStatement(connection.get(), executionCommand.get()));
 						int updateCount;
 						if (statement.get().execute(executionCommand.get())) {
 							rst = statement.get().getResultSet();
@@ -79,7 +79,7 @@ public class DisplayResultSet {
 							return;
 						}
 					} else {
-						throw new SQLMinusException("Statement not available to execute command");
+						throw new SQLMinusException("Not connected");
 					}
 				} else if (resultSet.isPresent()) {
 					rst = resultSet.get();
@@ -353,7 +353,7 @@ public class DisplayResultSet {
 			// System.gc();
 			busy.set(false);
 			if (sqlMinusObject != null)
-				sqlMinusObject.unsetBusy();
+				sqlMinusObject.unsetBusy(statement);
 		}
 
 	}
