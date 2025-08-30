@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 public class CallableHelper {
@@ -53,8 +54,11 @@ public class CallableHelper {
 		}
 
 		// 2. Get procedure/function parameter metadata
-		ResultSet rs = ref.isFunction ? meta.getFunctionColumns(null, ref.schema, ref.name, null)
-				: meta.getProcedureColumns(null, ref.schema, ref.name, null);
+		String procSchema = (ref.schema != null) ? ref.schema.toUpperCase(Locale.ROOT) : null;
+		String procName = (ref.name != null) ? ref.name.toUpperCase(Locale.ROOT) : null;
+
+		ResultSet rs = ref.isFunction ? meta.getFunctionColumns(null, procSchema, procName, null)
+				: meta.getProcedureColumns(null, procSchema, procName, null);
 
 		Map<String, List<Map<String, Object>>> overloads = new LinkedHashMap<>();
 		try (rs) {
