@@ -28,7 +28,7 @@ public class CallableHelper {
 	}
 
 	public static Map.Entry<CallableStatement, List<OutParam>> prepareWithOutParams(Connection conn,
-			SqlParser.ProcRef ref, String sql) throws SQLException {
+			SqlParser.ProcRef ref, String sql) throws SQLException, SQLMinusException {
 
 		CallableStatement cs = conn.prepareCall(sql);
 		List<OutParam> outParams = new ArrayList<>();
@@ -74,6 +74,10 @@ public class CallableHelper {
 			}
 		}
 
+		if (overloads.keySet().size() == 0) {
+			throw new SQLMinusException("No metadata found for " + procSchema + "." + procName + " in database");
+		}
+
 		// 3. Find overload whose OUT/RETURN positions match the ? positions
 		List<Map<String, Object>> chosen = null;
 		for (List<Map<String, Object>> params : overloads.values()) {
@@ -94,8 +98,8 @@ public class CallableHelper {
 		}
 
 		if (chosen == null) {
-			throw new SQLException("No overload of " + ref.schema + "." + ref.name + " matches OUT parameter positions "
-					+ sqlOutPositions);
+			throw new SQLMinusException("No overload of " + ref.schema + "." + ref.name
+					+ " matches OUT parameter positions " + sqlOutPositions);
 		}
 
 		// 4. Register OUT/RETURN params in the order of ? placeholders
