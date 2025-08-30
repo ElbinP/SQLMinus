@@ -7,6 +7,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.AbstractMap;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -78,28 +79,49 @@ public class CallableHelper {
 			throw new SQLMinusException("No metadata found for " + procSchema + "." + procName + " in database");
 		}
 
-		// 3. Find overload whose OUT/RETURN positions match the ? positions
+		// 3. Find overload whose parameter count and OUT positions match the SQL
 		List<Map<String, Object>> chosen = null;
+
 		for (List<Map<String, Object>> params : overloads.values()) {
-			List<Integer> outPositions = params.stream().filter(p -> {
-				int colType = (int) p.get("COLUMN_TYPE");
-				return colType == DatabaseMetaData.procedureColumnOut
+			// Sort params by ordinal position so they align with SQL order
+			List<Map<String, Object>> sorted = params.stream()
+					.sorted(Comparator.comparingInt(p -> (int) p.get("ORDINAL_POSITION"))).toList();
+
+			if (sorted.size() != args.length) {
+				continue; // parameter count mismatch
+			}
+
+			boolean matches = true;
+			for (int i = 0; i < args.length; i++) {
+				boolean isMarker = args[i].trim().equals("?");
+				int colType = (int) sorted.get(i).get("COLUMN_TYPE");
+
+				boolean isOut = colType == DatabaseMetaData.procedureColumnOut
 						|| colType == DatabaseMetaData.procedureColumnInOut
 						|| colType == DatabaseMetaData.procedureColumnReturn
 						|| colType == DatabaseMetaData.functionColumnOut
 						|| colType == DatabaseMetaData.functionColumnInOut
 						|| colType == DatabaseMetaData.functionReturn;
-			}).map(p -> (int) p.get("ORDINAL_POSITION")).sorted().toList();
 
-			if (outPositions.equals(sqlOutPositions)) {
-				chosen = params;
+				if (isMarker && !isOut) {
+					matches = false; // SQL expected OUT, DB says IN
+					break;
+				}
+				if (!isMarker && isOut) {
+					matches = false; // SQL had literal, DB expected OUT
+					break;
+				}
+			}
+
+			if (matches) {
+				chosen = sorted;
 				break;
 			}
 		}
 
 		if (chosen == null) {
-			throw new SQLMinusException("No overload of " + ref.schema + "." + ref.name
-					+ " matches OUT parameter positions " + sqlOutPositions);
+			throw new SQLMinusException("No overload of " + procSchema + "." + procName + " matches argument pattern "
+					+ Arrays.toString(args));
 		}
 
 		// 4. Register OUT/RETURN params in the order of ? placeholders
