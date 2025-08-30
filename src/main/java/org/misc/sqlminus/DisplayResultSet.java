@@ -329,7 +329,7 @@ public class DisplayResultSet {
 			}
 		} catch (ThreadKilledException te) {
 			textOutput.append("\n\n" + te.getMessage() + "\n");
-		} catch (SQLException se) {
+		} catch (SQLException | SQLMinusException se) {
 			textOutput.append("\n\n" + se.getMessage() + "\n");
 		} catch (Exception e) {
 			textOutput.append("\n\n" + e + "\n");

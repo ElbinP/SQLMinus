@@ -145,7 +145,7 @@ public class DisplayResultSetAsGrid {
 
 		} catch (ThreadKilledException te) {
 			JOptionPane.showMessageDialog(null, te.getMessage());
-		} catch (SQLException se) {
+		} catch (SQLException | SQLMinusException se) {
 			// textOutput.append("\n"+se.getMessage()+"\n");
 			JOptionPane.showMessageDialog(null, se.getMessage());
 		} catch (Exception e) {

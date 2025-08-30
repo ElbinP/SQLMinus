@@ -9,7 +9,8 @@ import java.util.Optional;
 
 public class StatementFactory {
 
-	public static StatementWithOutParams getStatement(Connection conn, String sql) throws SQLException {
+	public static StatementWithOutParams getStatement(Connection conn, String sql)
+			throws SQLException, SQLMinusException {
 		String trimmed = sql.trim();
 
 		// CallableStatement detection (JDBC escape syntax)
