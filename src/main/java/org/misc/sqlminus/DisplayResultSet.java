@@ -76,7 +76,7 @@ public class DisplayResultSet {
 			rstOptional = result.resultSet();
 
 			if (rstOptional.isPresent()) {
-
+				sqlMinusObject.clearTextOutput();
 				ResultSet rst = rstOptional.get();
 				int option;
 				boolean hasAnotherRow = rst.next();// The result set now points to the first row, if it has one.

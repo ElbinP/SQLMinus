@@ -1049,8 +1049,6 @@ public class SQLMinus extends JFrame implements ActionListener {
 
 	public /* synchronized */ void displayResultSet(Optional<String> executionCommand,
 			Optional<MetadataRequestEntity> metadataRequestEntity, Optional<Statement> statement) {
-		clearTextOutput();
-
 		Optional<Integer> rowsToReturn = Optional.empty();
 		// rowsToReturn will be null if all rows are to be returned
 		if (!(((String) rowsComboBox.getSelectedItem()).equalsIgnoreCase("All"))) {
