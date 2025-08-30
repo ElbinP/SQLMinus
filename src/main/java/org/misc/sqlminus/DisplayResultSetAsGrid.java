@@ -11,10 +11,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
+import org.misc.sqlminus.DisplayResultSetUtil.ExecutionResult;
+
 public class DisplayResultSetAsGrid {
 
 	private Optional<String> executionCommand;
-	private Optional<Statement> statement;
 	private SQLMinus sqlMinusObject;
 	private Optional<Integer> rowsToReturn;
 	private String nullRep;
@@ -22,7 +23,7 @@ public class DisplayResultSetAsGrid {
 	private final AtomicBoolean stopExecution = new AtomicBoolean(false);
 	private SortableTable table;
 	private Optional<MetadataRequestEntity> metadataRequestEntity;
-	private Optional<ResultSet> resultSet;
+	private Optional<Statement> statement;
 	private Optional<Connection> connection;
 
 	public void killThread() {
@@ -30,9 +31,9 @@ public class DisplayResultSetAsGrid {
 	}
 
 	public void setDisplayParamsAndRun(Optional<Integer> rowsToReturn, Optional<String> executionCommand,
-			Optional<Statement> statement, Optional<ResultSet> resultSet, Optional<Connection> connection,
-			SQLMinus sqlMinusObject, SortableTable table, String nullRep,
-			Optional<MetadataRequestEntity> metadataRequestEntity) throws Exception {
+			Optional<Statement> statement, Optional<Connection> connection, SQLMinus sqlMinusObject,
+			SortableTable table, String nullRep, Optional<MetadataRequestEntity> metadataRequestEntity)
+			throws Exception {
 		if (busy.compareAndSet(false, true)) {
 			if (sqlMinusObject != null) {
 				sqlMinusObject.setBusy();
@@ -45,7 +46,6 @@ public class DisplayResultSetAsGrid {
 			this.rowsToReturn = rowsToReturn;
 			this.nullRep = nullRep;
 			this.metadataRequestEntity = metadataRequestEntity;
-			this.resultSet = resultSet;
 			this.connection = connection;
 			table.setNullRep(nullRep);
 
@@ -56,30 +56,15 @@ public class DisplayResultSetAsGrid {
 	}
 
 	public void run() {
+		Optional<Statement> stmtInternal = Optional.empty();
+		Optional<ResultSet> rstOptional = Optional.empty();
 		try {
-			ResultSet rst = null;
-			try {
-
-				if (executionCommand.isPresent()) {
-					if (statement.isPresent()) {
-						int updateCount;
-						if (statement.get().execute(executionCommand.get())) {
-							rst = statement.get().getResultSet();
-						} else if ((updateCount = statement.get().getUpdateCount()) != -1) {
-							sqlMinusObject.popMessage(updateCount + " row(s) updated");
-							return;
-						}
-					} else {
-						throw new SQLMinusException("Statement not available to execute command");
-					}
-				} else if (resultSet.isPresent()) {
-					rst = resultSet.get();
-				} else if (metadataRequestEntity.isPresent()) {
-					rst = DisplayResultSetUtil.getMetadataResult(metadataRequestEntity.get(), connection);
-				} else {
-					throw new SQLMinusException("None of execution command, result set and metadata request provided");
-				}
-
+			ExecutionResult result = DisplayResultSetUtil.getResult(executionCommand, statement, metadataRequestEntity,
+					connection, sqlMinusObject, Optional.empty(), true);
+			stmtInternal = result.statement();
+			rstOptional = result.resultSet();
+			if (rstOptional.isPresent()) {
+				ResultSet rst = rstOptional.get();
 				int option;
 				boolean hasAnotherRow = rst.next();// The result set now points to the first row, if it has one.
 				do {
@@ -155,13 +140,11 @@ public class DisplayResultSetAsGrid {
 					}
 
 				} while (option == JOptionPane.YES_OPTION);
-				rst.close();
-			} catch (ThreadKilledException te) {
-				if (rst != null) {
-					rst.close();
-				}
-				JOptionPane.showMessageDialog(null, te.getMessage());
+
 			}
+
+		} catch (ThreadKilledException te) {
+			JOptionPane.showMessageDialog(null, te.getMessage());
 		} catch (SQLException se) {
 			// textOutput.append("\n"+se.getMessage()+"\n");
 			JOptionPane.showMessageDialog(null, se.getMessage());
@@ -172,8 +155,7 @@ public class DisplayResultSetAsGrid {
 			System.err.println("End of exception from " + this);
 			JOptionPane.showMessageDialog(null, e);
 		} finally {
-			// System.runFinalization();
-			// System.gc();
+
 			SwingUtilities.invokeLater(new Runnable() {
 				public void run() {
 					try {
@@ -183,10 +165,17 @@ public class DisplayResultSetAsGrid {
 					}
 				}
 			});
+			if (rstOptional.isPresent()) {
+				try {
+					rstOptional.get().close();
+				} catch (SQLException e) {
+					System.err.println(e + " while closing result set");
+				}
+			}
 			busy.set(false);
 			// System.err.println("Display thread exiting");
 			if (sqlMinusObject != null)
-				sqlMinusObject.unsetBusy();
+				sqlMinusObject.unsetBusy(stmtInternal);
 		}
 
 	}
