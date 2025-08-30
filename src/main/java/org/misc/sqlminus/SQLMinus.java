@@ -24,6 +24,7 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -1297,7 +1298,8 @@ public class SQLMinus extends JFrame implements ActionListener {
 	private synchronized void saveSQLTextsToPreferences() {
 		try {
 			StringBuilder sqlTextsString = new StringBuilder();
-			for (int i = sqlText.getItemCount() - 1; i >= 0; i--) {
+			// save only the latest 30 sql texts in preferences
+			for (int i = 0; i < sqlText.getItemCount() && i < 30; i++) {
 				String encryptedSqlText = sqlMinusPreferences.getEncryptedString(sqlText.getItemAt(i).toString());
 				sqlTextsString.append(encryptedSqlText).append("<br/>");
 			}
@@ -1312,6 +1314,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 			String sqlTextsString = sqlMinusPreferences.get(Constants.PreferencesKeys.SQL_TEXTS, null);
 			if (sqlTextsString != null) {
 				String[] sqlTextArray = sqlTextsString.split("<br/>");
+				List<String> decryptedTexts = new ArrayList<>();
 				Arrays.stream(sqlTextArray).forEach(s -> {
 					if (s.length() > 0) {
 						String decryptedSqlText;
@@ -1321,14 +1324,19 @@ public class SQLMinus extends JFrame implements ActionListener {
 							throw new IllegalStateException(e.getMessage(), e);
 						}
 						if (decryptedSqlText.trim().length() > 0) {
-							insertItem(sqlText, decryptedSqlText);
+							decryptedTexts.add(decryptedSqlText);
 						}
 					}
 				});
+				initialiseSqlText(sqlText, decryptedTexts);
 			}
 		} catch (IllegalStateException e) {
 			popMessage(e.getMessage());
 		}
+	}
+
+	private void initialiseSqlText(JComboBox sqlText, List<String> decryptedTexts) {
+		decryptedTexts.forEach(t -> sqlText.addItem(t));
 	}
 
 	private Object makeObj(final String item) {
