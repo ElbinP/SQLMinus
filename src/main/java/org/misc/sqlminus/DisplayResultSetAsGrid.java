@@ -11,6 +11,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
+import org.misc.sqlminus.DisplayResultSetUtil.ExecutionResult;
+
 public class DisplayResultSetAsGrid {
 
 	private Optional<String> executionCommand;
@@ -54,31 +56,15 @@ public class DisplayResultSetAsGrid {
 	}
 
 	public void run() {
-		Optional<Statement> statement = Optional.empty();
+		Optional<Statement> stmtInternal = Optional.empty();
+		Optional<ResultSet> rstOptional = Optional.empty();
 		try {
-			ResultSet rst = null;
-			try {
-				if (executionCommand.isPresent()) {
-					if (connection.isPresent()) {
-						statement = Optional
-								.of(StatementFactory.getStatement(connection.get(), executionCommand.get()));
-						int updateCount;
-						if (statement.get().execute(executionCommand.get())) {
-							rst = statement.get().getResultSet();
-						} else if ((updateCount = statement.get().getUpdateCount()) != -1) {
-							sqlMinusObject.popMessage(updateCount + " row(s) updated");
-							return;
-						}
-					} else {
-						throw new SQLMinusException("Not connected");
-					}
-
-				} else if (metadataRequestEntity.isPresent()) {
-					rst = DisplayResultSetUtil.getMetadataResult(metadataRequestEntity.get(), connection);
-				} else {
-					throw new SQLMinusException("None of execution command, result set and metadata request provided");
-				}
-
+			ExecutionResult result = DisplayResultSetUtil.getResult(executionCommand, statement, metadataRequestEntity,
+					connection, sqlMinusObject);
+			stmtInternal = result.statement();
+			rstOptional = result.resultSet();
+			if (rstOptional.isPresent()) {
+				ResultSet rst = rstOptional.get();
 				int option;
 				boolean hasAnotherRow = rst.next();// The result set now points to the first row, if it has one.
 				do {
@@ -155,13 +141,10 @@ public class DisplayResultSetAsGrid {
 
 				} while (option == JOptionPane.YES_OPTION);
 
-			} catch (ThreadKilledException te) {
-				JOptionPane.showMessageDialog(null, te.getMessage());
-			} finally {
-				if (rst != null) {
-					rst.close();
-				}
 			}
+
+		} catch (ThreadKilledException te) {
+			JOptionPane.showMessageDialog(null, te.getMessage());
 		} catch (SQLException se) {
 			// textOutput.append("\n"+se.getMessage()+"\n");
 			JOptionPane.showMessageDialog(null, se.getMessage());
@@ -172,8 +155,7 @@ public class DisplayResultSetAsGrid {
 			System.err.println("End of exception from " + this);
 			JOptionPane.showMessageDialog(null, e);
 		} finally {
-			// System.runFinalization();
-			// System.gc();
+
 			SwingUtilities.invokeLater(new Runnable() {
 				public void run() {
 					try {
@@ -183,6 +165,13 @@ public class DisplayResultSetAsGrid {
 					}
 				}
 			});
+			if (rstOptional.isPresent()) {
+				try {
+					rstOptional.get().close();
+				} catch (SQLException e) {
+					System.err.println(e + " while closing result set");
+				}
+			}
 			busy.set(false);
 			// System.err.println("Display thread exiting");
 			if (sqlMinusObject != null)
