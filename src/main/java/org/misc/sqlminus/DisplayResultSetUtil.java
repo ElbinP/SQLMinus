@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Optional;
 
 import javax.swing.JOptionPane;
+import javax.swing.JTextArea;
 
 public class DisplayResultSetUtil {
 
@@ -48,7 +49,8 @@ public class DisplayResultSetUtil {
 
 	public static ExecutionResult getResult(Optional<String> executionCommand, Optional<Statement> statement,
 			Optional<MetadataRequestEntity> metadataRequestEntity, Optional<Connection> connection,
-			SQLMinus sqlMinusObject) throws SQLMinusException, SQLException {
+			SQLMinus sqlMinusObject, Optional<JTextArea> textOutput, boolean showPopupMessage)
+			throws SQLMinusException, SQLException {
 
 		Optional<Statement> stmtInternal = Optional.empty();
 		Optional<ResultSet> rstOptional = Optional.empty();
@@ -72,7 +74,12 @@ public class DisplayResultSetUtil {
 				if (stmtInternal.get().execute(executionCommand.get())) {
 					rstOptional = Optional.of(stmtInternal.get().getResultSet());
 				} else if ((updateCount = stmtInternal.get().getUpdateCount()) != -1) {
-					sqlMinusObject.popMessage(updateCount + " row(s) updated");
+					if (showPopupMessage) {
+						JOptionPane.showMessageDialog(null, updateCount + " row(s) updated");
+					}
+					if (textOutput.isPresent()) {
+						textOutput.get().append("\n\n" + updateCount + " row(s) updated");
+					}
 				}
 			} else {
 				throw new SQLMinusException("Not connected");

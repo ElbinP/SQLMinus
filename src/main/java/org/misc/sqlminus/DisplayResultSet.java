@@ -71,7 +71,7 @@ public class DisplayResultSet {
 		try {
 
 			ExecutionResult result = DisplayResultSetUtil.getResult(executionCommand, statement, metadataRequestEntity,
-					connection, sqlMinusObject);
+					connection, sqlMinusObject, Optional.of(textOutput), false);
 			stmtInternal = result.statement();
 			rstOptional = result.resultSet();
 

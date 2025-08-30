@@ -60,7 +60,7 @@ public class DisplayResultSetAsGrid {
 		Optional<ResultSet> rstOptional = Optional.empty();
 		try {
 			ExecutionResult result = DisplayResultSetUtil.getResult(executionCommand, statement, metadataRequestEntity,
-					connection, sqlMinusObject);
+					connection, sqlMinusObject, Optional.empty(), true);
 			stmtInternal = result.statement();
 			rstOptional = result.resultSet();
 			if (rstOptional.isPresent()) {
