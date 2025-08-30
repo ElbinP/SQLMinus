@@ -18,8 +18,8 @@ public class DisplayResultSet {
 
 	private JTextArea textOutput;
 	private Optional<MetadataRequestEntity> metadataRequestEntity;
-	private Optional<ResultSet> resultSet;
 	private Optional<Connection> connection;
+	private Optional<Statement> statement;
 	private Optional<String> executionCommand;
 	private SQLMinus sqlMinusObject;
 	private Optional<Integer> rowsToReturn;
@@ -35,7 +35,7 @@ public class DisplayResultSet {
 	}
 
 	public void setDisplayParamsAndRun(Optional<Integer> rowsToReturn, Optional<String> executionCommand,
-			Optional<ResultSet> resultSet, Optional<Connection> connection, JTextArea textOutput,
+			Optional<Statement> statement, Optional<Connection> connection, JTextArea textOutput,
 			SQLMinus sqlMinusObject, int maxColWidth, int spacing, boolean rowDividers, int maxDataLength,
 			String nullRep, Optional<MetadataRequestEntity> metadataRequestEntity) throws Exception {
 		if (busy.compareAndSet(false, true)) {
@@ -43,8 +43,8 @@ public class DisplayResultSet {
 				sqlMinusObject.setBusy();
 			this.stopExecution.set(false);
 			this.textOutput = textOutput;
-			this.resultSet = resultSet;
 			this.executionCommand = executionCommand;
+			this.statement = statement;
 			this.connection = connection;
 			this.sqlMinusObject = sqlMinusObject;
 			this.rowsToReturn = rowsToReturn;
@@ -81,8 +81,7 @@ public class DisplayResultSet {
 					} else {
 						throw new SQLMinusException("Not connected");
 					}
-				} else if (resultSet.isPresent()) {
-					rst = resultSet.get();
+
 				} else if (metadataRequestEntity.isPresent()) {
 					rst = DisplayResultSetUtil.getMetadataResult(metadataRequestEntity.get(), connection);
 				} else {
@@ -337,12 +336,14 @@ public class DisplayResultSet {
 					}
 
 				} while (option == JOptionPane.YES_OPTION);
-				rst.close();
+
 			} catch (ThreadKilledException te) {
+
+				textOutput.append("\n\n" + te.getMessage() + "\n");
+			} finally {
 				if (rst != null) {
 					rst.close();
 				}
-				textOutput.append("\n\n" + te.getMessage() + "\n");
 			}
 		} catch (SQLException se) {
 			textOutput.append("\n\n" + se.getMessage() + "\n");

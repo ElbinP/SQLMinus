@@ -1042,8 +1042,13 @@ public class SQLMinus extends JFrame implements ActionListener {
 		}
 	}
 
-	public /* synchronized */ void displayResultSet(Optional<ResultSet> rst, Optional<String> executionCommand,
+	public void displayResultSet(Optional<String> executionCommand,
 			Optional<MetadataRequestEntity> metadataRequestEntity) {
+		displayResultSet(executionCommand, metadataRequestEntity, Optional.empty());
+	}
+
+	public /* synchronized */ void displayResultSet(Optional<String> executionCommand,
+			Optional<MetadataRequestEntity> metadataRequestEntity, Optional<Statement> statement) {
 		clearTextOutput();
 
 		Optional<Integer> rowsToReturn = Optional.empty();
@@ -1054,7 +1059,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 				rowsToReturn = Optional.of(Integer.valueOf(selectedItemValue));
 				sqlMinusPreferences.put(Constants.PreferencesKeys.ROWS_TO_SELECT, selectedItemValue);
 			} catch (NumberFormatException ne) {
-				popMessageAndCloseResultSet("Enter an integer for the number of records to be returned", rst);
+				popMessage("Enter an integer for the number of records to be returned");
 				rowsComboBox.requestFocusInWindow();
 				return;
 			}
@@ -1067,7 +1072,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 			if (minColWidth.isEnabled()) {
 				minColWidthValue = Integer.parseInt(minColWidth.getText().trim());
 				if (minColWidthValue < 0) {
-					popMessageAndCloseResultSet("Maximum column width should be 0 or greater", rst);
+					popMessage("Maximum column width should be 0 or greater");
 					minColWidth.requestFocusInWindow();
 					return;
 				} else {
@@ -1075,7 +1080,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 				}
 			}
 		} catch (NumberFormatException ne) {
-			popMessageAndCloseResultSet("Enter an integer value for Minimum column width", rst);
+			popMessage("Enter an integer value for Minimum column width");
 			minColWidth.requestFocusInWindow();
 			return;
 		}
@@ -1085,7 +1090,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 			if (maxColWidth.isEnabled()) {
 				maxColWidthValue = Integer.parseInt(maxColWidth.getText().trim());
 				if (maxColWidthValue < 1) {
-					popMessageAndCloseResultSet("Maximum column width should be greater than 0", rst);
+					popMessage("Maximum column width should be greater than 0");
 					maxColWidth.requestFocusInWindow();
 					return;
 				} else {
@@ -1093,7 +1098,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 				}
 			}
 		} catch (NumberFormatException ne) {
-			popMessageAndCloseResultSet("Enter an integer value for Maximum column width", rst);
+			popMessage("Enter an integer value for Maximum column width");
 			maxColWidth.requestFocusInWindow();
 			return;
 		}
@@ -1103,7 +1108,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 			if (interColSpace.isEnabled()) {
 				interColSpaceValue = Integer.parseInt(interColSpace.getText().trim());
 				if (interColSpaceValue < 0) {
-					popMessageAndCloseResultSet("Inter-column spacing should be 0 or greater", rst);
+					popMessage("Inter-column spacing should be 0 or greater");
 					interColSpace.requestFocusInWindow();
 					return;
 				} else {
@@ -1111,7 +1116,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 				}
 			}
 		} catch (NumberFormatException ne) {
-			popMessageAndCloseResultSet("Enter an integer value for Inter-column spacing", rst);
+			popMessage("Enter an integer value for Inter-column spacing");
 			interColSpace.requestFocusInWindow();
 			return;
 		}
@@ -1121,7 +1126,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 			if (maxDataLength.isEnabled()) {
 				maxDataLengthValue = Integer.parseInt(maxDataLength.getText().trim());
 				if (maxDataLengthValue < 1) {
-					popMessageAndCloseResultSet("Maximum data length should be greater than 0", rst);
+					popMessage("Maximum data length should be greater than 0");
 					maxDataLength.requestFocusInWindow();
 					return;
 				} else {
@@ -1129,7 +1134,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 				}
 			}
 		} catch (NumberFormatException ne) {
-			popMessageAndCloseResultSet("Enter an integer value for Maximum data length", rst);
+			popMessage("Enter an integer value for Maximum data length");
 			maxDataLength.requestFocusInWindow();
 			return;
 		}
@@ -1152,12 +1157,13 @@ public class SQLMinus extends JFrame implements ActionListener {
 
 				Thread displayThread = new Thread(() -> {
 					try {
-						displayObject.setDisplayParamsAndRun(rowsToReturnFinal, executionCommand, rst, conn, textOutput,
-								this, maxColWidthValueFinal, interColSpaceValueFinal, rowDividers.isSelected(),
-								maxDataLengthValueFinal, nullRep.getText(), metadataRequestEntity);
+						displayObject.setDisplayParamsAndRun(rowsToReturnFinal, executionCommand, statement, conn,
+								textOutput, this, maxColWidthValueFinal, interColSpaceValueFinal,
+								rowDividers.isSelected(), maxDataLengthValueFinal, nullRep.getText(),
+								metadataRequestEntity);
 
 					} catch (Exception e) {
-						popMessageAndCloseResultSet(e.toString(), rst);
+						popMessage(e.toString());
 					}
 				}, "DISPLAY-RESULT-SET-THREAD");
 
@@ -1174,10 +1180,10 @@ public class SQLMinus extends JFrame implements ActionListener {
 
 				Thread displayThread = new Thread(() -> {
 					try {
-						displayGrid.setDisplayParamsAndRun(rowsToReturnFinal, executionCommand, rst, conn, this,
+						displayGrid.setDisplayParamsAndRun(rowsToReturnFinal, executionCommand, statement, conn, this,
 								tableOutput, nullRep.getText(), metadataRequestEntity);
 					} catch (Exception e) {
-						popMessageAndCloseResultSet(e.toString(), rst);
+						popMessage(e.toString());
 					}
 				}, "DISPLAY-RESULT-SET-AS-GRID-THREAD");
 
@@ -1189,17 +1195,6 @@ public class SQLMinus extends JFrame implements ActionListener {
 			}
 		} catch (Exception e) {
 			// e.printStackTrace();/////////////////////////////////////////
-			popMessageAndCloseResultSet(e.toString(), rst);
-		}
-	}
-
-	private void popMessageAndCloseResultSet(String message, Optional<ResultSet> rst) {
-		try {
-			popMessage(message);
-			if (rst.isPresent()) {
-				rst.get().close();
-			}
-		} catch (Exception e) {
 			popMessage(e.toString());
 		}
 	}
@@ -1259,7 +1254,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 						if (JOptionPane.showConfirmDialog(null, "Show the next resultset?", "Next?",
 								JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
 							// System.err.println("Starting next display thread");
-							displayResultSet(Optional.of(stmt.getResultSet()), Optional.empty(), Optional.empty());
+							displayResultSet(Optional.empty(), Optional.empty(), Optional.of(stmt));
 						}
 						return;// This resultSet is displayed in a separate thread
 						// and this method will be called again when that
@@ -1374,7 +1369,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 				try {
 					int updateCount;
 					setStatusBarText("");
-					displayResultSet(Optional.empty(), Optional.of(executionCommand), Optional.empty());
+					displayResultSet(Optional.of(executionCommand), Optional.empty());
 				} catch (Exception e) {
 					popMessage(UtilityFunctions.getExceptionMessages(e));
 				}
@@ -1439,7 +1434,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 				MetadataRequestEntity entity = new MetadataRequestEntity(catalogPattern, schemaPattern,
 						tableText.getText(), null, MetadataRequestType.TABLES);
 
-				displayResultSet(Optional.empty(), Optional.empty(), Optional.of(entity));
+				displayResultSet(Optional.empty(), Optional.of(entity));
 			}
 		} else {
 			popMessage("Not connected");
@@ -1464,7 +1459,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 				MetadataRequestEntity entity = new MetadataRequestEntity(catalogPattern, schemaPattern,
 						tableText.getText(), columnText.getText(), MetadataRequestType.COLUMNS);
 
-				displayResultSet(Optional.empty(), Optional.empty(), Optional.of(entity));
+				displayResultSet(Optional.empty(), Optional.of(entity));
 			}
 		} else {
 			popMessage("Not connected");
@@ -1487,7 +1482,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 				MetadataRequestEntity entity = new MetadataRequestEntity(catalogPattern, schemaPattern, null, null,
 						MetadataRequestType.SCHEMAS);
 
-				displayResultSet(Optional.empty(), Optional.empty(), Optional.of(entity));
+				displayResultSet(Optional.empty(), Optional.of(entity));
 			}
 		} else {
 			popMessage("Not connected");
@@ -1500,7 +1495,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 				setStatusBarText("");
 				MetadataRequestEntity entity = new MetadataRequestEntity(null, null, null, null,
 						MetadataRequestType.CATALOGS);
-				displayResultSet(Optional.empty(), Optional.empty(), Optional.of(entity));
+				displayResultSet(Optional.empty(), Optional.of(entity));
 			}
 		} else {
 			popMessage("Not connected");

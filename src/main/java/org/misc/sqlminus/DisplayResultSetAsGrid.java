@@ -21,7 +21,7 @@ public class DisplayResultSetAsGrid {
 	private final AtomicBoolean stopExecution = new AtomicBoolean(false);
 	private SortableTable table;
 	private Optional<MetadataRequestEntity> metadataRequestEntity;
-	private Optional<ResultSet> resultSet;
+	private Optional<Statement> statement;
 	private Optional<Connection> connection;
 
 	public void killThread() {
@@ -29,7 +29,7 @@ public class DisplayResultSetAsGrid {
 	}
 
 	public void setDisplayParamsAndRun(Optional<Integer> rowsToReturn, Optional<String> executionCommand,
-			Optional<ResultSet> resultSet, Optional<Connection> connection, SQLMinus sqlMinusObject,
+			Optional<Statement> statement, Optional<Connection> connection, SQLMinus sqlMinusObject,
 			SortableTable table, String nullRep, Optional<MetadataRequestEntity> metadataRequestEntity)
 			throws Exception {
 		if (busy.compareAndSet(false, true)) {
@@ -39,11 +39,11 @@ public class DisplayResultSetAsGrid {
 			this.stopExecution.set(false);
 			this.table = table;
 			this.executionCommand = executionCommand;
+			this.statement = statement;
 			this.sqlMinusObject = sqlMinusObject;
 			this.rowsToReturn = rowsToReturn;
 			this.nullRep = nullRep;
 			this.metadataRequestEntity = metadataRequestEntity;
-			this.resultSet = resultSet;
 			this.connection = connection;
 			table.setNullRep(nullRep);
 
@@ -58,7 +58,6 @@ public class DisplayResultSetAsGrid {
 		try {
 			ResultSet rst = null;
 			try {
-
 				if (executionCommand.isPresent()) {
 					if (connection.isPresent()) {
 						statement = Optional
@@ -73,8 +72,7 @@ public class DisplayResultSetAsGrid {
 					} else {
 						throw new SQLMinusException("Not connected");
 					}
-				} else if (resultSet.isPresent()) {
-					rst = resultSet.get();
+
 				} else if (metadataRequestEntity.isPresent()) {
 					rst = DisplayResultSetUtil.getMetadataResult(metadataRequestEntity.get(), connection);
 				} else {
@@ -156,12 +154,13 @@ public class DisplayResultSetAsGrid {
 					}
 
 				} while (option == JOptionPane.YES_OPTION);
-				rst.close();
+
 			} catch (ThreadKilledException te) {
+				JOptionPane.showMessageDialog(null, te.getMessage());
+			} finally {
 				if (rst != null) {
 					rst.close();
 				}
-				JOptionPane.showMessageDialog(null, te.getMessage());
 			}
 		} catch (SQLException se) {
 			// textOutput.append("\n"+se.getMessage()+"\n");
