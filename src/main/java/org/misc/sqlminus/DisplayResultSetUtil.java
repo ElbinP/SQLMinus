@@ -1,5 +1,6 @@
 package org.misc.sqlminus;
 
+import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -79,12 +80,21 @@ public class DisplayResultSetUtil {
 		} else if (executionCommand.isPresent()) {
 			if (connection.isPresent()) {
 				stmtInternal = Optional.of(StatementFactory.getStatement(connection.get(), executionCommand.get()));
+
+				boolean executeStatus;
+				if (stmtInternal.get() instanceof CallableStatement callableStatement) {
+					executeStatus = callableStatement.execute();
+				} else {
+					executeStatus = stmtInternal.get().execute(executionCommand.get());
+				}
+
 				int updateCount;
-				if (stmtInternal.get().execute(executionCommand.get())) {
+				if (executeStatus) {
 					rstOptional = Optional.of(stmtInternal.get().getResultSet());
 				} else if ((updateCount = stmtInternal.get().getUpdateCount()) != -1) {
 					showUpdateMessage(textOutput, showPopupMessage, updateCount);
 				}
+
 			} else {
 				throw new SQLMinusException("Not connected");
 			}
