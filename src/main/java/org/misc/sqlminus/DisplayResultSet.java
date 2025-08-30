@@ -12,6 +12,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import javax.swing.JOptionPane;
 import javax.swing.JTextArea;
 
+import org.misc.sqlminus.DisplayResultSetUtil.ExecutionResult;
+
 import nocom.special.UtilityFunctions;
 
 public class DisplayResultSet {
@@ -63,31 +65,19 @@ public class DisplayResultSet {
 	}
 
 	public void run() {
-		Optional<Statement> statement = Optional.empty();
+
+		Optional<Statement> stmtInternal = Optional.empty();
+		Optional<ResultSet> rstOptional = Optional.empty();
 		try {
-			ResultSet rst = null;
-			try {
-				if (executionCommand.isPresent()) {
-					if (connection.isPresent()) {
-						statement = Optional
-								.of(StatementFactory.getStatement(connection.get(), executionCommand.get()));
-						int updateCount;
-						if (statement.get().execute(executionCommand.get())) {
-							rst = statement.get().getResultSet();
-						} else if ((updateCount = statement.get().getUpdateCount()) != -1) {
-							sqlMinusObject.popMessage(updateCount + " row(s) updated");
-							return;
-						}
-					} else {
-						throw new SQLMinusException("Not connected");
-					}
 
-				} else if (metadataRequestEntity.isPresent()) {
-					rst = DisplayResultSetUtil.getMetadataResult(metadataRequestEntity.get(), connection);
-				} else {
-					throw new SQLMinusException("None of execution command, result set and metadata request provided");
-				}
+			ExecutionResult result = DisplayResultSetUtil.getResult(executionCommand, statement, metadataRequestEntity,
+					connection, sqlMinusObject);
+			stmtInternal = result.statement();
+			rstOptional = result.resultSet();
 
+			if (rstOptional.isPresent()) {
+
+				ResultSet rst = rstOptional.get();
 				int option;
 				boolean hasAnotherRow = rst.next();// The result set now points to the first row, if it has one.
 				do {
@@ -336,25 +326,24 @@ public class DisplayResultSet {
 					}
 
 				} while (option == JOptionPane.YES_OPTION);
-
-			} catch (ThreadKilledException te) {
-
-				textOutput.append("\n\n" + te.getMessage() + "\n");
-			} finally {
-				if (rst != null) {
-					rst.close();
-				}
 			}
+		} catch (ThreadKilledException te) {
+			textOutput.append("\n\n" + te.getMessage() + "\n");
 		} catch (SQLException se) {
 			textOutput.append("\n\n" + se.getMessage() + "\n");
 		} catch (Exception e) {
 			textOutput.append("\n\n" + e + "\n");
 		} finally {
-			// System.runFinalization();
-			// System.gc();
+			if (rstOptional.isPresent()) {
+				try {
+					rstOptional.get().close();
+				} catch (SQLException e) {
+					System.err.println(e + " while closing result set");
+				}
+			}
 			busy.set(false);
 			if (sqlMinusObject != null)
-				sqlMinusObject.unsetBusy(statement);
+				sqlMinusObject.unsetBusy(stmtInternal);
 		}
 
 	}

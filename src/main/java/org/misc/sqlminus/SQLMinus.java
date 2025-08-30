@@ -1247,30 +1247,8 @@ public class SQLMinus extends JFrame implements ActionListener {
 		if (!busy.get()) {// quit if we are in the middle of displaying a previous
 			// resultset. This method will be called again when we are
 			// free so all the resultsets _WILL_ eventually be displayed.
-			try {
-				int updateCount;
-				while (!stmt.isClosed()) {// run around in circles until we have no more results to display
-					if (stmt.getMoreResults()) {
-						if (JOptionPane.showConfirmDialog(null, "Show the next resultset?", "Next?",
-								JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
-							// System.err.println("Starting next display thread");
-							displayResultSet(Optional.empty(), Optional.empty(), Optional.of(stmt));
-						}
-						return;// This resultSet is displayed in a separate thread
-						// and this method will be called again when that
-						// separate thread quits. So we can exit here.
-					} else if ((updateCount = stmt.getUpdateCount()) != -1) {
-						popMessage(updateCount + " row(s) updated");
-						showNextResult(stmt);
-					} else {
-						stmt.close();
-						return;// if getMoreResults is false and if the updatecount is -1 then
-						// there are no more results to display and we can go home.
-					}
-				}
-			} catch (SQLException se) {
-				popMessage(se.getMessage());
-			}
+
+			displayResultSet(Optional.empty(), Optional.empty(), Optional.of(stmt));
 		}
 	}
 
