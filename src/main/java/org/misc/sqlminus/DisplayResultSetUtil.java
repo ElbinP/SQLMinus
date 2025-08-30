@@ -47,6 +47,15 @@ public class DisplayResultSetUtil {
 		return rst;
 	}
 
+	private static void showUpdateMessage(Optional<JTextArea> textOutput, boolean showPopupMessage, int updateCount) {
+		if (showPopupMessage) {
+			JOptionPane.showMessageDialog(null, updateCount + " row(s) updated");
+		}
+		if (textOutput.isPresent()) {
+			textOutput.get().append("\n\n" + updateCount + " row(s) updated");
+		}
+	}
+
 	public static ExecutionResult getResult(Optional<String> executionCommand, Optional<Statement> statement,
 			Optional<MetadataRequestEntity> metadataRequestEntity, Optional<Connection> connection,
 			SQLMinus sqlMinusObject, Optional<JTextArea> textOutput, boolean showPopupMessage)
@@ -74,12 +83,7 @@ public class DisplayResultSetUtil {
 				if (stmtInternal.get().execute(executionCommand.get())) {
 					rstOptional = Optional.of(stmtInternal.get().getResultSet());
 				} else if ((updateCount = stmtInternal.get().getUpdateCount()) != -1) {
-					if (showPopupMessage) {
-						JOptionPane.showMessageDialog(null, updateCount + " row(s) updated");
-					}
-					if (textOutput.isPresent()) {
-						textOutput.get().append("\n\n" + updateCount + " row(s) updated");
-					}
+					showUpdateMessage(textOutput, showPopupMessage, updateCount);
 				}
 			} else {
 				throw new SQLMinusException("Not connected");
@@ -93,7 +97,7 @@ public class DisplayResultSetUtil {
 					rstOptional = Optional.of(stmtInternal.get().getResultSet());
 				}
 			} else if ((updateCount = stmtInternal.get().getUpdateCount()) != -1) {
-				sqlMinusObject.popMessage(updateCount + " row(s) updated");
+				showUpdateMessage(textOutput, showPopupMessage, updateCount);
 			} else {
 				stmtInternal.get().close();
 				stmtInternal = Optional.empty();
