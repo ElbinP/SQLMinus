@@ -6,11 +6,15 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import javax.swing.JOptionPane;
 import javax.swing.JTextArea;
+
+import org.misc.sqlminus.StatementFactory.StatementWithOutParams;
 
 public class DisplayResultSetUtil {
 
@@ -57,6 +61,40 @@ public class DisplayResultSetUtil {
 		}
 	}
 
+	private static void showOutparamValues(Optional<JTextArea> textOutput, boolean showPopupMessage,
+			Optional<String> mainError, Optional<List<CallableHelper.OutParam>> outParams, CallableStatement cs)
+			throws SQLException {
+		Map<String, Object> results;
+
+		if (outParams.isPresent()) {
+			results = CallableHelper.readOutParams(cs, outParams.get());
+		} else {
+			results = new LinkedHashMap<>();
+		}
+
+		String formatted = formatOutParams(mainError, results);
+
+		if (showPopupMessage) {
+			JOptionPane.showMessageDialog(null, formatted);
+		}
+		textOutput.ifPresent(area -> area.append("\n\n" + formatted));
+	}
+
+	private static String formatOutParams(Optional<String> mainError, Map<String, Object> results) {
+		StringBuilder sb = new StringBuilder();
+
+		// Append error if present
+		mainError.ifPresent(err -> sb.append("Error: ").append(err).append("\n"));
+
+		// Append OUT param values if available
+		if (!results.isEmpty()) {
+			results.forEach(
+					(k, v) -> sb.append(k).append(" = ").append(v == null ? "NULL" : v.toString()).append("\n"));
+		}
+
+		return sb.toString();
+	}
+
 	public static ExecutionResult getResult(Optional<String> executionCommand, Optional<Statement> statement,
 			Optional<MetadataRequestEntity> metadataRequestEntity, Optional<Connection> connection,
 			SQLMinus sqlMinusObject, Optional<JTextArea> textOutput, boolean showPopupMessage)
@@ -79,11 +117,21 @@ public class DisplayResultSetUtil {
 					"Exactly one parameter must be provided, but found: " + String.join(", ", presentParams));
 		} else if (executionCommand.isPresent()) {
 			if (connection.isPresent()) {
-				stmtInternal = Optional.of(StatementFactory.getStatement(connection.get(), executionCommand.get()));
+				StatementWithOutParams statementWithOutParams = StatementFactory.getStatement(connection.get(),
+						executionCommand.get());
+				stmtInternal = Optional.of(statementWithOutParams.statement());
 
-				boolean executeStatus;
+				boolean executeStatus = false;
 				if (stmtInternal.get() instanceof CallableStatement callableStatement) {
-					executeStatus = callableStatement.execute();
+					Optional<String> mainError = Optional.empty();
+					try {
+						executeStatus = callableStatement.execute();
+					} catch (SQLException se) {
+						mainError = Optional.of(se.getMessage());
+					}
+					showOutparamValues(textOutput, showPopupMessage, mainError, statementWithOutParams.outParams(),
+							callableStatement);
+
 				} else {
 					executeStatus = stmtInternal.get().execute(executionCommand.get());
 				}
