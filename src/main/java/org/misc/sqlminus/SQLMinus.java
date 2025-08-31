@@ -67,6 +67,7 @@ import nocom.special.UtilityFunctions;
 
 public class SQLMinus extends JFrame implements ActionListener {
 
+	private static final long serialVersionUID = -3452359178949290219L;
 	private final int DEFAULT_MINCOLWIDTH = 15, DEFAULT_MAXCOLWIDTH = 50, DEFAULT_INTERCOLSPACE = 4,
 			DEFAULT_MAXDATALENGTH = 1000;
 	private final String COMMIT_TRANSACTIONS_COMMAND = "COMMIT_TRANSACTIONS";
