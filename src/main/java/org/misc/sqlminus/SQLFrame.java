@@ -61,6 +61,7 @@ import nocom.special.VectorIndexOutOfBoundsException;
 
 public class SQLFrame extends JFrame implements ActionListener, DocumentListener, FocusListener {
 
+	private static final long serialVersionUID = 8287479928561324445L;
 	private UndoableRSyntaxTextArea textInput;
 	private IndexedVector sqlCommands;
 	private SQLMinus sqlMinusObject;
@@ -70,7 +71,6 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 	private RTextScrollPane textSPane;
 	private static final int HISTORY_CHARACTER_WIDTH = 23;
 	private JPanel centerPanel;
-	private String lineSeparator;
 	private FileSaverThread fileSaver;
 	private FileOpenerThread fileOpener;
 	private final SQLMinusPreferences sqlMinusPreferences;
@@ -96,7 +96,6 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 		sqlCommands = new IndexedVector();
 		fileChooser = new JFileChooser(System.getProperty("user.home"));
 		sqlMinusObject.laf.addComponentToMonitor(fileChooser);
-		lineSeparator = System.getProperty("line.separator");
 		fileSaver = new FileSaverThread();
 		fileOpener = new FileOpenerThread();
 
@@ -257,21 +256,21 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 		textInput.addKeyListener(new KeyListener() {
 			public void keyPressed(KeyEvent ke) {
 				try {
-					if (ke.isControlDown() && (ke.getKeyCode() == ke.VK_E)) {
+					if (ke.isControlDown() && (ke.getKeyCode() == KeyEvent.VK_E)) {
 						execute();
-					} else if (ke.isControlDown() && (ke.getKeyCode() == ke.VK_UP)) {
+					} else if (ke.isControlDown() && (ke.getKeyCode() == KeyEvent.VK_UP)) {
 						goForwardInHistory();
-					} else if (ke.isControlDown() && (ke.getKeyCode() == ke.VK_DOWN)) {
+					} else if (ke.isControlDown() && (ke.getKeyCode() == KeyEvent.VK_DOWN)) {
 						goBackInHistory();
-					} else if (ke.isControlDown() && (ke.getKeyCode() == ke.VK_Z)) {
+					} else if (ke.isControlDown() && (ke.getKeyCode() == KeyEvent.VK_Z)) {
 						textInput.undo();
-					} else if (ke.isControlDown() && (ke.getKeyCode() == ke.VK_Y)) {
+					} else if (ke.isControlDown() && (ke.getKeyCode() == KeyEvent.VK_Y)) {
 						textInput.redo();
-					} else if (ke.isControlDown() && (ke.getKeyCode() == ke.VK_O)) {
+					} else if (ke.isControlDown() && (ke.getKeyCode() == KeyEvent.VK_O)) {
 						openFile();
-					} else if (ke.isControlDown() && (ke.getKeyCode() == ke.VK_S)) {
+					} else if (ke.isControlDown() && (ke.getKeyCode() == KeyEvent.VK_S)) {
 						saveToFile();
-					} else if (ke.isControlDown() && (ke.getKeyCode() == ke.VK_U)) {
+					} else if (ke.isControlDown() && (ke.getKeyCode() == KeyEvent.VK_U)) {
 						sqlCommands.insertString(textInput.getText());
 						reloadHistoryPanel();
 						saveSQLCommandsToHistoryFile();
@@ -326,7 +325,7 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 
 		textInput.addMouseListener(new MouseAdapter() {
 			public void mousePressed(MouseEvent me) {
-				if (me.getModifiers() == me.BUTTON3_MASK) {
+				if (me.getModifiersEx() == MouseEvent.BUTTON3_DOWN_MASK) {
 					popup.show(me.getComponent(), me.getX(), me.getY());
 				}
 			}
