@@ -21,10 +21,8 @@ import java.awt.event.WindowEvent;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.sql.Connection;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -77,7 +75,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 	private JTextArea textOutput;
 	private SQLFrame textareaFrame;
 	private JTextField driverConnectionString, dbUsername, tableText, columnText, schemaText, catalogText, statusBar;
-	private JComboBox sqlText;
+	private JComboBox<String> sqlText;
 	private JTextField minColWidth, maxColWidth, interColSpace, maxDataLength, nullRep;
 	private JButton minColWidthButton, maxColWidthButton, interColSpaceButton, maxDataLengthButton;
 	private JPasswordField dbPassword;
@@ -86,7 +84,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 	private JSplitPane splitPane;
 	private Optional<Connection> conn = Optional.empty();
 	private JCheckBox displayTextAreaButton, clearScreenButton, setCommitButton, rowDividers, enableThreads;
-	private JComboBox rowsComboBox;
+	private JComboBox<String> rowsComboBox;
 	private DisplayResultSet displayObject = new DisplayResultSet();
 	private DisplayResultSetAsGrid displayGrid = new DisplayResultSetAsGrid();
 	private ClassLoaderPanel driverPanel;
@@ -313,7 +311,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 
 		c.weightx = 1;
 		c.gridwidth = GridBagConstraints.REMAINDER;
-		rowsComboBox = new JComboBox(rowsComboBoxOptions);
+		rowsComboBox = new JComboBox<>(rowsComboBoxOptions);
 		rowsComboBox.setEditable(true);
 		String rowsToSelectUserPreference = sqlMinusPreferences.get(Constants.PreferencesKeys.ROWS_TO_SELECT, null);
 		if (rowsToSelectUserPreference != null) {
@@ -729,8 +727,8 @@ public class SQLMinus extends JFrame implements ActionListener {
 		c.weightx = 50;
 		c.weighty = 1;
 		// sqlText=new JTextField("select * from emp",50);
-		Object[] optionArray = {};
-		sqlText = new JComboBox(optionArray);
+		String[] optionArray = {};
+		sqlText = new JComboBox<>(optionArray);
 		loadSQLTextsFromPreferences();
 		MetalComboBoxEditor editor = new MetalComboBoxEditor();
 		sqlText.setEditor(editor);
@@ -1273,9 +1271,9 @@ public class SQLMinus extends JFrame implements ActionListener {
 		}
 	}
 
-	private void insertItem(JComboBox combo, String item) {
+	private void insertItem(JComboBox<String> combo, String item) {
 		int caretPos = ((JTextComponent) sqlText.getEditor().getEditorComponent()).getCaretPosition();
-		Object temp = null;
+		String temp = null;
 		boolean itemFound = false;
 		for (int i = 0; (i < combo.getItemCount()) && (!itemFound); i++) {
 			if (combo.getItemAt(i).toString().equals(item.trim())) {
@@ -1285,7 +1283,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 			}
 		}
 		if (!itemFound)
-			temp = makeObj(item.trim());
+			temp = item.trim();
 		combo.insertItemAt(temp, 0);
 		combo.setSelectedIndex(0);
 		String comboText = ((JTextComponent) sqlText.getEditor().getEditorComponent()).getText();
@@ -1300,10 +1298,10 @@ public class SQLMinus extends JFrame implements ActionListener {
 			StringBuilder sqlTextsString = new StringBuilder();
 			// save only the latest 30 sql texts in preferences
 			for (int i = 0; i < sqlText.getItemCount() && i < 30; i++) {
-				String encryptedSqlText = sqlMinusPreferences.getEncryptedString(sqlText.getItemAt(i).toString());
-				sqlTextsString.append(encryptedSqlText).append("<br/>");
+				sqlTextsString.append(sqlText.getItemAt(i).toString()).append("<br/>");
 			}
-			sqlMinusPreferences.put(Constants.PreferencesKeys.SQL_TEXTS, sqlTextsString.toString());
+			String encryptedSqlTexts = sqlMinusPreferences.getEncryptedString(sqlTextsString.toString());
+			sqlMinusPreferences.put(Constants.PreferencesKeys.SQL_TEXTS, encryptedSqlTexts);
 		} catch (SQLMinusException e) {
 			popMessage(e.getMessage());
 		}
@@ -1313,45 +1311,25 @@ public class SQLMinus extends JFrame implements ActionListener {
 		try {
 			String sqlTextsString = sqlMinusPreferences.get(Constants.PreferencesKeys.SQL_TEXTS, null);
 			if (sqlTextsString != null) {
-				String[] sqlTextArray = sqlTextsString.split("<br/>");
-				List<String> decryptedTexts = new ArrayList<>();
-				Arrays.stream(sqlTextArray).forEach(s -> {
-					if (s.length() > 0) {
-						String decryptedSqlText;
-						try {
-							decryptedSqlText = sqlMinusPreferences.getDecryptedString(s);
-						} catch (SQLMinusException e) {
-							throw new IllegalStateException(e.getMessage(), e);
-						}
-						if (decryptedSqlText.trim().length() > 0) {
-							decryptedTexts.add(decryptedSqlText);
-						}
-					}
-				});
-				initialiseSqlText(sqlText, decryptedTexts);
+				String decryptedSqlText = sqlMinusPreferences.getDecryptedString(sqlTextsString);
+				if (decryptedSqlText.trim().length() > 0) {
+					var decryptedTexts = Arrays.asList(decryptedSqlText.split("<br/>"));
+					initialiseSqlText(sqlText, decryptedTexts);
+				}
 			}
-		} catch (IllegalStateException e) {
+		} catch (Exception e) {
 			popMessage(e.getMessage());
 		}
 	}
 
-	private void initialiseSqlText(JComboBox sqlText, List<String> decryptedTexts) {
+	private void initialiseSqlText(JComboBox<String> sqlText, List<String> decryptedTexts) {
 		decryptedTexts.forEach(t -> sqlText.addItem(t));
-	}
-
-	private Object makeObj(final String item) {
-		return new Object() {
-			public String toString() {
-				return item;
-			}
-		};
 	}
 
 	public /* synchronized */ void executeStatement(String executionCommand) {
 		if (conn.isPresent()) {
 			if (!busy.get()) {
 				try {
-					int updateCount;
 					setStatusBarText("");
 					displayResultSet(Optional.of(executionCommand), Optional.empty());
 				} catch (Exception e) {
@@ -1404,7 +1382,6 @@ public class SQLMinus extends JFrame implements ActionListener {
 	public /* synchronized */ void getTables() throws SQLException {
 		if (conn.isPresent()) {
 			if (!busy.get()) {
-				ResultSet rst;
 				setStatusBarText("");
 
 				String catalogPattern = null;
@@ -1428,7 +1405,6 @@ public class SQLMinus extends JFrame implements ActionListener {
 	public /* synchronized */ void getColumns() throws SQLException {
 		if (conn.isPresent()) {
 			if (!busy.get()) {
-				ResultSet rst;
 				setStatusBarText("");
 
 				String catalogPattern = null;
