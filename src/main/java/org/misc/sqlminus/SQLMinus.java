@@ -736,11 +736,12 @@ public class SQLMinus extends JFrame implements ActionListener {
 		sqlText.setToolTipText("Enter SQL statement and press Enter to execute");
 		sqlText.getEditor().getEditorComponent().addKeyListener(new KeyAdapter() {
 			public void keyPressed(KeyEvent ke) {
-				if ((ke.getKeyCode() == KeyEvent.VK_ENTER)
-						|| ((ke.getKeyCode() == KeyEvent.VK_E) && ((ke.getModifiers() & InputEvent.CTRL_MASK) != 0))) {
+				if ((ke.getKeyCode() == KeyEvent.VK_ENTER) || ((ke.getKeyCode() == KeyEvent.VK_E)
+						&& ((ke.getModifiersEx() & InputEvent.CTRL_DOWN_MASK) != 0))) {
 					insertItem(sqlText, getSqlText());
 					executeStatement(getSqlText());
-				} else if ((ke.getKeyCode() == KeyEvent.VK_W) && ((ke.getModifiers() & InputEvent.CTRL_MASK) != 0)) {
+				} else if ((ke.getKeyCode() == KeyEvent.VK_W)
+						&& ((ke.getModifiersEx() & InputEvent.CTRL_DOWN_MASK) != 0)) {
 					showSQLFrame(true);
 				}
 			}
