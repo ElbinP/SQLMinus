@@ -154,7 +154,12 @@ public class CallableHelper {
 
 		Map<String, Object> values = new LinkedHashMap<>();
 		for (OutParam p : outParams) {
-			Object val = cs.getObject(p.position);
+			Object val;
+			try {
+				val = cs.getObject(p.position);
+			} catch (SQLException e) {
+				val = "";
+			}
 			values.put(p.name != null ? p.name : ("param" + p.position), val);
 		}
 		return values;
