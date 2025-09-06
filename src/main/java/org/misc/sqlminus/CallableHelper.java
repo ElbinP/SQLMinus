@@ -5,6 +5,7 @@ import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Types;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -19,12 +20,10 @@ public class CallableHelper {
 	public static class OutParam {
 		public final int position;
 		public final String name;
-		public final int sqlType;
 
-		OutParam(int position, String name, int sqlType) {
+		OutParam(int position, String name) {
 			this.position = position;
 			this.name = name;
-			this.sqlType = sqlType;
 		}
 	}
 
@@ -58,8 +57,7 @@ public class CallableHelper {
 		String procSchema = (ref.schema != null) ? ref.schema.toUpperCase(Locale.ROOT) : null;
 		String procName = (ref.name != null) ? ref.name.toUpperCase(Locale.ROOT) : null;
 
-		ResultSet rs = ref.isFunction ? meta.getFunctionColumns(null, procSchema, procName, null)
-				: meta.getProcedureColumns(null, procSchema, procName, null);
+		ResultSet rs = meta.getProcedureColumns(null, procSchema, procName, null);
 
 		Map<String, List<Map<String, Object>>> overloads = new LinkedHashMap<>();
 		try (rs) {
@@ -134,12 +132,19 @@ public class CallableHelper {
 		}).sorted(Comparator.comparingInt(p -> (int) p.get("ORDINAL_POSITION"))).toList();
 
 		int jdbcIndex = 1; // JDBC indexes are sequential for the ? markers
+
+		if (ref.hasReturn) {
+			cs.registerOutParameter(jdbcIndex, Types.VARCHAR);
+			outParams.add(new OutParam(jdbcIndex, "RETURN VALUE"));
+			jdbcIndex++;
+		}
+
 		for (Map<String, Object> p : outs) {
 			int dataType = (int) p.get("DATA_TYPE");
 			String name = (String) p.get("COLUMN_NAME");
 
 			cs.registerOutParameter(jdbcIndex, dataType);
-			outParams.add(new OutParam(jdbcIndex, name, dataType));
+			outParams.add(new OutParam(jdbcIndex, name));
 			jdbcIndex++;
 		}
 

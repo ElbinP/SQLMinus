@@ -5,12 +5,12 @@ public class SqlParser {
 	public static class ProcRef {
 		public final String schema;
 		public final String name;
-		public final boolean isFunction;
+		public final boolean hasReturn; // true if { ? = call ... } form
 
-		ProcRef(String schema, String name, boolean isFunction) {
+		ProcRef(String schema, String name, boolean hasReturn) {
 			this.schema = schema;
 			this.name = name;
-			this.isFunction = isFunction;
+			this.hasReturn = hasReturn;
 		}
 	}
 
@@ -20,12 +20,15 @@ public class SqlParser {
 	public static ProcRef extractProcRef(String sql) {
 		String clean = sql.trim();
 
-		boolean isFunction = clean.startsWith("{?=");
+		// Detect return placeholder
+		boolean hasReturn = clean.matches("^\\{?\\s*\\?\\s*=.*");
 
-		// Remove { }, and ?= call / call prefix
-		clean = clean.replaceAll("[{}]", "");
-		clean = clean.replaceFirst("(?i)^\\s*\\?=\\s*call\\s*", "");
-		clean = clean.replaceFirst("(?i)^\\s*call\\s*", "");
+		// Remove { }
+		clean = clean.replaceAll("[{}]", "").trim();
+
+		// Remove ?= call or call prefix (case-insensitive)
+		clean = clean.replaceFirst("(?i)^\\?\\s*=\\s*call\\s*", "");
+		clean = clean.replaceFirst("(?i)^call\\s*", "");
 
 		// Cut off args (...)
 		int parenIdx = clean.indexOf('(');
@@ -44,6 +47,7 @@ public class SqlParser {
 			name = clean.substring(dotIdx + 1).trim();
 		}
 
-		return new ProcRef(schema, name, isFunction);
+		return new ProcRef(schema, name, hasReturn);
 	}
+
 }
