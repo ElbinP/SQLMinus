@@ -1,12 +1,14 @@
 package nocom.special;
 
-import javax.swing.*;
-import javax.swing.text.JTextComponent;
-import java.awt.*;
+import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+
+import javax.swing.JMenuItem;
+import javax.swing.JPopupMenu;
+import javax.swing.text.JTextComponent;
 
 public class CustomizedMouseAdapter extends MouseAdapter implements ActionListener {
 
@@ -18,7 +20,8 @@ public class CustomizedMouseAdapter extends MouseAdapter implements ActionListen
 	/**
 	 * A mouse adapter for JTextComponents that will show a typical popupmenu with
 	 * cut,copy,paste,selectall and clear menus for a right click event on the text
-	 * component. The popup will be displayed only if the event source is a JTextComponent.
+	 * component. The popup will be displayed only if the event source is a
+	 * JTextComponent.
 	 * <p>
 	 * The <code>forceClear</code> argument, if true, would enable the clear menu
 	 * even when the JTextComponent is not editable.
@@ -78,11 +81,12 @@ public class CustomizedMouseAdapter extends MouseAdapter implements ActionListen
 		text = null;
 	}
 
-	public void mouseReleased(MouseEvent me) {
+	@Override
+	public void mousePressed(MouseEvent me) {
 		Component eventSource = me.getComponent();
 		if (eventSource instanceof JTextComponent) {
 			text = (JTextComponent) eventSource;
-			if (me.getModifiers() == me.BUTTON3_MASK && text.isEnabled()) {
+			if (me.getModifiersEx() == MouseEvent.BUTTON3_DOWN_MASK && text.isEnabled()) {
 				cut.setEnabled(text.isEditable());
 				paste.setEnabled(text.isEditable());
 				if (forceClear)
