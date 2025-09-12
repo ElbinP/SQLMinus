@@ -203,6 +203,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 				sqlMinusPreferences.getDecryptedValue(Constants.PreferencesKeys.DB_PASSWORD, ""), 20);
 		dbPassword.setActionCommand("CONNECT");
 		dbPassword.addActionListener(this);
+		dbPassword.addMouseListener(commonAdapter);
 		// dbPassword.setFont(tfont);
 		dbPassword.setEchoChar('*');
 		gridbag.setConstraints(dbPassword, c);

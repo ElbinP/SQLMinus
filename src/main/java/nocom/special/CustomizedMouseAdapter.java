@@ -7,6 +7,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 import javax.swing.JMenuItem;
+import javax.swing.JPasswordField;
 import javax.swing.JPopupMenu;
 import javax.swing.text.JTextComponent;
 
@@ -51,14 +52,6 @@ public class CustomizedMouseAdapter extends MouseAdapter implements ActionListen
 		popup.add(clear);
 	}
 
-	/**
-	 * The <code>text</code> parameter is for compatibility with older code, it is
-	 * not used anymore.
-	 */
-	public CustomizedMouseAdapter(javax.swing.text.JTextComponent text) {
-		this(false);
-	}
-
 	public JPopupMenu getPopupMenu() {
 		return popup;
 	}
@@ -84,10 +77,15 @@ public class CustomizedMouseAdapter extends MouseAdapter implements ActionListen
 	@Override
 	public void mousePressed(MouseEvent me) {
 		Component eventSource = me.getComponent();
-		if (eventSource instanceof JTextComponent) {
-			text = (JTextComponent) eventSource;
+		if (eventSource instanceof JTextComponent textComponent) {
+			text = textComponent;
+			boolean isPasswordField = false;
+			if (text instanceof JPasswordField) {
+				isPasswordField = true;
+			}
 			if (me.getModifiersEx() == MouseEvent.BUTTON3_DOWN_MASK && text.isEnabled()) {
-				cut.setEnabled(text.isEditable());
+				cut.setEnabled(!isPasswordField && text.isEditable());
+				copy.setEnabled(!isPasswordField);
 				paste.setEnabled(text.isEditable());
 				if (forceClear)
 					clear.setEnabled(true);
