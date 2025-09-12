@@ -48,7 +48,7 @@ public class SortableTable extends JTable {
 		text.setBackground(backgroundColor);
 		text.setFont(tFont);
 		text.setEditable(false);
-		textMouseAdapter = new CustomizedMouseAdapter(text);
+		textMouseAdapter = new CustomizedMouseAdapter(false);
 		text.addMouseListener(textMouseAdapter);
 
 		myCellEditor = new MultilineTextCellEditor(text);
