@@ -56,6 +56,7 @@ public class CustomizedMouseAdapter extends MouseAdapter implements ActionListen
 		return popup;
 	}
 
+	@Override
 	public void actionPerformed(ActionEvent ae) {
 		if (text == null)
 			return;
