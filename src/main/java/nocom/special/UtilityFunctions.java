@@ -1,7 +1,14 @@
 package nocom.special;
 
+import java.awt.Toolkit;
+import java.awt.event.KeyEvent;
 import java.io.File;
 import java.util.Vector;
+
+import javax.swing.InputMap;
+import javax.swing.JPasswordField;
+import javax.swing.KeyStroke;
+import javax.swing.text.DefaultEditorKit;
 
 public class UtilityFunctions {
 
@@ -187,6 +194,23 @@ public class UtilityFunctions {
 			e = e.getCause();
 		}
 		return sb.toString();
+	}
+
+	public static void fixPasswordFieldKeyBindings(JPasswordField passwordField) {
+		int menuShortcutKey = Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx(); // ⌘ on macOS, Ctrl otherwise
+		InputMap im = passwordField.getInputMap();
+
+		// Map ⌘A to select all
+		im.put(KeyStroke.getKeyStroke(KeyEvent.VK_A, menuShortcutKey), DefaultEditorKit.selectAllAction);
+
+		// Map ⌘C to copy
+		im.put(KeyStroke.getKeyStroke(KeyEvent.VK_C, menuShortcutKey), DefaultEditorKit.copyAction);
+
+		// Map ⌘X to cut
+		im.put(KeyStroke.getKeyStroke(KeyEvent.VK_X, menuShortcutKey), DefaultEditorKit.cutAction);
+
+		// Map ⌘V to paste
+		im.put(KeyStroke.getKeyStroke(KeyEvent.VK_V, menuShortcutKey), DefaultEditorKit.pasteAction);
 	}
 
 }

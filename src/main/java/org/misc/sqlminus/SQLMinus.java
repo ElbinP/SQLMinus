@@ -206,6 +206,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 		dbPassword.addMouseListener(commonAdapter);
 		// dbPassword.setFont(tfont);
 		dbPassword.setEchoChar('*');
+		UtilityFunctions.fixPasswordFieldKeyBindings(dbPassword);
 		gridbag.setConstraints(dbPassword, c);
 		connectionPanel.add(dbPassword);
 
