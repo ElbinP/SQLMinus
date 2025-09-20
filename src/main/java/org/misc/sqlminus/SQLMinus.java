@@ -1366,7 +1366,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 	public /* synchronized */ void disconnectDatabase() {
 		if (!busy.get()) {
 			try {
-				if (conn.isPresent()) {
+				if (conn.isPresent() && !conn.get().getAutoCommit()) {
 					conn.get().rollback();
 				}
 			} catch (Exception e) {
