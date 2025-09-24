@@ -99,6 +99,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 	private SQLMinusPreferences sqlMinusPreferences = new SQLMinusPreferences();
 	public LookAndFeelMenu laf = new LookAndFeelMenu(new Component[] {}, KeyEvent.VK_L, null, sqlMinusPreferences);
 	private static final int SPLIT_PANE_DIVIDER_LOCATION = 142;
+	private static final int NUMBER_OF_COMMANDS_TO_SAVE_IN_DROPDOWN = 50;
 
 	/************** The Constructor for SQLMinus ***********************/
 
@@ -1304,8 +1305,8 @@ public class SQLMinus extends JFrame implements ActionListener {
 	private synchronized void saveSQLTextsToPreferences() {
 		try {
 			StringBuilder sqlTextsString = new StringBuilder();
-			// save only the latest 30 sql texts in preferences
-			for (int i = 0; i < sqlText.getItemCount() && i < 30; i++) {
+			// save only the latest N sql texts in preferences
+			for (int i = 0; i < sqlText.getItemCount() && i < NUMBER_OF_COMMANDS_TO_SAVE_IN_DROPDOWN; i++) {
 				sqlTextsString.append(sqlText.getItemAt(i).toString()).append("<br/>");
 			}
 			String encryptedSqlTexts = sqlMinusPreferences.getEncryptedString(sqlTextsString.toString());
