@@ -3,6 +3,7 @@ package nocom.special;
 import java.awt.Toolkit;
 import java.awt.event.KeyEvent;
 import java.io.File;
+import java.text.BreakIterator;
 import java.util.Vector;
 
 import javax.swing.InputMap;
@@ -40,6 +41,57 @@ public class UtilityFunctions {
 		return splitdata;
 	}
 
+	public static Vector splitUpStringByGraphemeCount(String data, int elementlength) {
+		if (elementlength < 1) {
+			throw new IllegalArgumentException("elementlength cannot be less than 1");
+		}
+		Vector splitdata = new Vector();
+		int stringLength = countGraphemes(data);
+		if (stringLength <= elementlength) {
+			splitdata.addElement(data);
+		} else {
+			while (stringLength > elementlength) {
+				int indexAtElementLength = getIndexAfterGraphemes(data, elementlength);
+				splitdata.addElement(data.substring(0, indexAtElementLength));
+				data = data.substring(indexAtElementLength);
+				stringLength = countGraphemes(data);
+			}
+			if (data.length() > 0) {
+				splitdata.addElement(data);
+			}
+		}
+		return splitdata;
+	}
+
+	public static String substringByGraphemes(String input, int n) {
+		BreakIterator iterator = BreakIterator.getCharacterInstance();
+		iterator.setText(input);
+		int start = iterator.first();
+		int count = 0;
+		int end = start;
+
+		while (count < n && end != BreakIterator.DONE) {
+			end = iterator.next();
+			count++;
+		}
+
+		return (end != BreakIterator.DONE) ? input.substring(start, end) : input;
+	}
+
+	public static int getIndexAfterGraphemes(String input, int graphemeCount) {
+		BreakIterator iterator = BreakIterator.getCharacterInstance();
+		iterator.setText(input);
+		int count = 0;
+		int index = iterator.first();
+
+		while (count < graphemeCount && index != BreakIterator.DONE) {
+			index = iterator.next();
+			count++;
+		}
+
+		return index;
+	}
+
 	/**
 	 * Returns the length of the longest string in the array of strings. Returns 0
 	 * if <code>data</code> is null.
@@ -50,6 +102,21 @@ public class UtilityFunctions {
 			try {
 				if (maxlength < data[i].length()) {
 					maxlength = data[i].length();
+				}
+			} catch (NullPointerException ne) {
+				// NullPointerException maybe thrown when data[i] is null.
+			}
+		}
+		return maxlength;
+	}
+
+	public static int getMaxLengthInGraphemes(String[] data) {
+		int maxlength = 0;
+		for (int i = 0; i < data.length; i++) {
+			try {
+				int lengthOfString = countGraphemes(data[i]);
+				if (maxlength < lengthOfString) {
+					maxlength = lengthOfString;
 				}
 			} catch (NullPointerException ne) {
 				// NullPointerException maybe thrown when data[i] is null.
@@ -120,6 +187,13 @@ public class UtilityFunctions {
 	public static String truncateString(String data, int length) {
 		if (data.length() > length) {
 			data = data.substring(0, length) + "...";
+		}
+		return data;
+	}
+
+	public static String truncateStringByGraphemeCount(String data, int length) {
+		if (countGraphemes(data) > length) {
+			data = data.substring(0, getIndexAfterGraphemes(data, length)) + "...";
 		}
 		return data;
 	}
@@ -211,6 +285,16 @@ public class UtilityFunctions {
 
 		// Map ⌘V to paste
 		im.put(KeyStroke.getKeyStroke(KeyEvent.VK_V, menuShortcutKey), DefaultEditorKit.pasteAction);
+	}
+
+	public static int countGraphemes(String input) {
+		BreakIterator iterator = BreakIterator.getCharacterInstance();
+		iterator.setText(input);
+		int count = 0;
+		while (iterator.next() != BreakIterator.DONE) {
+			count++;
+		}
+		return count;
 	}
 
 }

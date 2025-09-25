@@ -108,9 +108,9 @@ public class DisplayResultSet {
 						if (temp == null) {
 							temp = nullRep;
 						}
-						temp = UtilityFunctions.truncateString(temp, maxDataLength).replace('\n', ' ')
+						temp = UtilityFunctions.truncateStringByGraphemeCount(temp, maxDataLength).replace('\n', ' ')
 								.replace('\t', ' ').replace('\r', ' ');
-						columnName[i] = UtilityFunctions.splitUpString(temp, maxColWidth);
+						columnName[i] = UtilityFunctions.splitUpStringByGraphemeCount(temp, maxColWidth);
 					}
 
 					int rowsRead = 0;
@@ -127,8 +127,8 @@ public class DisplayResultSet {
 							if (temp == null) {
 								temp = nullRep;
 							}
-							temp = UtilityFunctions.truncateString(temp, maxDataLength).replace('\n', ' ')
-									.replace('\t', ' ').replace('\r', ' ');
+							temp = UtilityFunctions.truncateStringByGraphemeCount(temp, maxDataLength)
+									.replace('\n', ' ').replace('\t', ' ').replace('\r', ' ');
 							arlRow.add(temp);// add each column value to the row arraylist
 						}
 						masterList.add(arlRow);// add the row arraylist to the master arraylist
@@ -153,7 +153,8 @@ public class DisplayResultSet {
 							if (stopExecution.get())
 								throw new ThreadKilledException("Thread killed");
 							// columnValue[i][j]=(String)temp[j-1];//++++++++++++++++++++++++++++++++++++++++++
-							columnValue[i][j] = UtilityFunctions.splitUpString((String) temp[j - 1], maxColWidth);
+							columnValue[i][j] = UtilityFunctions.splitUpStringByGraphemeCount((String) temp[j - 1],
+									maxColWidth);
 						}
 						temp = null;
 					}
@@ -165,8 +166,8 @@ public class DisplayResultSet {
 						if (stopExecution.get())
 							throw new ThreadKilledException("Thread killed");
 						// columnSize[i]=columnName[i].length();//+++++++++++++++++++++++++++++++++++++++++++++
-						columnSize[i] = UtilityFunctions
-								.getMaxLength((String[]) columnName[i].toArray(new String[columnName[i].size()]));
+						columnSize[i] = UtilityFunctions.getMaxLengthInGraphemes(
+								(String[]) columnName[i].toArray(new String[columnName[i].size()]));
 					}
 					for (int j = 1; j <= columnCount; j++) {
 						if (stopExecution.get())
@@ -176,9 +177,9 @@ public class DisplayResultSet {
 								throw new ThreadKilledException("Thread killed");
 							// if(columnSize[j]<columnValue[i][j].length())
 							// columnSize[j]=columnValue[i][j].length();//+++++++++++++++++++++++++++++
-							if (columnSize[j] < UtilityFunctions.getMaxLength(
+							if (columnSize[j] < UtilityFunctions.getMaxLengthInGraphemes(
 									(String[]) columnValue[i][j].toArray(new String[columnValue[i][j].size()]))) {
-								columnSize[j] = UtilityFunctions.getMaxLength(
+								columnSize[j] = UtilityFunctions.getMaxLengthInGraphemes(
 										(String[]) columnValue[i][j].toArray(new String[columnValue[i][j].size()]));
 							}
 						}
@@ -253,7 +254,7 @@ public class DisplayResultSet {
 							throw new ThreadKilledException("Thread killed");
 						// for(int j=1;j<=columnName[i].length();j++)
 						// textOutput.append("_");//+++++++++++++++++++++++
-						for (int j = 1; j <= UtilityFunctions.getMaxLength(
+						for (int j = 1; j <= UtilityFunctions.getMaxLengthInGraphemes(
 								(String[]) columnName[i].toArray(new String[columnName[i].size()])); j++) {
 							if (stopExecution.get())
 								throw new ThreadKilledException("Thread killed");
@@ -262,7 +263,7 @@ public class DisplayResultSet {
 						// for(int j=1;j<=(columnSize[i]-columnName[i].length())+spacing;j++)
 						// textOutput.append(" ");//++++++++++++++++
 						for (int j = 1; j <= (columnSize[i]
-								- UtilityFunctions.getMaxLength(
+								- UtilityFunctions.getMaxLengthInGraphemes(
 										(String[]) columnName[i].toArray(new String[columnName[i].size()]))
 								+ spacing); j++) {
 							if (stopExecution.get())
