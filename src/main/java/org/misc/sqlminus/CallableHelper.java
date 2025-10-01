@@ -95,14 +95,15 @@ public class CallableHelper {
 				int colType = (int) sorted.get(i).get("COLUMN_TYPE");
 
 				boolean isOut = colType == DatabaseMetaData.procedureColumnOut
-						|| colType == DatabaseMetaData.procedureColumnInOut
 						|| colType == DatabaseMetaData.procedureColumnReturn
 						|| colType == DatabaseMetaData.functionColumnOut
-						|| colType == DatabaseMetaData.functionColumnInOut
 						|| colType == DatabaseMetaData.functionReturn;
+				
+				boolean isInOut = colType == DatabaseMetaData.procedureColumnInOut
+						|| colType == DatabaseMetaData.functionColumnInOut;
 
-				if (isMarker && !isOut) {
-					matches = false; // SQL expected OUT, DB says IN
+				if (isMarker && (!isOut && !isInOut)) {
+					matches = false; // SQL expected OUT, DB says not OUT
 					break;
 				}
 				if (!isMarker && isOut) {
