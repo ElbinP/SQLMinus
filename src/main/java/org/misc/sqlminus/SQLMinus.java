@@ -9,6 +9,7 @@ import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.Image;
 import java.awt.Insets;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
@@ -28,14 +29,18 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import javax.swing.AbstractAction;
+import javax.swing.ActionMap;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
 import javax.swing.ImageIcon;
+import javax.swing.InputMap;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComboBox;
+import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
@@ -50,6 +55,7 @@ import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
+import javax.swing.KeyStroke;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
 import javax.swing.border.BevelBorder;
@@ -961,6 +967,8 @@ public class SQLMinus extends JFrame implements ActionListener {
 			setBounds(windowX, windowY, windowWidth, windowHeight);
 		}
 
+		setKeyboardShortcutToOpenQueryWindow();
+
 		enableTextOutputSettings(btText.isSelected());
 		setVisible(true);
 		dbPassword.requestFocusInWindow();
@@ -1565,5 +1573,18 @@ public class SQLMinus extends JFrame implements ActionListener {
 			// Fallback or log error
 			System.err.println("Unable to set Dock icon: " + e);
 		}
+	}
+
+	private void setKeyboardShortcutToOpenQueryWindow() {
+		InputMap inputMap = getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+		ActionMap actionMap = getRootPane().getActionMap();
+		KeyStroke ctrlW = KeyStroke.getKeyStroke(KeyEvent.VK_W, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx());
+		inputMap.put(ctrlW, "openQueryWindow");
+		actionMap.put("openQueryWindow", new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				showSQLFrame(!textareaFrame.isVisible());
+			}
+		});
 	}
 }

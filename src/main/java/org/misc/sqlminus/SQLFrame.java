@@ -25,10 +25,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import javax.swing.AbstractAction;
+import javax.swing.ActionMap;
 import javax.swing.BorderFactory;
 import javax.swing.DefaultListModel;
 import javax.swing.ImageIcon;
+import javax.swing.InputMap;
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JList;
@@ -39,6 +43,7 @@ import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JToggleButton;
 import javax.swing.JToolBar;
+import javax.swing.KeyStroke;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
@@ -363,15 +368,20 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 		updateToolBarButtons();
 
 		this.addFocusListener(this);
+		setKeyboardShortcutToCloseQueryWindow();
 
 		getContentPane().add(centerPanel, BorderLayout.CENTER);
 		addWindowListener(new WindowAdapter() {
 			public void windowClosing(WindowEvent we) {
-				popup.setVisible(false);
-				sqlMinusObject.showSQLFrame(false);
+				closeWindow();
 			}
 		});
 
+	}
+
+	private void closeWindow() {
+		popup.setVisible(false);
+		sqlMinusObject.showSQLFrame(false);
 	}
 
 	private void reloadHistoryPanel() {
@@ -658,6 +668,19 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 
 	public int getToolbarOrientation() {
 		return toolBar.getOrientation();
+	}
+
+	private void setKeyboardShortcutToCloseQueryWindow() {
+		InputMap inputMap = getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+		ActionMap actionMap = getRootPane().getActionMap();
+		KeyStroke ctrlW = KeyStroke.getKeyStroke(KeyEvent.VK_W, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx());
+		inputMap.put(ctrlW, "closeQueryWindow");
+		actionMap.put("closeQueryWindow", new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				closeWindow();
+			}
+		});
 	}
 
 }
