@@ -9,7 +9,6 @@ import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.Image;
 import java.awt.Insets;
-import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
@@ -106,6 +105,8 @@ public class SQLMinus extends JFrame implements ActionListener {
 	public LookAndFeelMenu laf = new LookAndFeelMenu(new Component[] {}, KeyEvent.VK_L, null, sqlMinusPreferences);
 	private static final int SPLIT_PANE_DIVIDER_LOCATION = 142;
 	private static final int NUMBER_OF_COMMANDS_TO_SAVE_IN_DROPDOWN = 50;
+	public static final KeyStroke TOGGLE_KEY_STROKE = KeyStroke.getKeyStroke(KeyEvent.VK_M, InputEvent.CTRL_DOWN_MASK,
+			false);
 
 	/************** The Constructor for SQLMinus ***********************/
 
@@ -278,7 +279,9 @@ public class SQLMinus extends JFrame implements ActionListener {
 		 * gridbag.setConstraints(dummy1,c); optionsPanel.add(dummy1);
 		 */
 
-		displayTextAreaButton = new JCheckBox("Show query window", false);
+		String keyText = KeyEvent.getModifiersExText(TOGGLE_KEY_STROKE.getModifiers()) + "+"
+				+ KeyEvent.getKeyText(TOGGLE_KEY_STROKE.getKeyCode());
+		displayTextAreaButton = new JCheckBox("Show query window (" + keyText + ")", false);
 		// displayTextAreaButton.setFont(f);
 		displayTextAreaButton.setBackground(backgroundColor);
 		displayTextAreaButton.addItemListener(new ItemListener() {
@@ -1578,8 +1581,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 	private void setKeyboardShortcutToOpenQueryWindow() {
 		InputMap inputMap = getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
 		ActionMap actionMap = getRootPane().getActionMap();
-		KeyStroke ctrlW = KeyStroke.getKeyStroke(KeyEvent.VK_W, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx());
-		inputMap.put(ctrlW, "openQueryWindow");
+		inputMap.put(TOGGLE_KEY_STROKE, "openQueryWindow");
 		actionMap.put("openQueryWindow", new AbstractAction() {
 			@Override
 			public void actionPerformed(ActionEvent e) {

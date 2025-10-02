@@ -43,7 +43,6 @@ import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JToggleButton;
 import javax.swing.JToolBar;
-import javax.swing.KeyStroke;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
@@ -679,8 +678,7 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 	private void setKeyboardShortcutToCloseQueryWindow() {
 		InputMap inputMap = getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
 		ActionMap actionMap = getRootPane().getActionMap();
-		KeyStroke ctrlW = KeyStroke.getKeyStroke(KeyEvent.VK_W, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx());
-		inputMap.put(ctrlW, "closeQueryWindow");
+		inputMap.put(SQLMinus.TOGGLE_KEY_STROKE, "closeQueryWindow");
 		actionMap.put("closeQueryWindow", new AbstractAction() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
