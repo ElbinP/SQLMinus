@@ -48,6 +48,8 @@ import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.undo.CannotRedoException;
 import javax.swing.undo.CannotUndoException;
 
@@ -347,22 +349,17 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 		historyList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		JScrollPane historyScrollPane = new JScrollPane(historyList);
 		historyScrollPane.setBorder(BorderFactory.createTitledBorder("History"));
-		historyList.addMouseListener(new MouseAdapter() {
+		reloadHistoryPanel();
+		// Add selection listener
+		historyList.addListSelectionListener(new ListSelectionListener() {
 			@Override
-			public void mouseClicked(MouseEvent e) {
-				if (e.getClickCount() == 2 && SwingUtilities.isLeftMouseButton(e)
-						&& historyList.getSelectedIndex() != -1) {
-					try {
-						textInput.setText(sqlCommands.get(historyList.getSelectedIndex() + 1));
-						sqlCommands.setSelectedIndex(historyList.getSelectedIndex() + 1);
-						updateToolBarButtons();
-					} catch (VectorIndexOutOfBoundsException e1) {
-						Toolkit.getDefaultToolkit().beep();
-					}
+			public void valueChanged(ListSelectionEvent e) {
+				// Ignore extra events while adjusting (dragging, etc.)
+				if (!e.getValueIsAdjusting()) {
+					setQueryTextFromHistoryList();
 				}
 			}
 		});
-		reloadHistoryPanel();
 		getContentPane().add(historyScrollPane, BorderLayout.EAST);
 
 		updateToolBarButtons();
@@ -377,6 +374,18 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 			}
 		});
 
+	}
+
+	private void setQueryTextFromHistoryList() {
+		if (historyList.getSelectedIndex() != -1) {
+			try {
+				textInput.setText(sqlCommands.get(historyList.getSelectedIndex() + 1));
+				sqlCommands.setSelectedIndex(historyList.getSelectedIndex() + 1);
+				updateToolBarButtons();
+			} catch (VectorIndexOutOfBoundsException e1) {
+				Toolkit.getDefaultToolkit().beep();
+			}
+		}
 	}
 
 	private void closeWindow() {
