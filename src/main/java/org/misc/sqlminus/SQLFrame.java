@@ -379,8 +379,8 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 	private void setQueryTextFromHistoryList() {
 		if (historyList.getSelectedIndex() != -1) {
 			try {
-				textInput.setText(sqlCommands.get(historyList.getSelectedIndex() + 1));
-				sqlCommands.setSelectedIndex(historyList.getSelectedIndex() + 1);
+				sqlCommands.setSelectedIndex(historyList.getSelectedIndex(), textInput.getText());
+				textInput.setText(sqlCommands.get(historyList.getSelectedIndex()));
 				updateToolBarButtons();
 			} catch (VectorIndexOutOfBoundsException e1) {
 				Toolkit.getDefaultToolkit().beep();
@@ -396,6 +396,7 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 	private void reloadHistoryPanel() {
 		Thread historyReloadThread = new Thread(() -> {
 			historyModel.clear();
+			historyModel.addElement("<Current query>");
 			for (int i = 1; i < sqlCommands.size(); i++) {
 				historyModel.addElement(getFirstFewChars(sqlCommands.get(i)));
 			}
@@ -499,17 +500,13 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 	private void goBackInHistory() throws VectorIndexOutOfBoundsException {
 		textInput.setText(sqlCommands.getPrevious(textInput.getText()));
 		textInput.discardAllEdits();
-		if (sqlCommands.getSelectedIndex() > 0) {
-			historyList.setSelectedIndex(sqlCommands.getSelectedIndex() - 1);
-		}
+		historyList.setSelectedIndex(sqlCommands.getSelectedIndex());
 	}
 
 	private void goForwardInHistory() throws VectorIndexOutOfBoundsException {
 		textInput.setText(sqlCommands.getNext(textInput.getText()));
 		textInput.discardAllEdits();
-		if (sqlCommands.getSelectedIndex() > 0) {
-			historyList.setSelectedIndex(sqlCommands.getSelectedIndex() - 1);
-		}
+		historyList.setSelectedIndex(sqlCommands.getSelectedIndex());
 	}
 
 	private void deleteHistoryEntry() {

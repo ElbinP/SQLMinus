@@ -112,7 +112,8 @@ public class IndexedVector extends Vector<String> {
 		return selectedIndex;
 	}
 
-	public void setSelectedIndex(int index) throws VectorIndexOutOfBoundsException {
+	public void setSelectedIndex(int index, String currentItem) throws VectorIndexOutOfBoundsException {
+		setCurrentItem(currentItem);
 		if (index > size() - 1) {
 			throw new VectorIndexOutOfBoundsException("index " + index + "greater than size of vector " + size());
 		}
