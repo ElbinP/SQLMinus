@@ -53,6 +53,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTable;
+import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.KeyStroke;
 import javax.swing.ListSelectionModel;
@@ -61,8 +62,6 @@ import javax.swing.border.BevelBorder;
 import javax.swing.plaf.metal.MetalComboBoxEditor;
 import javax.swing.text.JTextComponent;
 
-import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
-import org.fife.ui.rtextarea.RTextScrollPane;
 import org.misc.sqlminus.MetadataRequestEntity.MetadataRequestType;
 import org.misc.sqlminus.session.SessionsPanel;
 
@@ -79,7 +78,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 	private final String COMMIT_TRANSACTIONS_COMMAND = "COMMIT_TRANSACTIONS";
 	private final String ROLLBACK_TRANSACTIONS_COMMAND = "ROLLBACK_TRANSACTIONS";
 	public CustomizedMouseAdapter commonAdapter = new CustomizedMouseAdapter(false);
-	private RSyntaxTextArea textOutput;
+	private JTextArea textOutput;
 	private SQLFrame textareaFrame;
 	private JTextField driverConnectionString, dbUsername, tableText, columnText, schemaText, catalogText, statusBar;
 	private JComboBox<String> sqlText;
@@ -99,7 +98,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 	private SortableTable tableOutput;
 	private JRadioButton btText, btTable;
 	private JScrollPane tableSpane;
-	private RTextScrollPane textSpane;
+	private JScrollPane textSpane;
 	private String[] rowsComboBoxOptions = { "100", "500", "All" };
 	private SQLMinusPreferences sqlMinusPreferences = new SQLMinusPreferences();
 	public LookAndFeelMenu laf = new LookAndFeelMenu(new Component[] {}, KeyEvent.VK_L, null, sqlMinusPreferences);
@@ -109,6 +108,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 			false);
 	private final String TOGGLE_KEY_TEXT = KeyEvent.getModifiersExText(TOGGLE_KEY_STROKE.getModifiers()) + "+"
 			+ KeyEvent.getKeyText(TOGGLE_KEY_STROKE.getKeyCode());
+
 	/************** The Constructor for SQLMinus ***********************/
 
 	public SQLMinus() {
@@ -811,8 +811,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 		gridbag.setConstraints(indicatorLabel, c);
 		bottomPanel.add(indicatorLabel);
 
-		textOutput = new RSyntaxTextArea();
-		textOutput.setHighlightCurrentLine(false);
+		textOutput = new JTextArea();
 		textOutput.setFont(tfont);
 		// textOutput.setSelectionColor(Color.white);
 		// textOutput.setSelectionColor(new Color(180,180,180));
@@ -822,8 +821,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 		laf.addComponentToMonitor(textOutputAdapter.getPopupMenu());
 		textOutput.addMouseListener(textOutputAdapter);
 
-		textSpane = new RTextScrollPane(textOutput);
-		textSpane.setLineNumbersEnabled(false);
+		textSpane = new JScrollPane(textOutput);
 
 		c.weighty = 2000;
 		c.weightx = 2000;
