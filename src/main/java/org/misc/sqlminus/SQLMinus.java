@@ -107,7 +107,8 @@ public class SQLMinus extends JFrame implements ActionListener {
 	private static final int NUMBER_OF_COMMANDS_TO_SAVE_IN_DROPDOWN = 50;
 	public static final KeyStroke TOGGLE_KEY_STROKE = KeyStroke.getKeyStroke(KeyEvent.VK_M, InputEvent.CTRL_DOWN_MASK,
 			false);
-
+	private final String TOGGLE_KEY_TEXT = KeyEvent.getModifiersExText(TOGGLE_KEY_STROKE.getModifiers()) + "+"
+			+ KeyEvent.getKeyText(TOGGLE_KEY_STROKE.getKeyCode());
 	/************** The Constructor for SQLMinus ***********************/
 
 	public SQLMinus() {
@@ -279,9 +280,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 		 * gridbag.setConstraints(dummy1,c); optionsPanel.add(dummy1);
 		 */
 
-		String keyText = KeyEvent.getModifiersExText(TOGGLE_KEY_STROKE.getModifiers()) + "+"
-				+ KeyEvent.getKeyText(TOGGLE_KEY_STROKE.getKeyCode());
-		displayTextAreaButton = new JCheckBox("Show query window (" + keyText + ")", false);
+		displayTextAreaButton = new JCheckBox("Show query window (" + TOGGLE_KEY_TEXT + ")", false);
 		// displayTextAreaButton.setFont(f);
 		displayTextAreaButton.setBackground(backgroundColor);
 		displayTextAreaButton.addItemListener(new ItemListener() {
@@ -784,7 +783,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 		emptyCombo.setActionCommand("EMPTY COMBOBOX");
 		emptyCombo.addActionListener(this);
 
-		JMenuItem showQueryWindow = new JMenuItem("Show query window");
+		JMenuItem showQueryWindow = new JMenuItem("Show query window " + TOGGLE_KEY_TEXT);
 		showQueryWindow.setActionCommand("SHOW QUERY WINDOW-COMBO COMMAND");
 		showQueryWindow.addActionListener(this);
 
