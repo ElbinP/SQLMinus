@@ -93,13 +93,13 @@ public class DisplayResultSet {
 					 * column values.
 					 */
 
-					ArrayList masterList = new ArrayList();// masterList is the master arraylist
+					ArrayList<ArrayList<String>> masterList = new ArrayList<>();// masterList is the master arraylist
 
 					// This section reads and stores the column headings
 					int columnCount = rst.getMetaData().getColumnCount();
 					// String[] columnName=new
 					// String[columnCount+1];//++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-					Vector[] columnName = new Vector[columnCount + 1];
+					Vector<String>[] columnName = new Vector[columnCount + 1];
 					for (int i = 1; i <= columnCount; i++) {
 						if (stopExecution.get())
 							throw new ThreadKilledException("Thread killed");
@@ -119,7 +119,7 @@ public class DisplayResultSet {
 					while (hasAnotherRow && ((rowsToReturn.isEmpty()) || (rowsRead < rowsToReturn.get().intValue()))) {
 						if (stopExecution.get())
 							throw new ThreadKilledException("Thread killed");
-						ArrayList arlRow = new ArrayList();// arraylist for the corresponding row
+						ArrayList<String> arlRow = new ArrayList<>();// arraylist for the corresponding row
 						for (int i = 1; i <= columnCount; i++) {
 							if (stopExecution.get())
 								throw new ThreadKilledException("Thread killed");
@@ -143,7 +143,7 @@ public class DisplayResultSet {
 
 					// String[][] columnValue=new
 					// String[rowlength+1][columnCount+1];//++++++++++++++++++++++++++++++++
-					Vector[][] columnValue = new Vector[rowlength + 1][columnCount + 1];
+					Vector<String>[][] columnValue = new Vector[rowlength + 1][columnCount + 1];
 					for (int i = 1; i <= rowlength; i++) {
 						if (stopExecution.get())
 							throw new ThreadKilledException("Thread killed");
@@ -285,8 +285,8 @@ public class DisplayResultSet {
 									throw new ThreadKilledException("Thread killed");
 								int temp = 0;
 								try {
-									textOutput.append(((String) columnValue[i][j].elementAt(m - 1)));
-									temp = ((String) columnValue[i][j].elementAt(m - 1)).length();
+									textOutput.append(columnValue[i][j].elementAt(m - 1));
+									temp = columnValue[i][j].elementAt(m - 1).length();
 								} catch (ArrayIndexOutOfBoundsException ae) {
 									// ArrayIndexOutOfBoundsException will be thrown when there is no elementAt(m-1)
 								}

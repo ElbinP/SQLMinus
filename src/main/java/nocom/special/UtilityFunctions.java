@@ -21,11 +21,11 @@ public class UtilityFunctions {
 	 * the correct order.<br>
 	 * Throws an IllegalArgumentException if elementlength is less than 1.
 	 */
-	public static Vector splitUpString(String data, int elementlength) {
+	public static Vector<String> splitUpString(String data, int elementlength) {
 		if (elementlength < 1) {
 			throw new IllegalArgumentException("elementlength cannot be less than 1");
 		}
-		Vector splitdata = new Vector();
+		Vector<String> splitdata = new Vector<>();
 		if (data.length() <= elementlength) {
 			splitdata.addElement(data);
 		} else {
