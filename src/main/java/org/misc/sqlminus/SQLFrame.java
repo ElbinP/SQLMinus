@@ -56,6 +56,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.fife.ui.rsyntaxtextarea.SyntaxConstants;
 import org.fife.ui.rtextarea.RTextScrollPane;
 import org.misc.sqlminus.sqlhistory.SQLHistoryHelper;
+import org.misc.sqlminus.sqlhistory.SQLHistorySearchDialog;
 
 import com.alibaba.druid.DbType;
 import com.alibaba.druid.sql.SQLUtils;
@@ -71,7 +72,7 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 	private UndoableRSyntaxTextArea textInput;
 	private IndexedVector sqlCommands;
 	private SQLMinus sqlMinusObject;
-	private JButton back, forward, undo, redo, execute, save, open, clearHistory, deleteHistoryEntryButton;
+	private JButton back, forward, undo, redo, execute, save, open, clearHistory, deleteHistoryEntryButton, searchHistory;
 	private JPopupMenu popup;
 	private JFileChooser fileChooser;
 	private RTextScrollPane textSPane;
@@ -160,6 +161,12 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 		} catch (Exception e) {
 			wordWrap = new JToggleButton("Wrap lines");
 		}
+		
+		try {
+			searchHistory = new JButton(new ImageIcon(ImageReader.getImage(this.getClass(), "/images/history.gif")));
+		} catch (Exception e) {
+			searchHistory = new JButton("Search");
+		}
 
 		back.setToolTipText("Back");
 		// back.setFont(f);
@@ -208,6 +215,10 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 		wordWrap.setToolTipText("Word wrap");
 		wordWrap.addActionListener(this);
 		wordWrap.setActionCommand("WORD-WRAP-SQL");
+		
+		searchHistory.setToolTipText("Search History (Ctrl+F)");
+		searchHistory.addActionListener(this);
+		searchHistory.setActionCommand("SearchHistory");
 
 		if (sqlMinusPreferences.getBoolean(Constants.PreferencesKeys.SQLFRAME_WORD_WRAP, false)) {
 			wordWrap.setSelected(true);
@@ -226,6 +237,7 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 		toolBar.addSeparator();
 		toolBar.add(deleteHistoryEntryButton);
 		toolBar.add(clearHistory);
+		toolBar.add(searchHistory);
 		toolBar.addSeparator();
 		toolBar.add(wordWrap);
 
@@ -280,6 +292,8 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 						sqlCommands.insertString(textInput.getText());
 						reloadHistoryPanel();
 						saveSQLCommandsToHistoryFile();
+					} else if (ke.isControlDown() && (ke.getKeyCode() == KeyEvent.VK_F)) {
+						openSearchDialog();
 					}
 				} catch (VectorIndexOutOfBoundsException ve) {
 					Toolkit.getDefaultToolkit().beep();
@@ -470,6 +484,8 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 				textInput.setLineWrap(wordWrap.isSelected());
 			} else if (actionCommand.equals("Format SQL")) {
 				formatSQL();
+			} else if (actionCommand.equals("SearchHistory")) {
+				openSearchDialog();
 			}
 		} catch (Exception e) {
 			Toolkit.getDefaultToolkit().beep();
@@ -685,6 +701,33 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 				closeWindow();
 			}
 		});
+	}
+	
+	/**
+	 * Open the SQL history search dialog
+	 */
+	private void openSearchDialog() {
+		SQLHistorySearchDialog searchDialog = new SQLHistorySearchDialog(
+			this,
+			new ArrayList<>(sqlCommands),
+			sqlMinusPreferences
+		);
+		searchDialog.setVisible(true);
+	}
+	
+	/**
+	 * Load a history entry at the specified index into the text editor
+	 * @param index The index in the history to load
+	 */
+	public void loadHistoryEntry(int index) {
+		try {
+			sqlCommands.setSelectedIndex(index, textInput.getText());
+			textInput.setText(sqlCommands.get(index));
+			historyList.setSelectedIndex(index);
+			updateToolBarButtons();
+		} catch (VectorIndexOutOfBoundsException e) {
+			Toolkit.getDefaultToolkit().beep();
+		}
 	}
 
 }
