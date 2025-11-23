@@ -163,7 +163,7 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 		}
 		
 		try {
-			searchHistory = new JButton(new ImageIcon(ImageReader.getImage(this.getClass(), "/images/history.gif")));
+			searchHistory = new JButton(new ImageIcon(ImageReader.getImage(this.getClass(), "/images/search_history.png")));
 		} catch (Exception e) {
 			searchHistory = new JButton("Search");
 		}
