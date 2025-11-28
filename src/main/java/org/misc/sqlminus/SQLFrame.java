@@ -724,6 +724,7 @@ public class SQLFrame extends JFrame implements ActionListener, DocumentListener
 			sqlCommands.setSelectedIndex(index, textInput.getText());
 			textInput.setText(sqlCommands.get(index));
 			historyList.setSelectedIndex(index);
+			historyList.ensureIndexIsVisible(index);
 			updateToolBarButtons();
 		} catch (VectorIndexOutOfBoundsException e) {
 			Toolkit.getDefaultToolkit().beep();
