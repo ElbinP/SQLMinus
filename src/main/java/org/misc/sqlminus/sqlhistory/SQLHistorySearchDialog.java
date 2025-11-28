@@ -343,12 +343,16 @@ public class SQLHistorySearchDialog extends JDialog implements ActionListener {
 			Pattern pattern = buildSearchPattern(searchTerm);
 
 			// Search through history
-			for (int i = 0; i < sqlHistory.size(); i++) {
+			// Note: sqlHistory includes working copy at index 0, actual history starts at 1
+			// We start from index 1 to skip the working copy and only search actual history
+			for (int i = 1; i < sqlHistory.size(); i++) {
 				String sql = sqlHistory.get(i);
 				Matcher matcher = pattern.matcher(sql);
 
 				if (matcher.find()) {
-					String displayText = createDisplayText(sql, i + 1);
+					// Display position matches the history list position (1-based for first history item)
+					// historyIndex is i for correct loading (matches IndexedVector index)
+					String displayText = createDisplayText(sql, i);
 					SearchResult result = new SearchResult(i, sql, displayText);
 					searchResults.add(result);
 					resultsModel.addElement(displayText);
