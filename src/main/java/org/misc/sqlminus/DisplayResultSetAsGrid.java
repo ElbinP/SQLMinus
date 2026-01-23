@@ -15,7 +15,18 @@ import org.misc.sqlminus.DisplayResultSetUtil.ExecutionResult;
 
 public class DisplayResultSetAsGrid {
 
+	/**
+	 * Callback interface for pagination events
+	 */
+	public interface PaginationCallback {
+		void onMoreRowsAvailable(int batchSize, int currentRowCount);
+		void onLoadingComplete();
+	}
+
 	private Optional<String> executionCommand;
+	private PaginationCallback paginationCallback;
+	private Optional<ResultSet> pendingResultSet = Optional.empty();
+	private int totalRowsDisplayed = 0;
 	private SQLMinus sqlMinusObject;
 	private Optional<Integer> rowsToReturn;
 	private String nullRep;
@@ -28,6 +39,92 @@ public class DisplayResultSetAsGrid {
 
 	public void killThread() {
 		stopExecution.set(true);
+	}
+
+	public void setPaginationCallback(PaginationCallback callback) {
+		this.paginationCallback = callback;
+	}
+
+	public void continueLoading(int batchSize) {
+		if (pendingResultSet.isPresent()) {
+			try {
+				ResultSet rst = pendingResultSet.get();
+				boolean hasAnotherRow = true;
+				int rowsRead = 0;
+				Vector rowContents = new Vector();
+				
+				int columnCount = rst.getMetaData().getColumnCount();
+				int[] columnTypes = new int[columnCount];
+				for (int i = 1; i <= columnCount; i++) {
+					columnTypes[i - 1] = rst.getMetaData().getColumnType(i);
+				}
+				
+				while (hasAnotherRow && rowsRead < batchSize) {
+					if (stopExecution.get()) break;
+					Vector row = new Vector();
+					for (int i = 1; i <= columnCount; i++) {
+						Object temp;
+						if (DisplayResultSetTableModel.getClassForType(columnTypes[i - 1]) == java.lang.String.class)
+							temp = rst.getString(i);
+						else
+							temp = rst.getObject(i);
+						row.addElement(temp);
+					}
+					rowContents.addElement(row);
+					rowsRead++;
+					hasAnotherRow = rst.next();
+				}
+				
+				// Append to existing table using appendTable method
+				final int previousRowCount = table.getRowCount();
+				table.appendTable(rowContents, columnTypes);
+				
+				totalRowsDisplayed += rowsRead;
+				if (sqlMinusObject != null) {
+					sqlMinusObject.setStatusBarText(" " + totalRowsDisplayed + " row(s) selected");
+				}
+				
+				table.repaint();
+				
+				// Auto-scroll to show newly added rows
+				SwingUtilities.invokeLater(() -> {
+					try {
+						// Scroll to the first newly added row
+						table.scrollRectToVisible(table.getCellRect(previousRowCount, 0, true));
+					} catch (Exception e) {
+						// Ignore scroll errors
+					}
+				});
+				
+				if (hasAnotherRow && paginationCallback != null) {
+					paginationCallback.onMoreRowsAvailable(batchSize, totalRowsDisplayed);
+				} else {
+					cleanupPendingResultSet();
+				}
+			} catch (Exception e) {
+				JOptionPane.showMessageDialog(null, "Error loading next batch: " + e.getMessage());
+				cleanupPendingResultSet();
+			}
+		}
+	}
+
+	public void stopLoading() {
+		stopExecution.set(true);
+		cleanupPendingResultSet();
+	}
+
+	private void cleanupPendingResultSet() {
+		if (pendingResultSet.isPresent()) {
+			try {
+				pendingResultSet.get().close();
+			} catch (SQLException e) {
+				System.err.println("Error closing pending ResultSet: " + e.getMessage());
+			}
+			pendingResultSet = Optional.empty();
+		}
+		if (paginationCallback != null) {
+			paginationCallback.onLoadingComplete();
+		}
 	}
 
 	public void setDisplayParamsAndRun(Optional<Integer> rowsToReturn, Optional<String> executionCommand,
@@ -65,6 +162,7 @@ public class DisplayResultSetAsGrid {
 			rstOptional = result.resultSet();
 			if (rstOptional.isPresent()) {
 				ResultSet rst = rstOptional.get();
+				totalRowsDisplayed = 0;
 				int option;
 				boolean hasAnotherRow = rst.next();// The result set now points to the first row, if it has one.
 				do {
@@ -118,28 +216,34 @@ public class DisplayResultSetAsGrid {
 					}
 
 					table.changeTable(rowContents, columnHeadings, columnTypes);
+					totalRowsDisplayed += rowContents.size();
 					if (sqlMinusObject != null)
-						sqlMinusObject.setStatusBarText(" " + rowContents.size() + " row(s) selected");
+						sqlMinusObject.setStatusBarText(" " + totalRowsDisplayed + " row(s) selected");
 
 					if (rowsToReturn.isPresent()) {
-						// If there are remaining rows should we display them too?
+						// If there are remaining rows, notify via callback instead of modal dialog
 						if (hasAnotherRow && rowsToReturn.get().intValue() > 0) {
-							option = JOptionPane.showConfirmDialog(null,
-									"Show the next " + rowsToReturn.get() + " rows?", "Continue?",
-									JOptionPane.YES_NO_OPTION);
+							pendingResultSet = Optional.of(rst);
+							if (paginationCallback != null) {
+								paginationCallback.onMoreRowsAvailable(rowsToReturn.get(), totalRowsDisplayed);
+							}
+							// Exit loop - will resume when continueLoading() is called
+							return;
 						}
 						if (rowsToReturn.get().intValue() < 1) {
-							// textOutput.append("\nYou have set the number of rows to be fetched to
-							// "+rowsToReturn.intValue());
-							// textOutput.append("\nNo rows will be displayed\n");
 							String message = "You have set the number of rows to be fetched to "
 									+ rowsToReturn.get().intValue();
 							message = message + "\nNo Rows will be displayed";
 							JOptionPane.showMessageDialog(null, message);
 						}
 					}
+					
+					// No more rows or no pagination - cleanup
+					if (paginationCallback != null) {
+						paginationCallback.onLoadingComplete();
+					}
 
-				} while (option == JOptionPane.YES_OPTION);
+				} while (false); // Changed from option == YES_OPTION since we now use callbacks
 
 			}
 
@@ -165,7 +269,8 @@ public class DisplayResultSetAsGrid {
 					}
 				}
 			});
-			if (rstOptional.isPresent()) {
+			// Only close ResultSet if it's not pending for pagination
+			if (rstOptional.isPresent() && pendingResultSet.isEmpty()) {
 				try {
 					rstOptional.get().close();
 				} catch (SQLException e) {

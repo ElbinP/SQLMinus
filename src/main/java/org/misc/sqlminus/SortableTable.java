@@ -109,6 +109,27 @@ public class SortableTable extends JTable {
 		((DisplayResultSetTableModel) getModel()).setDataVector(rowContents, columnHeadings, columnTypes);
 	}
 
+	public void appendTable(Vector newRows, int[] columnTypes) {
+		DisplayResultSetTableModel model = (DisplayResultSetTableModel) getModel();
+		Vector currentRows = new Vector();
+		Vector columnHeadings = new Vector();
+		
+		for (int i = 0; i < model.getRowCount(); i++) {
+			Vector row = new Vector();
+			for (int j = 0; j < model.getColumnCount(); j++) {
+				row.add(model.getValueAt(i, j));
+			}
+			currentRows.add(row);
+		}
+		
+		for (int i = 0; i < model.getColumnCount(); i++) {
+			columnHeadings.add(model.getColumnName(i));
+		}
+		
+		currentRows.addAll(newRows);
+		model.setDataVector(currentRows, columnHeadings, columnTypes);
+	}
+
 	public void setNullRep(String nullRep) {
 		((DisplayResultSetTableModel) getModel()).setNullRep(nullRep);
 	}
