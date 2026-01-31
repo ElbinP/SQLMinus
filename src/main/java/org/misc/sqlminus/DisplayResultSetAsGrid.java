@@ -86,11 +86,14 @@ public class DisplayResultSetAsGrid {
 				
 				table.repaint();
 				
-				// Auto-scroll to show newly added rows
+				// Auto-scroll to show newly added rows at the end
 				SwingUtilities.invokeLater(() -> {
 					try {
-						// Scroll to the first newly added row
-						table.scrollRectToVisible(table.getCellRect(previousRowCount, 0, true));
+						// Scroll to the last row to show all newly added rows
+						int lastRow = table.getRowCount() - 1;
+						if (lastRow >= 0) {
+							table.scrollRectToVisible(table.getCellRect(lastRow, 0, true));
+						}
 					} catch (Exception e) {
 						// Ignore scroll errors
 					}
