@@ -215,6 +215,9 @@ public class DisplayResultSet {
 			SQLMinus sqlMinusObject, int maxColWidth, int spacing, boolean rowDividers, int maxDataLength,
 			String nullRep, Optional<MetadataRequestEntity> metadataRequestEntity) throws Exception {
 		if (busy.compareAndSet(false, true)) {
+			// Clean up any pending ResultSet from previous query before starting new one
+			cleanupPendingResultSet();
+			
 			if (sqlMinusObject != null)
 				sqlMinusObject.setBusy();
 			this.stopExecution.set(false);

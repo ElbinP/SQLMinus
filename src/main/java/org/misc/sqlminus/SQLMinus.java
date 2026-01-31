@@ -1431,6 +1431,14 @@ public class SQLMinus extends JFrame implements ActionListener {
 
 	public /* synchronized */ void disconnectDatabase() {
 		if (!busy.get()) {
+			// Clean up any pending ResultSets before disconnecting
+			try {
+				displayObject.stopLoading();
+				displayGrid.stopLoading();
+			} catch (Exception e) {
+				System.err.println("Error cleaning up pending ResultSets: " + e.getMessage());
+			}
+			
 			try {
 				if (conn.isPresent() && !conn.get().getAutoCommit()) {
 					conn.get().rollback();
