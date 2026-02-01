@@ -1,5 +1,6 @@
 package org.misc.sqlminus;
 
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -99,6 +100,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 	private JRadioButton btText, btTable;
 	private JScrollPane tableSpane;
 	private JScrollPane textSpane;
+	private PaginationControlPanel paginationPanel;
 	private String[] rowsComboBoxOptions = { "100", "500", "All" };
 	private SQLMinusPreferences sqlMinusPreferences = new SQLMinusPreferences();
 	public LookAndFeelMenu laf = new LookAndFeelMenu(new Component[] {}, KeyEvent.VK_L, null, sqlMinusPreferences);
@@ -856,15 +858,42 @@ public class SQLMinus extends JFrame implements ActionListener {
 		bottomPanel.add(tableSpane);
 		tableSpane.setVisible(false);
 
+		JPanel statusBarContainer = new JPanel(new BorderLayout());
+		
 		statusBar = new JTextField();
 		statusBar.setEditable(false);
 		statusBar.setBorder(new BevelBorder(BevelBorder.LOWERED));
 		statusBar.setBackground(null);
+		statusBarContainer.add(statusBar, BorderLayout.CENTER);
+		
+		paginationPanel = new PaginationControlPanel();
+		paginationPanel.setCallback(new PaginationControlPanel.PaginationCallback() {
+			public void onLoadNext() {
+				int batchSize = paginationPanel.getBatchSize();
+				if (btText.isSelected()) {
+					displayObject.continueLoading(batchSize);
+				} else {
+					displayGrid.continueLoading(batchSize);
+				}
+			}
+			
+			public void onStop() {
+				if (btText.isSelected()) {
+					displayObject.stopLoading();
+				} else {
+					displayGrid.stopLoading();
+				}
+				SwingUtilities.invokeLater(() -> paginationPanel.setVisible(false));
+			}
+		});
+		paginationPanel.setVisible(false);
+		statusBarContainer.add(paginationPanel, BorderLayout.EAST);
+		
 		c.weightx = 1;
 		c.weighty = 1;
 		c.insets = new Insets(0, 0, 0, 0);
-		gridbag.setConstraints(statusBar, c);
-		bottomPanel.add(statusBar);
+		gridbag.setConstraints(statusBarContainer, c);
+		bottomPanel.add(statusBarContainer);
 
 		c.insets = new Insets(8, 8, 8, 8);
 		bottomPanel.setBackground(backgroundColor);
@@ -970,6 +999,34 @@ public class SQLMinus extends JFrame implements ActionListener {
 		setKeyboardShortcutToOpenQueryWindow();
 
 		enableTextOutputSettings(btText.isSelected());
+		
+		// Setup pagination callbacks
+		displayObject.setPaginationCallback(new DisplayResultSet.PaginationCallback() {
+			public void onMoreRowsAvailable(int batchSize, int currentRowCount) {
+				SwingUtilities.invokeLater(() -> {
+					paginationPanel.setBatchSize(batchSize);
+					paginationPanel.updateStatus(currentRowCount, true);
+					paginationPanel.setVisible(true);
+				});
+			}
+			public void onLoadingComplete() {
+				SwingUtilities.invokeLater(() -> paginationPanel.setVisible(false));
+			}
+		});
+		
+		displayGrid.setPaginationCallback(new DisplayResultSetAsGrid.PaginationCallback() {
+			public void onMoreRowsAvailable(int batchSize, int currentRowCount) {
+				SwingUtilities.invokeLater(() -> {
+					paginationPanel.setBatchSize(batchSize);
+					paginationPanel.updateStatus(currentRowCount, true);
+					paginationPanel.setVisible(true);
+				});
+			}
+			public void onLoadingComplete() {
+				SwingUtilities.invokeLater(() -> paginationPanel.setVisible(false));
+			}
+		});
+		
 		setVisible(true);
 		dbPassword.requestFocusInWindow();
 
@@ -1374,6 +1431,14 @@ public class SQLMinus extends JFrame implements ActionListener {
 
 	public /* synchronized */ void disconnectDatabase() {
 		if (!busy.get()) {
+			// Clean up any pending ResultSets before disconnecting
+			try {
+				displayObject.stopLoading();
+				displayGrid.stopLoading();
+			} catch (Exception e) {
+				System.err.println("Error cleaning up pending ResultSets: " + e.getMessage());
+			}
+			
 			try {
 				if (conn.isPresent() && !conn.get().getAutoCommit()) {
 					conn.get().rollback();

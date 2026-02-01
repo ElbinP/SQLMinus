@@ -18,7 +18,18 @@ import nocom.special.UtilityFunctions;
 
 public class DisplayResultSet {
 
+	/**
+	 * Callback interface for pagination events
+	 */
+	public interface PaginationCallback {
+		void onMoreRowsAvailable(int batchSize, int currentRowCount);
+		void onLoadingComplete();
+	}
+
 	private JTextArea textOutput;
+	private PaginationCallback paginationCallback;
+	private Optional<ResultSet> pendingResultSet = Optional.empty();
+	private int totalRowsDisplayed = 0;
 	private Optional<MetadataRequestEntity> metadataRequestEntity;
 	private Optional<Connection> connection;
 	private Optional<Statement> statement;
@@ -31,9 +42,172 @@ public class DisplayResultSet {
 	private String nullRep;
 	private final AtomicBoolean busy = new AtomicBoolean(false);
 	private final AtomicBoolean stopExecution = new AtomicBoolean(false);
+	
+	// Store column metadata for pagination
+	private Vector<String>[] columnName;
+	private int[] columnSize;
+	private int columnCount;
+	private int maxRowSize;
 
 	public void killThread() {
 		stopExecution.set(true);
+	}
+
+	public void setPaginationCallback(PaginationCallback callback) {
+		this.paginationCallback = callback;
+	}
+
+	public void continueLoading(int batchSize) {
+		if (pendingResultSet.isPresent()) {
+			try {
+				ResultSet rst = pendingResultSet.get();
+				boolean hasAnotherRow = true;
+				int rowsRead = 0;
+				
+				// Build master list for this batch
+				ArrayList<ArrayList<String>> masterList = new ArrayList<>();
+				
+				while (hasAnotherRow && rowsRead < batchSize) {
+					if (stopExecution.get()) break;
+					
+					ArrayList<String> arlRow = new ArrayList<>();
+					for (int i = 1; i <= columnCount; i++) {
+						if (stopExecution.get()) break;
+						String temp = rst.getString(i);
+						if (temp == null) {
+							temp = nullRep;
+						}
+						temp = UtilityFunctions.truncateString(temp, maxDataLength)
+							.replace('\n', ' ').replace('\t', ' ').replace('\r', ' ');
+						arlRow.add(temp);
+					}
+					masterList.add(arlRow);
+					rowsRead++;
+					hasAnotherRow = rst.next();
+				}
+				
+				// Format and append the new rows
+				if (rowsRead > 0) {
+					Object[] row = masterList.toArray();
+					int rowlength = row.length;
+					
+					Vector<String>[][] columnValue = new Vector[rowlength + 1][columnCount + 1];
+					for (int i = 1; i <= rowlength; i++) {
+						if (stopExecution.get()) break;
+						Object[] temp = ((ArrayList) row[i - 1]).toArray();
+						for (int j = 1; j <= columnCount; j++) {
+							if (stopExecution.get()) break;
+							columnValue[i][j] = UtilityFunctions.splitUpString((String) temp[j - 1], maxColWidth);
+						}
+					}
+					
+					// Recalculate column sizes to include new data
+					for (int j = 1; j <= columnCount; j++) {
+						if (stopExecution.get()) break;
+						for (int i = 1; i <= rowlength; i++) {
+							if (stopExecution.get()) break;
+							int currentMaxLength = UtilityFunctions.getMaxLength(
+								(String[]) columnValue[i][j].toArray(new String[columnValue[i][j].size()]));
+							if (columnSize[j] < currentMaxLength) {
+								columnSize[j] = currentMaxLength;
+							}
+						}
+					}
+					
+					// Recalculate maxRowSize
+					maxRowSize = 0;
+					for (int i = 1; i <= columnCount; i++) {
+						if (stopExecution.get()) break;
+						maxRowSize = maxRowSize + columnSize[i] + spacing;
+					}
+					
+					// Calculate max rows for each data row and find max for this batch
+					int[] columnValueMaxRows = new int[rowlength + 1];
+					int maxRowRowsInBatch = 1;
+					for (int i = 1; i <= rowlength; i++) {
+						if (stopExecution.get()) break;
+						columnValueMaxRows[i] = 1;
+						for (int j = 1; j <= columnCount; j++) {
+							if (stopExecution.get()) break;
+							if (columnValueMaxRows[i] < columnValue[i][j].size()) {
+								columnValueMaxRows[i] = columnValue[i][j].size();
+							}
+						}
+						if (maxRowRowsInBatch < columnValueMaxRows[i]) {
+							maxRowRowsInBatch = columnValueMaxRows[i];
+						}
+					}
+					
+					// Append the formatted rows to text output
+					for (int i = 1; i <= rowlength; i++) {
+						if (stopExecution.get()) break;
+						for (int m = 1; m <= columnValueMaxRows[i]; m++) {
+							if (stopExecution.get()) break;
+							textOutput.append("\n");
+							for (int j = 1; j <= columnCount; j++) {
+								if (stopExecution.get()) break;
+								int temp = 0;
+								try {
+									textOutput.append(columnValue[i][j].elementAt(m - 1));
+									temp = columnValue[i][j].elementAt(m - 1).length();
+								} catch (ArrayIndexOutOfBoundsException ae) {
+									// No element at this position
+								}
+								for (int k = 1; k <= (columnSize[j] - temp) + spacing; k++) {
+									if (stopExecution.get()) break;
+									textOutput.append(" ");
+								}
+							}
+						}
+						if (rowDividers || maxRowRowsInBatch > 1) {
+							textOutput.append("\n");
+							for (int p = 1; p <= maxRowSize; p++) {
+								if (stopExecution.get()) break;
+								textOutput.append("-");
+							}
+						}
+					}
+					
+					totalRowsDisplayed += rowsRead;
+					textOutput.append("\n\n" + totalRowsDisplayed + " row(s) selected (total)\n");
+					
+					// Auto-scroll to bottom
+					textOutput.setCaretPosition(textOutput.getDocument().getLength());
+				}
+				
+				if (sqlMinusObject != null) {
+					sqlMinusObject.setStatusBarText(" " + totalRowsDisplayed + " row(s) selected");
+				}
+				
+				if (hasAnotherRow && paginationCallback != null) {
+					paginationCallback.onMoreRowsAvailable(batchSize, totalRowsDisplayed);
+				} else {
+					cleanupPendingResultSet();
+				}
+			} catch (Exception e) {
+				textOutput.append("\n\nError loading next batch: " + e.getMessage() + "\n");
+				cleanupPendingResultSet();
+			}
+		}
+	}
+
+	public void stopLoading() {
+		stopExecution.set(true);
+		cleanupPendingResultSet();
+	}
+
+	private void cleanupPendingResultSet() {
+		if (pendingResultSet.isPresent()) {
+			try {
+				pendingResultSet.get().close();
+			} catch (SQLException e) {
+				System.err.println("Error closing pending ResultSet: " + e.getMessage());
+			}
+			pendingResultSet = Optional.empty();
+		}
+		if (paginationCallback != null) {
+			paginationCallback.onLoadingComplete();
+		}
 	}
 
 	public void setDisplayParamsAndRun(Optional<Integer> rowsToReturn, Optional<String> executionCommand,
@@ -41,6 +215,9 @@ public class DisplayResultSet {
 			SQLMinus sqlMinusObject, int maxColWidth, int spacing, boolean rowDividers, int maxDataLength,
 			String nullRep, Optional<MetadataRequestEntity> metadataRequestEntity) throws Exception {
 		if (busy.compareAndSet(false, true)) {
+			// Clean up any pending ResultSet from previous query before starting new one
+			cleanupPendingResultSet();
+			
 			if (sqlMinusObject != null)
 				sqlMinusObject.setBusy();
 			this.stopExecution.set(false);
@@ -78,6 +255,7 @@ public class DisplayResultSet {
 			if (rstOptional.isPresent()) {
 				sqlMinusObject.clearTextOutput();
 				ResultSet rst = rstOptional.get();
+				totalRowsDisplayed = 0;
 				int option;
 				boolean hasAnotherRow = rst.next();// The result set now points to the first row, if it has one.
 				do {
@@ -96,10 +274,10 @@ public class DisplayResultSet {
 					ArrayList<ArrayList<String>> masterList = new ArrayList<>();// masterList is the master arraylist
 
 					// This section reads and stores the column headings
-					int columnCount = rst.getMetaData().getColumnCount();
+					this.columnCount = rst.getMetaData().getColumnCount();
 					// String[] columnName=new
 					// String[columnCount+1];//++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-					Vector<String>[] columnName = new Vector[columnCount + 1];
+					this.columnName = new Vector[columnCount + 1];
 					for (int i = 1; i <= columnCount; i++) {
 						if (stopExecution.get())
 							throw new ThreadKilledException("Thread killed");
@@ -110,7 +288,7 @@ public class DisplayResultSet {
 						}
 						temp = UtilityFunctions.truncateString(temp, maxDataLength).replace('\n', ' ')
 								.replace('\t', ' ').replace('\r', ' ');
-						columnName[i] = UtilityFunctions.splitUpString(temp, maxColWidth);
+						this.columnName[i] = UtilityFunctions.splitUpString(temp, maxColWidth);
 					}
 
 					int rowsRead = 0;
@@ -160,7 +338,7 @@ public class DisplayResultSet {
 					row = null;
 
 					// This section determines the maximum size an entry in a column will have
-					int[] columnSize = new int[columnCount + 1];
+					this.columnSize = new int[columnCount + 1];
 					for (int i = 1; i <= columnCount; i++) {
 						if (stopExecution.get())
 							throw new ThreadKilledException("Thread killed");
@@ -184,11 +362,11 @@ public class DisplayResultSet {
 						}
 					}
 
-					int maxRowSize = 0;
+					this.maxRowSize = 0;
 					for (int i = 1; i <= columnCount; i++) {
 						if (stopExecution.get())
 							throw new ThreadKilledException("Thread killed");
-						maxRowSize = maxRowSize + columnSize[i] + spacing;
+						this.maxRowSize = this.maxRowSize + columnSize[i] + spacing;
 					}
 
 					int columnNameMaxRows = 1;
@@ -307,16 +485,20 @@ public class DisplayResultSet {
 							}
 						}
 					}
+					totalRowsDisplayed += rowlength;
 					textOutput.append("\n\n" + rowlength + " row(s) selected\n");
 					if (sqlMinusObject != null)
-						sqlMinusObject.setStatusBarText(" " + rowlength + " row(s) selected");
+						sqlMinusObject.setStatusBarText(" " + totalRowsDisplayed + " row(s) selected");
 
 					if (rowsToReturn.isPresent()) {
-						// If there are remaining rows should we display them too?
+						// If there are remaining rows, notify via callback instead of modal dialog
 						if (hasAnotherRow && rowsToReturn.get().intValue() > 0) {
-							option = JOptionPane.showConfirmDialog(null,
-									"Show the next " + rowsToReturn.get() + " rows?", "Continue?",
-									JOptionPane.YES_NO_OPTION);
+							pendingResultSet = Optional.of(rst);
+							if (paginationCallback != null) {
+								paginationCallback.onMoreRowsAvailable(rowsToReturn.get(), totalRowsDisplayed);
+							}
+							// Exit loop - will resume when continueLoading() is called
+							return;
 						}
 						if (rowsToReturn.get().intValue() < 1) {
 							textOutput.append("\nYou have set the number of rows to be fetched to "
@@ -324,8 +506,13 @@ public class DisplayResultSet {
 							textOutput.append("\nNo rows will be displayed\n");
 						}
 					}
+					
+					// No more rows or no pagination - cleanup
+					if (paginationCallback != null) {
+						paginationCallback.onLoadingComplete();
+					}
 
-				} while (option == JOptionPane.YES_OPTION);
+				} while (false); // Changed from option == YES_OPTION since we now use callbacks
 			}
 		} catch (ThreadKilledException te) {
 			textOutput.append("\n\n" + te.getMessage() + "\n");
@@ -334,7 +521,8 @@ public class DisplayResultSet {
 		} catch (Exception e) {
 			textOutput.append("\n\n" + e + "\n");
 		} finally {
-			if (rstOptional.isPresent()) {
+			// Only close ResultSet if it's not pending for pagination
+			if (rstOptional.isPresent() && pendingResultSet.isEmpty()) {
 				try {
 					rstOptional.get().close();
 				} catch (SQLException e) {
