@@ -23,11 +23,9 @@ import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.swing.AbstractAction;
 import javax.swing.ActionMap;
@@ -90,12 +88,10 @@ public class SQLMinus extends JFrame implements ActionListener {
 	private JLabel schemaLabel, catalogLabel;
 	private JSplitPane splitPane;
 	private Optional<Connection> conn = Optional.empty();
-	private JCheckBox displayTextAreaButton, clearScreenButton, setCommitButton, rowDividers, enableThreads;
+	private JCheckBox displayTextAreaButton, clearScreenButton, setCommitButton, rowDividers;
 	private JComboBox<String> rowsComboBox;
-	private DisplayResultSet displayObject = new DisplayResultSet();
-	private DisplayResultSetAsGrid displayGrid = new DisplayResultSetAsGrid();
+	private ResultSetLoader resultSetLoader;
 	private ClassLoaderPanel driverPanel;
-	private final AtomicBoolean busy = new AtomicBoolean(false);
 	private SortableTable tableOutput;
 	private JRadioButton btText, btTable;
 	private JScrollPane tableSpane;
@@ -414,18 +410,6 @@ public class SQLMinus extends JFrame implements ActionListener {
 
 		gridbag.setConstraints(setCommitPanel, c);
 		optionsPanel.add(setCommitPanel);
-
-		enableThreads = new JCheckBox("Enable threads",
-				sqlMinusPreferences.getBoolean(Constants.PreferencesKeys.ENABLE_THREADS, false));
-		// enableThreads.setFont(f);
-		enableThreads.setBackground(backgroundColor);
-		enableThreads.setToolTipText("Use a separate thread for displaying the result");
-		JPanel enableThreadsPanel = new JPanel();
-		enableThreadsPanel.add(enableThreads);
-		enableThreadsPanel.setBackground(backgroundColor);
-		enableThreadsPanel.setBorder(BorderFactory.createEtchedBorder());
-		gridbag.setConstraints(enableThreadsPanel, c);
-		optionsPanel.add(enableThreadsPanel);
 
 		btTable = new JRadioButton("Output in grid");
 		// btTable.setFont(f);
@@ -869,21 +853,11 @@ public class SQLMinus extends JFrame implements ActionListener {
 		paginationPanel = new PaginationControlPanel();
 		paginationPanel.setCallback(new PaginationControlPanel.PaginationCallback() {
 			public void onLoadNext() {
-				int batchSize = paginationPanel.getBatchSize();
-				if (btText.isSelected()) {
-					displayObject.continueLoading(batchSize);
-				} else {
-					displayGrid.continueLoading(batchSize);
-				}
+				resultSetLoader.loadNext(paginationPanel.getBatchSize());
 			}
-			
+
 			public void onStop() {
-				if (btText.isSelected()) {
-					displayObject.stopLoading();
-				} else {
-					displayGrid.stopLoading();
-				}
-				SwingUtilities.invokeLater(() -> paginationPanel.setVisible(false));
+				resultSetLoader.stop();
 			}
 		});
 		paginationPanel.setVisible(false);
@@ -1000,30 +974,25 @@ public class SQLMinus extends JFrame implements ActionListener {
 
 		enableTextOutputSettings(btText.isSelected());
 		
-		// Setup pagination callbacks
-		displayObject.setPaginationCallback(new DisplayResultSet.PaginationCallback() {
-			public void onMoreRowsAvailable(int batchSize, int currentRowCount) {
-				SwingUtilities.invokeLater(() -> {
-					paginationPanel.setBatchSize(batchSize);
-					paginationPanel.updateStatus(currentRowCount, true);
-					paginationPanel.setVisible(true);
-				});
+		resultSetLoader = new ResultSetLoader(new ResultSetLoader.Listener() {
+			public void loadingStarted() {
+				paginationPanel.setVisible(false);
+				setBusy();
 			}
-			public void onLoadingComplete() {
-				SwingUtilities.invokeLater(() -> paginationPanel.setVisible(false));
+
+			public void rowsLoaded(int totalRows) {
+				setStatusBarText(" " + totalRows + " row(s) selected");
 			}
-		});
-		
-		displayGrid.setPaginationCallback(new DisplayResultSetAsGrid.PaginationCallback() {
-			public void onMoreRowsAvailable(int batchSize, int currentRowCount) {
-				SwingUtilities.invokeLater(() -> {
-					paginationPanel.setBatchSize(batchSize);
-					paginationPanel.updateStatus(currentRowCount, true);
-					paginationPanel.setVisible(true);
-				});
+
+			public void moreRowsAvailable(int batchSize, int totalRows) {
+				unsetBusy();
+				paginationPanel.setBatchSize(batchSize);
+				paginationPanel.updateStatus(totalRows, true);
+				paginationPanel.setVisible(true);
 			}
-			public void onLoadingComplete() {
-				SwingUtilities.invokeLater(() -> paginationPanel.setVisible(false));
+
+			public void loadingFinished() {
+				unsetBusy();
 			}
 		});
 		
@@ -1075,8 +1044,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 			else if (command.equals("Output as text"))
 				enableTextOutputSettings(true);
 			else if (command.equals("KILL THREAD")) {
-				displayObject.killThread();
-				displayGrid.killThread();
+				resultSetLoader.cancel();
 			} else if (command.equals("EXECUTE SQLTEXT")) {
 				insertItem(sqlText, getSqlText());
 				executeStatement(getSqlText());
@@ -1107,21 +1075,8 @@ public class SQLMinus extends JFrame implements ActionListener {
 		System.exit(0);
 	}
 
-	public /* synchronized */ void clearTextOutput() {
-		sqlMinusPreferences.putBoolean(Constants.PreferencesKeys.CLEAR_SCREEN_BEFORE_EACH_RESULT,
-				clearScreenButton.isSelected());
-		if (clearScreenButton.isSelected()) {
-			textOutput.setText("");
-		}
-	}
-
 	public void displayResultSet(Optional<String> executionCommand,
 			Optional<MetadataRequestEntity> metadataRequestEntity) {
-		displayResultSet(executionCommand, metadataRequestEntity, Optional.empty());
-	}
-
-	public /* synchronized */ void displayResultSet(Optional<String> executionCommand,
-			Optional<MetadataRequestEntity> metadataRequestEntity, Optional<Statement> statement) {
 		Optional<Integer> rowsToReturn = Optional.empty();
 		// rowsToReturn will be null if all rows are to be returned
 		if (!(((String) rowsComboBox.getSelectedItem()).equalsIgnoreCase("All"))) {
@@ -1212,62 +1167,25 @@ public class SQLMinus extends JFrame implements ActionListener {
 
 		sqlMinusPreferences.put(Constants.PreferencesKeys.NULL_REPRESENTATION, nullRep.getText());
 		sqlMinusPreferences.putBoolean(Constants.PreferencesKeys.ALWAYS_SHOW_ROW_DIVIDERS, rowDividers.isSelected());
-		sqlMinusPreferences.putBoolean(Constants.PreferencesKeys.ENABLE_THREADS, enableThreads.isSelected());
 		sqlMinusPreferences.putBoolean(Constants.PreferencesKeys.OUTPUT_IN_GRID, btTable.isSelected());
+		sqlMinusPreferences.putBoolean(Constants.PreferencesKeys.CLEAR_SCREEN_BEFORE_EACH_RESULT,
+				clearScreenButton.isSelected());
 
-		final Optional<Integer> rowsToReturnFinal = rowsToReturn;
-		final int maxColWidthValueFinal = maxColWidthValue;
-		final int interColSpaceValueFinal = interColSpaceValue;
-		final int maxDataLengthValueFinal = maxDataLengthValue;
-
-		try {
-			// rowsToReturn will be null if all rows are to be returned
-			if (btText.isSelected()) {
-				tableSpane.setVisible(false);
-				textSpane.setVisible(true);
-
-				Thread displayThread = new Thread(() -> {
-					try {
-						displayObject.setDisplayParamsAndRun(rowsToReturnFinal, executionCommand, statement, conn,
-								textOutput, this, maxColWidthValueFinal, interColSpaceValueFinal,
-								rowDividers.isSelected(), maxDataLengthValueFinal, nullRep.getText(),
-								metadataRequestEntity);
-
-					} catch (Exception e) {
-						popMessage(e.toString());
-					}
-				}, "DISPLAY-RESULT-SET-THREAD");
-
-				if (enableThreads.isSelected()) {
-					displayThread.start();
-				} else {
-					SwingUtilities.invokeLater(displayThread);///////////////////////////////////
-				}
-			} else if (btTable.isSelected()) {
-				textSpane.setVisible(false);
-				tableSpane.setVisible(true);
-				tableOutput.setMinColWidth(minColWidthValue);
-				tableOutput.setMaxColWidth(maxColWidthValue);
-
-				Thread displayThread = new Thread(() -> {
-					try {
-						displayGrid.setDisplayParamsAndRun(rowsToReturnFinal, executionCommand, statement, conn, this,
-								tableOutput, nullRep.getText(), metadataRequestEntity);
-					} catch (Exception e) {
-						popMessage(e.toString());
-					}
-				}, "DISPLAY-RESULT-SET-AS-GRID-THREAD");
-
-				if (enableThreads.isSelected()) {
-					displayThread.start();
-				} else {
-					SwingUtilities.invokeLater(displayThread);///////////////////////////////////
-				}
-			}
-		} catch (Exception e) {
-			// e.printStackTrace();/////////////////////////////////////////
-			popMessage(e.toString());
+		ResultSetRenderer renderer;
+		if (btText.isSelected()) {
+			tableSpane.setVisible(false);
+			textSpane.setVisible(true);
+			renderer = new TextResultRenderer(textOutput, maxColWidthValue, interColSpaceValue,
+					rowDividers.isSelected(), maxDataLengthValue, nullRep.getText(), clearScreenButton.isSelected());
+		} else {
+			textSpane.setVisible(false);
+			tableSpane.setVisible(true);
+			tableOutput.setMinColWidth(minColWidthValue);
+			tableOutput.setMaxColWidth(maxColWidthValue);
+			renderer = new GridResultRenderer(tableOutput, nullRep.getText());
 		}
+		// rowsToReturn will be empty if all rows are to be returned
+		resultSetLoader.execute(executionCommand, metadataRequestEntity, conn, renderer, rowsToReturn);
 	}
 
 	public /* synchronized */ void clearFields() {
@@ -1286,17 +1204,14 @@ public class SQLMinus extends JFrame implements ActionListener {
 				new String(dbPassword.getPassword()));
 	}
 
-	public /* synchronized */ void setBusy() {
-		busy.set(true);
-		;
+	private void setBusy() {
 		indicatorLabel.setBorder(BorderFactory.createEtchedBorder());
 		indicatorLabel.setForeground(Color.red);
 		indicatorLabel.setText("BUSY");
 		indicatorLabel.setToolTipText("Click to kill the display thread");
 	}
 
-	public /* synchronized */ void unsetBusy(Optional<Statement> stmt) {
-		busy.set(false);
+	private void unsetBusy() {
 		indicatorLabel.setBorder(BorderFactory.createEmptyBorder());
 		indicatorLabel.setForeground(Color.green);
 		indicatorLabel.setText("Finished");
@@ -1311,16 +1226,6 @@ public class SQLMinus extends JFrame implements ActionListener {
 				}
 			}
 		});
-		stmt.ifPresent(this::showNextResult);
-	}
-
-	private void showNextResult(Statement stmt) {
-		if (!busy.get()) {// quit if we are in the middle of displaying a previous
-			// resultset. This method will be called again when we are
-			// free so all the resultsets _WILL_ eventually be displayed.
-
-			displayResultSet(Optional.empty(), Optional.empty(), Optional.of(stmt));
-		}
 	}
 
 	public /* synchronized */ void setCommit() throws SQLException {
@@ -1402,7 +1307,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 
 	public /* synchronized */ void executeStatement(String executionCommand) {
 		if (conn.isPresent()) {
-			if (!busy.get()) {
+			if (!resultSetLoader.isBusy()) {
 				try {
 					setStatusBarText("");
 					displayResultSet(Optional.of(executionCommand), Optional.empty());
@@ -1416,7 +1321,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 	}
 
 	public /* synchronized */ void connectDatabase() throws MalformedURLException, SQLException {
-		if (!busy.get()) {
+		if (!resultSetLoader.isBusy()) {
 			disconnectDatabase();
 			saveConnectionSettingsToPreferences();
 			conn = Optional.of(driverPanel.getConnection(driverConnectionString.getText(), dbUsername.getText(),
@@ -1430,15 +1335,10 @@ public class SQLMinus extends JFrame implements ActionListener {
 	}
 
 	public /* synchronized */ void disconnectDatabase() {
-		if (!busy.get()) {
-			// Clean up any pending ResultSets before disconnecting
-			try {
-				displayObject.stopLoading();
-				displayGrid.stopLoading();
-			} catch (Exception e) {
-				System.err.println("Error cleaning up pending ResultSets: " + e.getMessage());
-			}
-			
+		if (!resultSetLoader.isBusy()) {
+			resultSetLoader.close();
+			paginationPanel.setVisible(false);
+
 			try {
 				if (conn.isPresent() && !conn.get().getAutoCommit()) {
 					conn.get().rollback();
@@ -1463,7 +1363,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 
 	public /* synchronized */ void getTables() throws SQLException {
 		if (conn.isPresent()) {
-			if (!busy.get()) {
+			if (!resultSetLoader.isBusy()) {
 				setStatusBarText("");
 
 				String catalogPattern = null;
@@ -1486,7 +1386,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 
 	public /* synchronized */ void getColumns() throws SQLException {
 		if (conn.isPresent()) {
-			if (!busy.get()) {
+			if (!resultSetLoader.isBusy()) {
 				setStatusBarText("");
 
 				String catalogPattern = null;
@@ -1510,7 +1410,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 
 	public void getSchemas() throws SQLException {
 		if (conn.isPresent()) {
-			if (!busy.get()) {
+			if (!resultSetLoader.isBusy()) {
 				setStatusBarText("");
 
 				String catalogPattern = null;
@@ -1533,7 +1433,7 @@ public class SQLMinus extends JFrame implements ActionListener {
 
 	public void getCatalogs() throws SQLException {
 		if (conn.isPresent()) {
-			if (!busy.get()) {
+			if (!resultSetLoader.isBusy()) {
 				setStatusBarText("");
 				MetadataRequestEntity entity = new MetadataRequestEntity(null, null, null, null,
 						MetadataRequestType.CATALOGS);

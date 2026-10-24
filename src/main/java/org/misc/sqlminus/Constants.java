@@ -28,7 +28,6 @@ public class Constants {
 		public static final String NULL_REPRESENTATION = "NullRepresentation";
 		public static final String ALWAYS_SHOW_ROW_DIVIDERS = "AlwaysShowRowDividers";
 		public static final String CLEAR_SCREEN_BEFORE_EACH_RESULT = "ClearScreenBeforeEachResult";
-		public static final String ENABLE_THREADS = "EnableThreads";
 		public static final String OUTPUT_IN_GRID = "OutputInGrid";
 	}
 
