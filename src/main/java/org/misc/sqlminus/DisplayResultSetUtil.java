@@ -11,15 +11,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import javax.swing.JOptionPane;
-import javax.swing.JTextArea;
-
 import org.misc.sqlminus.StatementFactory.StatementWithOutParams;
 
 public class DisplayResultSetUtil {
 
 	public static record ExecutionResult(Optional<Statement> statement, Optional<ResultSet> resultSet) {
 
+	}
+
+	/**
+	 * Lets the caller decide how messages and questions raised while executing are presented.
+	 */
+	public interface ExecutionFeedback {
+		void showMessage(String message);
+
+		boolean confirm(String message, String title);
 	}
 
 	public static ResultSet getMetadataResult(MetadataRequestEntity metadataRequestEntity,
@@ -52,17 +58,8 @@ public class DisplayResultSetUtil {
 		return rst;
 	}
 
-	private static void showUpdateMessage(Optional<JTextArea> textOutput, boolean showPopupMessage, int updateCount) {
-		if (showPopupMessage) {
-			JOptionPane.showMessageDialog(null, updateCount + " row(s) updated");
-		}
-		if (textOutput.isPresent()) {
-			textOutput.get().append("\n\n" + updateCount + " row(s) updated");
-		}
-	}
-
-	private static void showOutparamValues(Optional<JTextArea> textOutput, boolean showPopupMessage,
-			Optional<String> mainError, Optional<List<CallableHelper.OutParam>> outParams, CallableStatement cs)
+	private static void showOutparamValues(ExecutionFeedback feedback, Optional<String> mainError,
+			Optional<List<CallableHelper.OutParam>> outParams, CallableStatement cs)
 			throws SQLException {
 		Map<String, Object> results;
 
@@ -72,12 +69,7 @@ public class DisplayResultSetUtil {
 			results = new LinkedHashMap<>();
 		}
 
-		String formatted = formatOutParams(mainError, results);
-
-		if (showPopupMessage) {
-			JOptionPane.showMessageDialog(null, formatted);
-		}
-		textOutput.ifPresent(area -> area.append("\n\n" + formatted));
+		feedback.showMessage(formatOutParams(mainError, results));
 	}
 
 	private static String formatOutParams(Optional<String> mainError, Map<String, Object> results) {
@@ -97,8 +89,7 @@ public class DisplayResultSetUtil {
 
 	public static ExecutionResult getResult(Optional<String> executionCommand, Optional<Statement> statement,
 			Optional<MetadataRequestEntity> metadataRequestEntity, Optional<Connection> connection,
-			SQLMinus sqlMinusObject, Optional<JTextArea> textOutput, boolean showPopupMessage)
-			throws SQLMinusException, SQLException {
+			ExecutionFeedback feedback) throws SQLMinusException, SQLException {
 
 		Optional<Statement> stmtInternal = Optional.empty();
 		Optional<ResultSet> rstOptional = Optional.empty();
@@ -129,8 +120,7 @@ public class DisplayResultSetUtil {
 					} catch (SQLException se) {
 						mainError = Optional.of(se.getMessage());
 					}
-					showOutparamValues(textOutput, showPopupMessage, mainError, statementWithOutParams.outParams(),
-							callableStatement);
+					showOutparamValues(feedback, mainError, statementWithOutParams.outParams(), callableStatement);
 
 				} else {
 					executeStatus = stmtInternal.get().execute(executionCommand.get());
@@ -140,7 +130,7 @@ public class DisplayResultSetUtil {
 				if (executeStatus) {
 					rstOptional = Optional.of(stmtInternal.get().getResultSet());
 				} else if ((updateCount = stmtInternal.get().getUpdateCount()) != -1) {
-					showUpdateMessage(textOutput, showPopupMessage, updateCount);
+					feedback.showMessage(updateCount + " row(s) updated");
 				}
 
 			} else {
@@ -150,12 +140,11 @@ public class DisplayResultSetUtil {
 			stmtInternal = statement;
 			int updateCount;
 			if (stmtInternal.get().getMoreResults()) {
-				if (JOptionPane.showConfirmDialog(null, "Show the next resultset?", "Next?",
-						JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+				if (feedback.confirm("Show the next resultset?", "Next?")) {
 					rstOptional = Optional.of(stmtInternal.get().getResultSet());
 				}
 			} else if ((updateCount = stmtInternal.get().getUpdateCount()) != -1) {
-				showUpdateMessage(textOutput, showPopupMessage, updateCount);
+				feedback.showMessage(updateCount + " row(s) updated");
 			} else {
 				stmtInternal.get().close();
 				stmtInternal = Optional.empty();
